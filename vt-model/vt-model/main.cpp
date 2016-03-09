@@ -7,9 +7,18 @@
 //
 
 #include <iostream>
+#include "Speaker.h"
+#include "Delta.h"
 
 int main(int argc, const char * argv[]) {
     // insert code here...
+    Speaker newspeaker("Male", 2);
+    Delta newdelta(20);
+
     std::cout << "Hello, World!\n";
+    std::cout << newdelta.numberOfTubes;
+    std::cout << "\n";
+    std::cout << newspeaker.relativeSize;
+    std::cout << "\n";
     return 0;
 }

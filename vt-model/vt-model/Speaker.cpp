@@ -33,9 +33,15 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses) {
 	/* That was a male speaker, so we need scaling for other speakers:		*/
 
 	double scaling;
-	if (kindOfSpeaker.compare("Male")) relativeSize = 1.1;
-	else if (kindOfSpeaker.compare("Child")) relativeSize = 0.7;
-	else relativeSize = 1.0;
+    /* I was getting some weird behavior out of this if-else section. 
+     * It would seem that str.compare returns a 0 when the strings are equal.
+     * I added the "==0" portion to the if statements (and some brackets from 
+     * debugging). The other if statements probably need fixing too.
+     * I'm a little surprised that this error was present in the code...
+     *                                  -Jacob                              */
+	if (kindOfSpeaker.compare("Male") == 0){ relativeSize = 1.1;}
+	else { if  (kindOfSpeaker.compare("Child") == 0) { relativeSize = 0.7;} 
+	else { relativeSize = 1.0; } }
 	scaling = relativeSize;
 
 	/* Laryngeal system. Data for male speaker from Ishizaka and Flanagan.	*/

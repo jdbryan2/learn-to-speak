@@ -1,0 +1,9 @@
+# Compiled sources
+###################
+*.o
+/vt-model/vt-model/build/CMakeFiles/
+
+# vim swap files
+################
+*.swp
+
