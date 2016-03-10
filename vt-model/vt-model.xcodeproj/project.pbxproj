@@ -32,6 +32,8 @@
 		C36B90681C8DCC4300B37B7B /* Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker.h; sourceTree = "<group>"; };
 		C36B906D1C8DF1C500B37B7B /* Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Delta.cpp; sourceTree = "<group>"; };
 		C36B906E1C8DF1C500B37B7B /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
+		C36B90741C91DBC500B37B7B /* Articulation_enums.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Articulation_enums.h; sourceTree = "<group>"; };
+		C36B907A1C91E59600B37B7B /* Articulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Articulation.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,8 @@
 		C36B902D1C8CE93600B37B7B /* vt-model */ = {
 			isa = PBXGroup;
 			children = (
+				C36B907A1C91E59600B37B7B /* Articulation.h */,
+				C36B90741C91DBC500B37B7B /* Articulation_enums.h */,
 				C36B906D1C8DF1C500B37B7B /* Delta.cpp */,
 				C36B906E1C8DF1C500B37B7B /* Delta.h */,
 				C36B90661C8DCC4300B37B7B /* Speaker_def.h */,
