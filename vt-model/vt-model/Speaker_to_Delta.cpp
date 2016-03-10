@@ -85,9 +85,9 @@ Delta Speaker_to_Delta (Speaker me) {
 		int i;
 		for (i = 0; data [i]. itube; i ++) {
 			Delta_Tube t = &(thee.tube->at(data[i].itube));
-			t -> Dy = t -> Dyeq = data [i+1]. Dy * f;
-			t -> Dz = t -> Dzeq = data [i+1]. Dz * f;
-			t -> parallel = data [i+1]. parallel;
+			t -> Dy = t -> Dyeq = data [i]. Dy * f;
+			t -> Dz = t -> Dzeq = data [i]. Dz * f;
+			t -> parallel = data [i]. parallel;
 		}
 		for (itube = 25; itube <= 34; itube ++) {
 			Delta_Tube t = &(thee.tube->at(itube));
@@ -139,7 +139,7 @@ Delta Speaker_to_Delta (Speaker me) {
 		t -> Brel = 0.2;
 
 		/* Couple spring with lower cord. */
-		t -> k1left1 = thee.tube->at(36).k1right1 = 1.0;
+		t -> k1left1 = thee.tube->at(35).k1right1 = 1.0;
 	}
 
 	/*
@@ -198,7 +198,7 @@ Delta Speaker_to_Delta (Speaker me) {
 			t -> k1left1 = t -> k1right1 = 1.0;
 		}
 		thee.tube->at(78).k1left1 = 0.0;
-		thee.tube->at(76).k1left1 = 1.0;   // the essence: couple spring with lower vocal cords
+		thee.tube->at(35).k1left1 = 1.0;   // the essence: couple spring with lower vocal cords
 	}
 
 	/*
@@ -229,7 +229,7 @@ Delta Speaker_to_Delta (Speaker me) {
 	for (itube = 37; itube <= 63; itube ++) {
 		Delta_Tube t = &(thee.tube->at(itube));
 		int i = itube - 36;
-        // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy).
+        // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy) starting @ 1.
         //       So for now let i = itube - 36 so that we start at xmm[37-36=1] instead of xmm[0]
 		t -> Dx = t -> Dxeq = sqrt (( dx = xmm [i] - xmm [i + 1], dx * dx ) + ( dy = ymm [i] - ymm [i + 1], dy * dy ));
 		t -> Dyeq = sqrt (( dx = xe [i] - xi [i], dx * dx ) + ( dy = ye [i] - yi [i], dy * dy ));
@@ -248,7 +248,7 @@ Delta Speaker_to_Delta (Speaker me) {
 	for (itube = 64; itube <= 77; itube ++) {
 		Delta_Tube t = &(thee.tube->at(itube));
 		t -> Dx = t -> Dxeq = me.nose.Dx;
-		t -> Dy = t -> Dyeq = me.nose.weq [itube - 64];
+		t -> Dy = t -> Dyeq = me.nose.weq [itube - 64]; // Zero indexing nose array
 		t -> Dz = t -> Dzeq = me.nose.Dz;
 		t -> mass = 0.006;
 		t -> k1 = 100.0;
@@ -322,12 +322,12 @@ Delta Speaker_to_Delta (Speaker me) {
 		int topOfTrachea = ( me.cord.numberOfMasses == 10 ? 85 : 34 );
 
 		/* Create a three-way interface below the shunt.
-		 * Connect lowest shunt tube (87) with top of trachea (34/35 or 85/86).
+		 * Connect lowest shunt tube (87) with top of trachea (33/34 or 84/85).
 		 */
 		thee.tube->at(topOfTrachea - 1).right2 = &(thee.tube->at(86));   // trachea to shunt
-		thee.tube->at(87).left1 = &(thee.tube->at(topOfTrachea - 1));   // shunt to trachea
-		thee.tube->at(87).Dxeq = thee.tube->at(topOfTrachea - 1).Dxeq = thee.tube->at(topOfTrachea).Dxeq;   // equal length
-		thee.tube->at(87).Dx = thee.tube->at(topOfTrachea - 1).Dx = thee.tube->at(topOfTrachea).Dx;
+		thee.tube->at(86).left1 = &(thee.tube->at(topOfTrachea - 1));   // shunt to trachea
+		thee.tube->at(86).Dxeq = thee.tube->at(topOfTrachea - 1).Dxeq = thee.tube->at(topOfTrachea).Dxeq;   // equal length
+		thee.tube->at(86).Dx = thee.tube->at(topOfTrachea - 1).Dx = thee.tube->at(topOfTrachea).Dx;
 
 		/* Create a three-way interface above the shunt.
 		 * Connect highest shunt tube (88) with bottom of pharynx (37/38).

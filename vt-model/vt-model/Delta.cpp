@@ -30,7 +30,7 @@ Delta::Delta (int numberOfTubes) {
         all members of result -> tube [1..numberOfTubes] are zero or null,
         except 'parallel', which is 1.
      */
-    //TODO: Assert (numberOfTubes >= 1);
+    //TODO: Assert (numberOfTubes >= 0);
     this->numberOfTubes = numberOfTubes;
     tube = new vector <structDelta_Tube> (this->numberOfTubes);
     for (int itube = 0; itube < this->numberOfTubes; itube ++) {
