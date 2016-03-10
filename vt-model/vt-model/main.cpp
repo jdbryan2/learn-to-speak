@@ -11,12 +11,13 @@
 #include "Delta.h"
 #include "Articulation_enums.h"
 #include "Articulation.h"
+#include "Speaker_to_Delta.h"
 using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-    Speaker newspeaker("Male", 2);
-    Delta newdelta(20);
+    Speaker newspeaker("Male", 10);
+    Delta newdelta = Speaker_to_Delta(newspeaker);
     Art test;
     test.art[kArt_muscle_DEFAULT] = .67;
     

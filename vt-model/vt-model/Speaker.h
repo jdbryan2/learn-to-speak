@@ -24,7 +24,7 @@
 using namespace std;
 
 class Speaker {
-//public:
+public:
     /* In the larynx. */
     Speaker_CordDimensions cord;
     Speaker_CordSpring lowerCord;
@@ -48,7 +48,6 @@ class Speaker {
     
     Speaker_Nose nose;
     
-public:
     Speaker(string, int);
 
     double relativeSize;  // different for female, male, child

@@ -24,8 +24,8 @@ typedef struct structDelta_Tube *Delta_Tube;
 
 class Delta {
 public:
-	int numberOfTubes;              // >= 1
-    vector <structDelta_Tube>  *tube;
+	int numberOfTubes;              // >= 0
+    vector <structDelta_Tube>  *tube; // tube [0..numberOfTubes-1]
 public:
     Delta(int numberOfTubes);
     ~Delta();
