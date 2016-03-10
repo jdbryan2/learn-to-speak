@@ -22,6 +22,10 @@
 
 #define DLIP  5e-3
 
+
+// TODO: These arrays (intX,intY,extX,extY)are being indexed starting @ 1.
+//       This is very confusing, but it would be time consuming to switch it over.
+//       We should change this at some point.
 void Art_Speaker_toVocalTract (Art _art, Speaker speaker,
 	double intX [], double intY [], double extX [], double extY [],
 	double *bodyX, double *bodyY)
@@ -241,6 +245,9 @@ static int inside (double x, double y,
 		(x - bodyX) * (x - bodyX) + (y - bodyY) * (y - bodyY);
 }
 
+// TODO: These arrays (xmm,ymm,xi,yi,xe,ye,dx,dy)are being indexed starting @ 1.
+//       This is very confusing, but it would be time consuming to switch it over.
+//       We should change this at some point.
 void Art_Speaker_meshVocalTract (Art art, Speaker speaker,
 	double xi [], double yi [], double xe [], double ye [],
 	double xmm [], double ymm [], int closed [])

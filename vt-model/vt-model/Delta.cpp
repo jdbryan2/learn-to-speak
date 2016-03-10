@@ -18,6 +18,7 @@
  */
 
 #include "Delta.h"
+#include <assert.h>
 //#include <vector>
 //using namespace std;
 
@@ -30,15 +31,17 @@ Delta::Delta (int numberOfTubes) {
         all members of result -> tube [1..numberOfTubes] are zero or null,
         except 'parallel', which is 1.
      */
-    //TODO: Assert (numberOfTubes >= 0);
+    assert(numberOfTubes >= 0);
     this->numberOfTubes = numberOfTubes;
+    // TODO: Maybe try to reconfigure the class so that dynamic allocation isn't necessary.
+    //       Make a fixed number of tubes would be one solution.
     tube = new vector <structDelta_Tube> (this->numberOfTubes);
     for (int itube = 0; itube < this->numberOfTubes; itube ++) {
         tube->at(itube).parallel = 1;
     }
 }
 Delta::~Delta () {
-	//TODO: Probably need to do something here but I can't remember what needs destroyed
+	//TODO: Double check that this is the correct way to clean up dynamic allocation of tube vector.
     delete tube;
     /*
     for (int itube = 1; itube <= numberOfTubes; itube ++) {
