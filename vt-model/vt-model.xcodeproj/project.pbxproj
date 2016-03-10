@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		C36B902F1C8CE93600B37B7B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B902E1C8CE93600B37B7B /* main.cpp */; };
+		C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B90671C8DCC4300B37B7B /* Speaker.cpp */; };
+		C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B906D1C8DF1C500B37B7B /* Delta.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +27,11 @@
 /* Begin PBXFileReference section */
 		C36B902B1C8CE93600B37B7B /* vt-model */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "vt-model"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C36B902E1C8CE93600B37B7B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		C36B90661C8DCC4300B37B7B /* Speaker_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker_def.h; sourceTree = "<group>"; };
+		C36B90671C8DCC4300B37B7B /* Speaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker.cpp; sourceTree = "<group>"; };
+		C36B90681C8DCC4300B37B7B /* Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker.h; sourceTree = "<group>"; };
+		C36B906D1C8DF1C500B37B7B /* Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Delta.cpp; sourceTree = "<group>"; };
+		C36B906E1C8DF1C500B37B7B /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +64,11 @@
 		C36B902D1C8CE93600B37B7B /* vt-model */ = {
 			isa = PBXGroup;
 			children = (
+				C36B906D1C8DF1C500B37B7B /* Delta.cpp */,
+				C36B906E1C8DF1C500B37B7B /* Delta.h */,
+				C36B90661C8DCC4300B37B7B /* Speaker_def.h */,
+				C36B90671C8DCC4300B37B7B /* Speaker.cpp */,
+				C36B90681C8DCC4300B37B7B /* Speaker.h */,
 				C36B902E1C8CE93600B37B7B /* main.cpp */,
 			);
 			path = "vt-model";
@@ -119,6 +131,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C36B902F1C8CE93600B37B7B /* main.cpp in Sources */,
+				C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */,
+				C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +251,7 @@
 				C36B90341C8CE93600B37B7B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

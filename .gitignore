@@ -1,0 +1,14 @@
+# Compiled sources
+###################
+*.o
+/vt-model/vt-model/build/CMakeFiles/
+
+# vim swap files
+################
+*.swp
+
+# OSX thumbnails
+*.DS_STORE
+
+# X-Code
+xcuserdata/
