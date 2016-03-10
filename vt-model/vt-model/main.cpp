@@ -13,12 +13,13 @@ using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-    //Speaker male("Male",2);
-    //cout << male.nose.Dx << "\n";
-    Delta test(40);
-    
-    cout << test.tube->at(0).k1left1 << "\n";
-    
-    cout << "Hello, World!\n";
+    Speaker newspeaker("Male", 2);
+    Delta newdelta(20);
+
+    std::cout << "Hello, World!\n";
+    std::cout << newdelta.numberOfTubes;
+    std::cout << "\n";
+    std::cout << newspeaker.relativeSize;
+    std::cout << "\n";
     return 0;
 }
