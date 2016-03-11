@@ -31,12 +31,12 @@ void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
 	/* Lungs. */
 
 	for (itube = 6; itube <= 17; itube ++)
-		delta.tube->at(itube). Dyeq = 120 * f * (1 + art.art [kArt_muscle_LUNGS]);
+		delta.tube[itube]. Dyeq = 120 * f * (1 + art.art [kArt_muscle_LUNGS]);
 
 	/* Glottis. */
 
 	{
-		Delta_Tube t = &(delta.tube->at(35));
+		Delta_Tube t = &(delta.tube[35]);
 		t -> Dyeq = f * (5 - 10 * art.art [kArt_muscle_INTERARYTENOID]
 		      + 3 * art.art [kArt_muscle_POSTERIOR_CRICOARYTENOID]
 		      - 3 * art.art [kArt_muscle_LATERAL_CRICOARYTENOID]);   /* 4.38 */
@@ -44,28 +44,28 @@ void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
 		t -> k3 = t -> k1 * (20 / t -> Dz) * (20 / t -> Dz);
 	}
 	if (speaker.cord.numberOfMasses >= 2) {
-		Delta_Tube t = &(delta.tube->at(36));
-		t -> Dyeq = delta.tube->at(35). Dyeq;
+		Delta_Tube t = &(delta.tube[36]);
+		t -> Dyeq = delta.tube[35]. Dyeq;
 		t -> k1 = speaker.upperCord.k1 * (1 + art.art [kArt_muscle_CRICOTHYROID]);
 		t -> k3 = t -> k1 * (20 / t -> Dz) * (20 / t -> Dz);
 	}
 	if (speaker.cord.numberOfMasses >= 10) {
-		delta.tube->at(83). Dyeq = 0.75 * 1 * f + 0.25 * delta.tube->at(35). Dyeq;
-		delta.tube->at(84). Dyeq = 0.50 * 1 * f + 0.50 * delta.tube->at(35). Dyeq;
-		delta.tube->at(85). Dyeq = 0.25 * 1 * f + 0.75 * delta.tube->at(35). Dyeq;
-		delta.tube->at(83). k1 = 0.75 * 160 + 0.25 * delta.tube->at(35). k1;
-		delta.tube->at(84). k1 = 0.50 * 160 + 0.50 * delta.tube->at(35). k1;
-		delta.tube->at(85). k1 = 0.25 * 160 + 0.75 * delta.tube->at(35). k1;
+		delta.tube[83]. Dyeq = 0.75 * 1 * f + 0.25 * delta.tube[35]. Dyeq;
+		delta.tube[84]. Dyeq = 0.50 * 1 * f + 0.50 * delta.tube[35]. Dyeq;
+		delta.tube[85]. Dyeq = 0.25 * 1 * f + 0.75 * delta.tube[35]. Dyeq;
+		delta.tube[83]. k1 = 0.75 * 160 + 0.25 * delta.tube[35]. k1;
+		delta.tube[84]. k1 = 0.50 * 160 + 0.50 * delta.tube[35]. k1;
+		delta.tube[85]. k1 = 0.25 * 160 + 0.75 * delta.tube[35]. k1;
 		for (itube = 83; itube <= 85; itube ++)
-			delta.tube->at(itube). k3 = delta.tube->at(itube). k1 *
-				(20 / delta.tube->at(itube). Dz) * (20 / delta.tube->at(itube). Dz);
+			delta.tube[itube]. k3 = delta.tube[itube]. k1 *
+				(20 / delta.tube[itube]. Dz) * (20 / delta.tube[itube]. Dz);
 	}
 
 	/* Vocal tract. */
 
 	Art_Speaker_meshVocalTract (art, speaker, xi, yi, xe, ye, xmm, ymm, closed);
 	for (itube = 37; itube <= 63; itube ++) {
-		Delta_Tube t = &(delta.tube->at(itube));
+		Delta_Tube t = &(delta.tube[itube]);
         // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy) starting @ 1.
         //       So for now let i = itube - 36 so that we start at xmm[37-36=1] instead of xmm[0]
 		int i = itube - 36;
@@ -73,15 +73,15 @@ void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
 		t -> Dyeq = sqrt (( dx = xe [i] - xi [i], dx * dx ) + ( dy = ye [i] - yi [i], dy * dy ));
 		if (closed [i]) t -> Dyeq = - t -> Dyeq;
 	}
-	delta.tube->at(64). Dxeq = delta.tube->at(50). Dxeq = delta.tube->at(49). Dxeq;
+	delta.tube[64]. Dxeq = delta.tube[50]. Dxeq = delta.tube[49]. Dxeq;
 	/* Voor [r]:  thy tube [59]. Brel = 0.1; thy tube [59]. k1 = 3; */
 
 	/* Nasopharyngeal port. */
 
-	delta.tube->at(64). Dyeq = f * (18 - 25 * art.art [kArt_muscle_LEVATOR_PALATINI]);   /* 4.40 */
+	delta.tube[64]. Dyeq = f * (18 - 25 * art.art [kArt_muscle_LEVATOR_PALATINI]);   /* 4.40 */
 
 	for (itube = 0; itube < delta.numberOfTubes; itube ++) {
-        Delta_Tube t = &(delta.tube->at(itube));
+        Delta_Tube t = &(delta.tube[itube]);
 		t -> s1 = 5e6 * t -> Dxeq * t -> Dzeq;
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 	}

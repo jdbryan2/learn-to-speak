@@ -33,9 +33,9 @@ int main(int argc, const char * argv[]) {
     std::cout << "\n";
     std::cout << test.art[kArt_muscle_DEFAULT];
     std::cout << "\n";
-    std::cout << newdelta1.tube->at(6).Dyeq;
+    std::cout << newdelta1.tube[6].Dyeq;
     std::cout << "\n";
-    std::cout << newdelta2.tube->at(6).Dyeq;
+    std::cout << newdelta2.tube[6].Dyeq;
     std::cout << "\n";
     return 0;
 }

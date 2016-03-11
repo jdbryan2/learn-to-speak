@@ -33,25 +33,15 @@ Delta::Delta (int numberOfTubes) {
      */
     assert(numberOfTubes >= 0);
     this->numberOfTubes = numberOfTubes;
-    // TODO: Maybe try to reconfigure the class so that dynamic allocation isn't necessary.
-    //       Make a fixed number of tubes would be one solution.
-    tube = new vector <structDelta_Tube> (this->numberOfTubes);
-    for (int itube = 0; itube < this->numberOfTubes; itube ++) {
-        tube->at(itube).parallel = 1;
-    }
+    // TODO: Don't know if this is a problem, but we are implicitly dynamically allocating memeory for these structs.
+    tube.resize(numberOfTubes);
 }
 
 // Default Constructor
 Delta::Delta () : Delta(89) {}
 
 Delta::~Delta () {
-	//TODO: Double check that this is the correct way to clean up dynamic allocation of tube vector.
-    delete tube;
-    /*
-    for (int itube = 1; itube <= numberOfTubes; itube ++) {
-        delete tube->at(itube);
-    }
-     */
+	//TODO: I don't think I need to delete tube because vector's destructor should do it, but I should double check.
 }
 
 /* End of file Delta.cpp */

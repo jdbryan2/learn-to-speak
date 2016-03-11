@@ -34,7 +34,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Lungs: tubes 0..22. */
 
 	for (itube = 0; itube <= 22; itube ++) {
-        Delta_Tube t = &(thee.tube->at(itube));
+        Delta_Tube t = &(thee.tube[itube]);
 		t -> Dx = t -> Dxeq = 10.0 * f;
 		t -> Dy = t -> Dyeq = 100.0 * f;
 		t -> Dz = t -> Dzeq = 230.0 * f;
@@ -48,7 +48,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Bronchi: tubes 23..28. */
 
 	for (itube = 23; itube <= 28; itube ++) {
-		Delta_Tube t = &(thee.tube->at(itube));
+		Delta_Tube t = &(thee.tube[itube]);
 		t -> Dx = t -> Dxeq = 10.0 * f;
 		t -> Dy = t -> Dyeq = 15.0 * f;
 		t -> Dz = t -> Dzeq = 30.0 * f;
@@ -61,7 +61,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Trachea: tubes 29..34; four of these may be replaced by conus elasticus (see below). */
 
 	for (itube = 29; itube <= 34; itube ++) {
-        Delta_Tube t = &(thee.tube->at(itube));
+        Delta_Tube t = &(thee.tube[itube]);
 		t -> Dx = t -> Dxeq = 10.0 * f;
 		t -> Dy = t -> Dyeq = 15.0 * f;
 		t -> Dz = t -> Dzeq = 16.0 * f;
@@ -82,19 +82,19 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 			{ 24,  18.0,  19.0,    2.0 }, { 0 } };
 		int i;
 		for (i = 0; data [i]. itube; i ++) {
-			Delta_Tube t = &(thee.tube->at(data[i].itube));
+			Delta_Tube t = &(thee.tube[data[i].itube]);
 			t -> Dy = t -> Dyeq = data [i]. Dy * f;
 			t -> Dz = t -> Dzeq = data [i]. Dz * f;
 			t -> parallel = data [i]. parallel;
 		}
 		for (itube = 25; itube <= 34; itube ++) {
-			Delta_Tube t = &(thee.tube->at(itube));
+			Delta_Tube t = &(thee.tube[itube]);
 			t -> Dy = t -> Dyeq = 11.0 * f;
 			t -> Dz = t -> Dzeq = 14.0 * f;
 			t -> parallel = 1;
 		}
 		for (itube = FIRST_TUBE; itube <= 17; itube ++) {
-			Delta_Tube t = &(thee.tube->at(itube));
+			Delta_Tube t = &(thee.tube[itube]);
 			t -> Dx = t -> Dxeq = 10.0 * f;
 			t -> mass = 10.0 * me.relativeSize * t -> Dx * t -> Dz;   // 10 mm
 			t -> k1 = 1e5 * t -> Dx * t -> Dz;   // elastic tissue: 1 mbar/mm
@@ -102,7 +102,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 			t -> Brel = 1.0;
 		}
 		for (itube = 18; itube <= 34; itube ++) {
-			Delta_Tube t = &(thee.tube->at(itube));
+			Delta_Tube t = &(thee.tube[itube]);
 			t -> Dx = t -> Dxeq = 10.0 * f;
 			t -> mass = 3.0 * me.relativeSize * t -> Dx * t -> Dz;   // 3 mm
 			t -> k1 = 10e5 * t -> Dx * t -> Dz;   // cartilage: 10 mbar/mm
@@ -113,7 +113,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 
 	/* Glottis: tubes 35 and 36; the last one may be disconnected (see below). */
 	{
-		Delta_Tube t = &(thee.tube->at(35));
+		Delta_Tube t = &(thee.tube[35]);
 		t -> Dx = t -> Dxeq = me.lowerCord.thickness;
 		t -> Dy = t -> Dyeq = 0.0;
 		t -> Dz = t -> Dzeq = me.cord.length;
@@ -127,7 +127,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	 * Fill in the values for the upper part of the glottis (tube 36) only if there is no one-mass model.
 	 */
 	if (me.cord.numberOfMasses >= 2) {
-		Delta_Tube t = &(thee.tube->at(36));
+		Delta_Tube t = &(thee.tube[36]);
 		t -> Dx = t -> Dxeq = me.upperCord.thickness;
 		t -> Dy = t -> Dyeq = 0.0;
 		t -> Dz = t -> Dzeq = me.cord.length;
@@ -137,66 +137,66 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 		t -> Brel = 0.2;
 
 		/* Couple spring with lower cord. */
-		t -> k1left1 = thee.tube->at(35).k1right1 = 1.0;
+		t -> k1left1 = thee.tube[35].k1right1 = 1.0;
 	}
 
 	/*
 	 * Fill in the values for the conus elasticus (tubes 78..85) only if we want to model it.
 	 */
 	if (me.cord.numberOfMasses == 10) {
-		thee.tube->at(78).Dx = thee.tube->at(78). Dxeq = 8.0 * f;
-		thee.tube->at(79).Dx = thee.tube->at(79).Dxeq = 7.0 * f;
-		thee.tube->at(80).Dx = thee.tube->at(80).Dxeq = 6.0 * f;
-		thee.tube->at(81).Dx = thee.tube->at(81).Dxeq = 5.0 * f;
-		thee.tube->at(82).Dx = thee.tube->at(82).Dxeq = 4.0 * f;
-		thee.tube->at(83).Dx = thee.tube->at(83).Dxeq = 0.75 * 4.0 * f + 0.25 * me.lowerCord.thickness;
-		thee.tube->at(84).Dx = thee.tube->at(84).Dxeq = 0.50 * 4.0 * f + 0.50 * me.lowerCord.thickness;
-		thee.tube->at(85).Dx = thee.tube->at(85).Dxeq = 0.25 * 4.0 * f + 0.75 * me.lowerCord.thickness;
+		thee.tube[78].Dx = thee.tube[78]. Dxeq = 8.0 * f;
+		thee.tube[79].Dx = thee.tube[79].Dxeq = 7.0 * f;
+		thee.tube[80].Dx = thee.tube[80].Dxeq = 6.0 * f;
+		thee.tube[81].Dx = thee.tube[81].Dxeq = 5.0 * f;
+		thee.tube[82].Dx = thee.tube[82].Dxeq = 4.0 * f;
+		thee.tube[83].Dx = thee.tube[83].Dxeq = 0.75 * 4.0 * f + 0.25 * me.lowerCord.thickness;
+		thee.tube[84].Dx = thee.tube[84].Dxeq = 0.50 * 4.0 * f + 0.50 * me.lowerCord.thickness;
+		thee.tube[85].Dx = thee.tube[85].Dxeq = 0.25 * 4.0 * f + 0.75 * me.lowerCord.thickness;
 
-		thee.tube->at(78).Dy = thee.tube->at(78).Dyeq = 11.0 * f;
-		thee.tube->at(79).Dy = thee.tube->at(79).Dyeq = 7.0 * f;
-		thee.tube->at(80).Dy = thee.tube->at(80).Dyeq = 4.0 * f;
-		thee.tube->at(81).Dy = thee.tube->at(81).Dyeq = 2.0 * f;
-		thee.tube->at(82).Dy = thee.tube->at(82).Dyeq = 1.0 * f;
-		thee.tube->at(83).Dy = thee.tube->at(83).Dyeq = 0.75 * f;
-		thee.tube->at(84).Dy = thee.tube->at(84).Dyeq = 0.50 * f;
-		thee.tube->at(85).Dy = thee.tube->at(85).Dyeq = 0.25 * f;
+		thee.tube[78].Dy = thee.tube[78].Dyeq = 11.0 * f;
+		thee.tube[79].Dy = thee.tube[79].Dyeq = 7.0 * f;
+		thee.tube[80].Dy = thee.tube[80].Dyeq = 4.0 * f;
+		thee.tube[81].Dy = thee.tube[81].Dyeq = 2.0 * f;
+		thee.tube[82].Dy = thee.tube[82].Dyeq = 1.0 * f;
+		thee.tube[83].Dy = thee.tube[83].Dyeq = 0.75 * f;
+		thee.tube[84].Dy = thee.tube[84].Dyeq = 0.50 * f;
+		thee.tube[85].Dy = thee.tube[85].Dyeq = 0.25 * f;
 
-		thee.tube->at(78).Dz = thee.tube->at(78).Dzeq = 16.0 * f;
-		thee.tube->at(79).Dz = thee.tube->at(79).Dzeq = 16.0 * f;
-		thee.tube->at(80).Dz = thee.tube->at(80).Dzeq = 16.0 * f;
-		thee.tube->at(81).Dz = thee.tube->at(81).Dzeq = 16.0 * f;
-		thee.tube->at(82).Dz = thee.tube->at(82).Dzeq = 16.0 * f;
-		thee.tube->at(83).Dz = thee.tube->at(83).Dzeq = 0.75 * 16.0 * f + 0.25 * me.cord.length;
-		thee.tube->at(84).Dz = thee.tube->at(84).Dzeq = 0.50 * 16.0 * f + 0.50 * me.cord.length;
-		thee.tube->at(85).Dz = thee.tube->at(85).Dzeq = 0.25 * 16.0 * f + 0.75 * me.cord.length;
+		thee.tube[78].Dz = thee.tube[78].Dzeq = 16.0 * f;
+		thee.tube[79].Dz = thee.tube[79].Dzeq = 16.0 * f;
+		thee.tube[80].Dz = thee.tube[80].Dzeq = 16.0 * f;
+		thee.tube[81].Dz = thee.tube[81].Dzeq = 16.0 * f;
+		thee.tube[82].Dz = thee.tube[82].Dzeq = 16.0 * f;
+		thee.tube[83].Dz = thee.tube[83].Dzeq = 0.75 * 16.0 * f + 0.25 * me.cord.length;
+		thee.tube[84].Dz = thee.tube[84].Dzeq = 0.50 * 16.0 * f + 0.50 * me.cord.length;
+		thee.tube[85].Dz = thee.tube[85].Dzeq = 0.25 * 16.0 * f + 0.75 * me.cord.length;
 
-		thee.tube->at(78).k1 = 160.0;
-		thee.tube->at(79).k1 = 160.0;
-		thee.tube->at(80).k1 = 160.0;
-		thee.tube->at(81).k1 = 160.0;
-		thee.tube->at(82).k1 = 160.0;
-		thee.tube->at(83).k1 = 0.75 * 160.0 * f + 0.25 * me.lowerCord.k1;
-		thee.tube->at(84).k1 = 0.50 * 160.0 * f + 0.50 * me.lowerCord.k1;
-		thee.tube->at(85).k1 = 0.25 * 160.0 * f + 0.75 * me.lowerCord.k1;
+		thee.tube[78].k1 = 160.0;
+		thee.tube[79].k1 = 160.0;
+		thee.tube[80].k1 = 160.0;
+		thee.tube[81].k1 = 160.0;
+		thee.tube[82].k1 = 160.0;
+		thee.tube[83].k1 = 0.75 * 160.0 * f + 0.25 * me.lowerCord.k1;
+		thee.tube[84].k1 = 0.50 * 160.0 * f + 0.50 * me.lowerCord.k1;
+		thee.tube[85].k1 = 0.25 * 160.0 * f + 0.75 * me.lowerCord.k1;
 
-		thee.tube->at(78).Brel = 0.7;
-		thee.tube->at(79).Brel = 0.6;
-		thee.tube->at(80).Brel = 0.5;
-		thee.tube->at(81).Brel = 0.4;
-		thee.tube->at(82).Brel = 0.3;
-		thee.tube->at(83).Brel = 0.2;
-		thee.tube->at(84).Brel = 0.2;
-		thee.tube->at(85).Brel = 0.2;
+		thee.tube[78].Brel = 0.7;
+		thee.tube[79].Brel = 0.6;
+		thee.tube[80].Brel = 0.5;
+		thee.tube[81].Brel = 0.4;
+		thee.tube[82].Brel = 0.3;
+		thee.tube[83].Brel = 0.2;
+		thee.tube[84].Brel = 0.2;
+		thee.tube[85].Brel = 0.2;
 
 		for (itube = 78; itube <= 85; itube ++) {
-			Delta_Tube t = &(thee.tube->at(itube));
+			Delta_Tube t = &(thee.tube[itube]);
 			t -> mass = t -> Dx * t -> Dz / (30.0 * f);
 			t -> k3 = t -> k1 * (20.0 / t -> Dz) * (20.0 / t -> Dz);
 			t -> k1left1 = t -> k1right1 = 1.0;
 		}
-		thee.tube->at(78).k1left1 = 0.0;
-		thee.tube->at(35).k1left1 = 1.0;   // the essence: couple spring with lower vocal cords
+		thee.tube[78].k1left1 = 0.0;
+		thee.tube[35].k1left1 = 1.0;   // the essence: couple spring with lower vocal cords
 	}
 
 	/*
@@ -204,7 +204,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	 */
 	if (me.shunt.Dx != 0.0) {
 		for (itube = 86; itube <= 88; itube ++) {
-			Delta_Tube t = &(thee.tube->at(itube));
+			Delta_Tube t = &(thee.tube[itube]);
 			t -> Dx = t -> Dxeq = me.shunt.Dx;
 			t -> Dy = t -> Dyeq = me.shunt.Dy;
 			t -> Dz = t -> Dzeq = me.shunt.Dz;
@@ -224,7 +224,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Pharynx and mouth: tubes 37..63. */
 
 	for (itube = 37; itube <= 63; itube ++) {
-		Delta_Tube t = &(thee.tube->at(itube));
+		Delta_Tube t = &(thee.tube[itube]);
 		int i = itube - 36;
         // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy) starting @ 1.
         //       So for now let i = itube - 36 so that we start at xmm[37-36=1] instead of xmm[0]
@@ -243,7 +243,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Nose: tubes 64..77. */
 
 	for (itube = 64; itube <= 77; itube ++) {
-		Delta_Tube t = &(thee.tube->at(itube));
+		Delta_Tube t = &(thee.tube[itube]);
 		t -> Dx = t -> Dxeq = me.nose.Dx;
 		t -> Dy = t -> Dyeq = me.nose.weq [itube - 64]; // Zero indexing nose array
 		t -> Dz = t -> Dzeq = me.nose.Dz;
@@ -252,14 +252,14 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 		t -> k3 = 0.0;
 		t -> Brel = 1.0;
 	}
-	thee.tube->at(64).Dy = thee.tube->at(64).Dyeq = 0.0;   // override: nasopharyngeal port closed
+	thee.tube[64].Dy = thee.tube[64].Dyeq = 0.0;   // override: nasopharyngeal port closed
 
 	/* The default structure:
 	 * every tube is connected on the left to the previous tube (index one lower).
 	 * This corresponds to a two-mass model of the vocal cords without shunt.
 	 */
 	for (itube = SMOOTH_LUNGS ? FIRST_TUBE : 0; itube < thee.numberOfTubes; itube ++) {
-		Delta_Tube t = &(thee.tube->at(itube));
+		Delta_Tube t = &(thee.tube[itube]);
 		t -> s1 = 5e6 * t -> Dx * t -> Dz;
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 		t -> dy = 1e-5;
@@ -272,7 +272,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* The leftmost boundary: the diaphragm (tube 1).
 	 * Disconnect on the left.
 	 */
-	thee.tube->at(SMOOTH_LUNGS ? FIRST_TUBE : 0). left1 = nullptr;   // closed at diaphragm
+	thee.tube[SMOOTH_LUNGS ? FIRST_TUBE : 0]. left1 = nullptr;   // closed at diaphragm
 
 	/* Optional one-mass model of the vocal cords.
 	 * Short-circuit over tube 37 (upper glottis).
@@ -280,11 +280,11 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	if (me.cord.numberOfMasses == 1) {
 
 		/* Connect the right side of tube 35 to the left side of tube 37. */
-        thee.tube->at(35). right1 = &(thee.tube->at(37));
-		thee.tube->at(37). left1 = &(thee.tube->at(35));
+        thee.tube[35]. right1 = &(thee.tube[37]);
+		thee.tube[37]. left1 = &(thee.tube[35]);
 
 		/* Disconnect tube 36 on both sides. */
-		thee.tube->at(36).left1 = thee.tube->at(36).right1 = nullptr;
+		thee.tube[36].left1 = thee.tube[36].right1 = nullptr;
 	}
 
 	/* Optionally couple vocal cords with conus elasticus.
@@ -293,23 +293,23 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	if (me.cord.numberOfMasses == 10) {
 
 		/* Connect the right side of tube 30 to the left side of tube 78. */
-		thee.tube->at(30).right1 = &(thee.tube->at(78));
-		thee.tube->at(78).left1 = &(thee.tube->at(30));
+		thee.tube[30].right1 = &(thee.tube[78]);
+		thee.tube[78].left1 = &(thee.tube[30]);
 
 		/* Connect the right side of tube 85 to the left side of tube 35. */
-		thee.tube->at(85).right1 = &(thee.tube->at(35));
-		thee.tube->at(35).left1 = &(thee.tube->at(85));
+		thee.tube[85].right1 = &(thee.tube[35]);
+		thee.tube[35].left1 = &(thee.tube[85]);
 
 		/* Disconnect tubes 31..34 on both sides. */
-		thee.tube->at(31).left1 = thee.tube->at(31).right1 = nullptr;
-		thee.tube->at(32).left1 = thee.tube->at(32).right1 = nullptr;
-		thee.tube->at(33).left1 = thee.tube->at(33).right1 = nullptr;
-		thee.tube->at(34).left1 = thee.tube->at(34).right1 = nullptr;
+		thee.tube[31].left1 = thee.tube[31].right1 = nullptr;
+		thee.tube[32].left1 = thee.tube[32].right1 = nullptr;
+		thee.tube[33].left1 = thee.tube[33].right1 = nullptr;
+		thee.tube[34].left1 = thee.tube[34].right1 = nullptr;
 	} else {
 
 		/* Disconnect tubes 78..85 on both sides. */
 		for (itube = 78; itube <= 85; itube ++)
-			thee.tube->at(itube).left1 = thee.tube->at(itube).right1 = nullptr;
+			thee.tube[itube].left1 = thee.tube[itube].right1 = nullptr;
 	}
 
 	/* Optionally add a shunt parallel to the glottis.
@@ -321,41 +321,41 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 		/* Create a three-way interface below the shunt.
 		 * Connect lowest shunt tube (87) with top of trachea (33/34 or 84/85).
 		 */
-		thee.tube->at(topOfTrachea - 1).right2 = &(thee.tube->at(86));   // trachea to shunt
-		thee.tube->at(86).left1 = &(thee.tube->at(topOfTrachea - 1));   // shunt to trachea
-		thee.tube->at(86).Dxeq = thee.tube->at(topOfTrachea - 1).Dxeq = thee.tube->at(topOfTrachea).Dxeq;   // equal length
-		thee.tube->at(86).Dx = thee.tube->at(topOfTrachea - 1).Dx = thee.tube->at(topOfTrachea).Dx;
+		thee.tube[topOfTrachea - 1].right2 = &(thee.tube[86]);   // trachea to shunt
+		thee.tube[86].left1 = &(thee.tube[topOfTrachea - 1]);   // shunt to trachea
+		thee.tube[86].Dxeq = thee.tube[topOfTrachea - 1].Dxeq = thee.tube[topOfTrachea].Dxeq;   // equal length
+		thee.tube[86].Dx = thee.tube[topOfTrachea - 1].Dx = thee.tube[topOfTrachea].Dx;
 
 		/* Create a three-way interface above the shunt.
 		 * Connect highest shunt tube (88) with bottom of pharynx (37/38).
 		 */
-		thee.tube->at(88).right1 = &(thee.tube->at(38));   // shunt to pharynx
-		thee.tube->at(38).left2 = &(thee.tube->at(88));   // pharynx to shunt
-		thee.tube->at(88).Dxeq = thee.tube->at(38).Dxeq = thee.tube->at(37).Dxeq;   // all three of equal length
-		thee.tube->at(88).Dx = thee.tube->at(38).Dx = thee.tube->at(37).Dx;
+		thee.tube[88].right1 = &(thee.tube[38]);   // shunt to pharynx
+		thee.tube[38].left2 = &(thee.tube[88]);   // pharynx to shunt
+		thee.tube[88].Dxeq = thee.tube[38].Dxeq = thee.tube[37].Dxeq;   // all three of equal length
+		thee.tube[88].Dx = thee.tube[38].Dx = thee.tube[37].Dx;
 	} else {
 
 		/* Disconnect tubes 86..88 on both sides. */
 		for (itube = 86; itube <= 88; itube ++)
-			thee.tube->at(itube).left1 = thee.tube->at(itube).right1 = nullptr;
+			thee.tube[itube].left1 = thee.tube[itube].right1 = nullptr;
 	}
 
 	/* Create a three-way interface at the nasopharyngeal port.
 	 * Connect tubes 49 (pharynx), 50 (mouth), and 64 (nose).
 	 */
-	thee.tube->at(49).right2 = &(thee.tube->at(64));   // pharynx to nose
-	thee.tube->at(64).left1 = &(thee.tube->at(49));   // nose to pharynx
-	thee.tube->at(64).Dxeq = thee.tube->at(50).Dxeq = thee.tube->at(49).Dxeq;   // all three must be of equal length
-	thee.tube->at(64).Dx = thee.tube->at(50).Dx = thee.tube->at(49).Dx;
+	thee.tube[49].right2 = &(thee.tube[64]);   // pharynx to nose
+	thee.tube[64].left1 = &(thee.tube[49]);   // nose to pharynx
+	thee.tube[64].Dxeq = thee.tube[50].Dxeq = thee.tube[49].Dxeq;   // all three must be of equal length
+	thee.tube[64].Dx = thee.tube[50].Dx = thee.tube[49].Dx;
 
 	/* The rightmost boundaries: the lips (tube 63) and the nostrils (tube 77).
 	 * Disconnect on the right.
 	 */
-	thee.tube->at(63). right1 = nullptr;   // radiation at the lips
-	thee.tube->at(77). right1 = nullptr;   // radiation at the nostrils
+	thee.tube[63]. right1 = nullptr;   // radiation at the lips
+	thee.tube[77]. right1 = nullptr;   // radiation at the nostrils
 
 	for (itube = 0; itube < thee.numberOfTubes; itube ++) {
-		Delta_Tube t = &(thee.tube->at(itube));
+		Delta_Tube t = &(thee.tube[itube]);
 		assert(! t->left1 || t->left1->right1 == t || t->left1->right2 == t);
 		assert(! t->left2 || t->left2->right1 == t);
 		assert(! t->right1 || t->right1->left1 == t || t->right1->left2 == t);
