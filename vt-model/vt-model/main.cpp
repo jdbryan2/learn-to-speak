@@ -12,22 +12,30 @@
 #include "Articulation_enums.h"
 #include "Articulation.h"
 #include "Speaker_to_Delta.h"
+#include "Art_Speaker_Delta.h"
+
 using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
     Speaker newspeaker("Male", 10);
-    Delta newdelta;
-    Speaker_to_Delta(newspeaker, newdelta);
+    Delta newdelta1, newdelta2;
+    Speaker_to_Delta(newspeaker, newdelta1);
     Art test;
-    test.art[kArt_muscle_DEFAULT] = .67;
+    test.art[kArt_muscle_LUNGS] = 0.67;
+    Art_Speaker_intoDelta(test, newspeaker, newdelta2);
+    
 
     std::cout << "Hello, World!\n";
-    std::cout << newdelta.numberOfTubes;
+    std::cout << newdelta1.numberOfTubes;
     std::cout << "\n";
     std::cout << newspeaker.relativeSize;
     std::cout << "\n";
     std::cout << test.art[kArt_muscle_DEFAULT];
+    std::cout << "\n";
+    std::cout << newdelta1.tube->at(6).Dyeq;
+    std::cout << "\n";
+    std::cout << newdelta2.tube->at(6).Dyeq;
     std::cout << "\n";
     return 0;
 }

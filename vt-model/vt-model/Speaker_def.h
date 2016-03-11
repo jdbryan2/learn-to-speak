@@ -1,3 +1,5 @@
+#ifndef _Speaker_def_h_
+#define _Speaker_def_h_
 /* Speaker_def.h
  *
  * Copyright (C) 1992-2011,2015 Paul Boersma
@@ -87,3 +89,4 @@ typedef struct {
 } Speaker_Nose;
 
 /* End of file Speaker_def.h */
+#endif

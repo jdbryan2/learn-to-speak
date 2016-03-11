@@ -1,6 +1,6 @@
-#ifndef _Speaker_to_Delta_h_
-#define _Speaker_to Delta_h_
-/* Speaker_to_Delta.h
+#ifndef _Art_Speaker_Delta_h_
+#define _Art_Speaker_Delta_h_
+/* Art_Speaker_Delta.h
  *
  * Copyright (C) 1992-2011 Paul Boersma
  *
@@ -19,10 +19,11 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "Articulation.h"
 #include "Speaker.h"
 #include "Delta.h"
 
-void Speaker_to_Delta (Speaker &me, Delta &thee);
+void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta);
 
-/* End of file Speaker_to_Delta.h */
+/* End of file Art_Speaker_Delta.h */
 #endif

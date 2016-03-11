@@ -1,3 +1,5 @@
+#ifndef _Art_Speaker_h_
+#define _Art_Speaker_h_
 /* Art_Speaker.h
  *
  * Copyright (C) 1992-2011 Paul Boersma
@@ -52,3 +54,4 @@ void Art_Speaker_drawMesh (Art art, Speaker speaker, Graphics g);
  */
 
 /* End of file Art_Speaker.h */
+#endif
