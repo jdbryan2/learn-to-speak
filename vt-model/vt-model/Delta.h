@@ -27,6 +27,7 @@ public:
 	int numberOfTubes;              // >= 0
     vector <structDelta_Tube>  *tube; // tube [0..numberOfTubes-1]
 public:
+    Delta();
     Delta(int numberOfTubes);
     ~Delta();
 };

@@ -17,10 +17,10 @@ using namespace std;
 int main(int argc, const char * argv[]) {
     // insert code here...
     Speaker newspeaker("Male", 10);
-    Delta newdelta = Speaker_to_Delta(newspeaker);
+    Delta newdelta;
+    Speaker_to_Delta(newspeaker, newdelta);
     Art test;
     test.art[kArt_muscle_DEFAULT] = .67;
-    
 
     std::cout << "Hello, World!\n";
     std::cout << newdelta.numberOfTubes;

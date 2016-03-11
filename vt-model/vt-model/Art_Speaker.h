@@ -20,7 +20,7 @@
 #include "Articulation.h"
 #include "Speaker.h"
 
-void Art_Speaker_toVocalTract (Art art, Speaker speaker,
+void Art_Speaker_toVocalTract (Art &_art, Speaker &speaker,
 	double intX [], double intY [], double extX [], double extY [],
 	double *bodyX, double *bodyY);
 /*
@@ -40,7 +40,7 @@ void Art_Speaker_toVocalTract (Art art, Speaker speaker,
 		ext [6..9] is the gums, upper teeth and upper lip.
 */
 
-void Art_Speaker_meshVocalTract (Art art, Speaker speaker,
+void Art_Speaker_meshVocalTract (Art &art, Speaker &speaker,
 	double xi [], double yi [], double xe [], double ye [],
 	double xmm [], double ymm [], int closed []);
 

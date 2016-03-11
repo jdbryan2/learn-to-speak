@@ -25,12 +25,12 @@
 #define FIRST_TUBE  6
 
 // TODO: Change to use references/pointers instead of objects
-Delta Speaker_to_Delta (Speaker me) {
+void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	double f = me.relativeSize * 1e-3;   // we shall use millimetres and grams
 	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;
 	int closed [40];
 	int itube;
-	Delta thee(89);
+	//Delta thee(89);
 	assert(me.cord.numberOfMasses == 1 || me.cord.numberOfMasses == 2 || me.cord.numberOfMasses == 10);
 
 	/* Lungs: tubes 0..22. */
@@ -364,7 +364,6 @@ Delta Speaker_to_Delta (Speaker me) {
 		assert(! t->right1 || t->right1->left1 == t || t->right1->left2 == t);
 		assert(! t->right2 || t->right2->left1 == t);
 	}
-	return thee;
 }
 
 /* End of file Speaker_to_Delta.cpp */

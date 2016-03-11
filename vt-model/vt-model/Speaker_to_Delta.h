@@ -20,6 +20,6 @@
 #include "Speaker.h"
 #include "Delta.h"
 
-Delta Speaker_to_Delta (Speaker me);
+void Speaker_to_Delta (Speaker &me, Delta &thee);
 
 /* End of file Speaker_to_Delta.h */

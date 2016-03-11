@@ -40,6 +40,10 @@ Delta::Delta (int numberOfTubes) {
         tube->at(itube).parallel = 1;
     }
 }
+
+// Default Constructor
+Delta::Delta () : Delta(89) {}
+
 Delta::~Delta () {
 	//TODO: Double check that this is the correct way to clean up dynamic allocation of tube vector.
     delete tube;
