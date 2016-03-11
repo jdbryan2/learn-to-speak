@@ -24,13 +24,11 @@
 #define SMOOTH_LUNGS  true
 #define FIRST_TUBE  6
 
-// TODO: Change to use references/pointers instead of objects
 void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	double f = me.relativeSize * 1e-3;   // we shall use millimetres and grams
 	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;
 	int closed [40];
 	int itube;
-	//Delta thee(89);
 	assert(me.cord.numberOfMasses == 1 || me.cord.numberOfMasses == 2 || me.cord.numberOfMasses == 10);
 
 	/* Lungs: tubes 0..22. */
@@ -220,7 +218,6 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	/* Vocal tract from neutral articulation. */
 	{
         Art art;
-        // TODO: Change the function to take pointers.. maybe
 		Art_Speaker_meshVocalTract (art, me, xi, yi, xe, ye, xmm, ymm, closed);
 	}
 
