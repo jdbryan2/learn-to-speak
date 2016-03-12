@@ -19,8 +19,6 @@
 
 #include "Delta.h"
 #include <assert.h>
-//#include <vector>
-//using namespace std;
 
 Delta::Delta (int numberOfTubes) {
     /*

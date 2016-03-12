@@ -21,7 +21,6 @@
 
 #include "Speaker_def.h"
 #include <string>
-using namespace std;
 
 class Speaker {
 public:
@@ -48,7 +47,7 @@ public:
     
     Speaker_Nose nose;
     
-    Speaker(string, int);
+    Speaker(std::string, int);
 
     double relativeSize;  // different for female, male, child
 };

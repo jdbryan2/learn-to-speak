@@ -13,6 +13,7 @@
 #include "Articulation.h"
 #include "Speaker_to_Delta.h"
 #include "Art_Speaker_Delta.h"
+#include "Artword.h"
 
 using namespace std;
 
@@ -21,7 +22,9 @@ int main(int argc, const char * argv[]) {
     Speaker newspeaker("Male", 10);
     Delta newdelta1, newdelta2;
     Speaker_to_Delta(newspeaker, newdelta1);
+    Artword artword_test(1.0);
     Art test;
+    artword_test.intoArt(test, 0.5);
     test.art[kArt_muscle_LUNGS] = 0.67;
     Art_Speaker_intoDelta(test, newspeaker, newdelta2);
     

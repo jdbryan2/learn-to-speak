@@ -19,26 +19,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include <vector>
-using namespace std;
-typedef struct structDelta_Tube *Delta_Tube;
+#include <memory>
 
-class Delta {
-public:
-	int numberOfTubes;              // >= 0
-    vector <structDelta_Tube>  tube; // tube [0..numberOfTubes-1]
-public:
-    Delta();
-    Delta(int numberOfTubes);
-    ~Delta();
-};
-
-struct structDelta_Tube
-{
+struct structDelta_Tube{
     /* Structure: static. */
-    Delta_Tube left1 = nullptr;   /* If null: closed at left edge. */
-    Delta_Tube left2 = nullptr;   /* If not null: two merging streams. */
-    Delta_Tube right1 = nullptr;  /* If null: radiation at right edge. */
-    Delta_Tube right2 = nullptr;  /* If not null: a stream splitting into two. */
+    structDelta_Tube* left1 = nullptr;   /* If null: closed at left edge. */
+    structDelta_Tube* left2 = nullptr;   /* If not null: two merging streams. */
+    structDelta_Tube* right1 = nullptr;  /* If null: radiation at right edge. */
+    structDelta_Tube* right2 = nullptr;  /* If not null: a stream splitting into two. */
     long parallel = 1;   /* Parallel subdivision. */
     
     /* Controlled by articulation: quasistatic. */
@@ -60,6 +48,18 @@ struct structDelta_Tube
     double p, phalf, pleft, pleftnew, pright, prightnew = 0;
     double Kleft, Kleftnew, Kright, Krightnew, Pturbright, Pturbrightnew = 0;
     double B, r, R, DeltaP, v = 0;
+};
+
+typedef struct structDelta_Tube* Delta_Tube;
+
+class Delta {
+public:
+    int numberOfTubes;              // >= 0
+    std::vector <structDelta_Tube>  tube; // tube [0..numberOfTubes-1]
+public:
+    Delta();
+    Delta(int numberOfTubes);
+    ~Delta();
 };
 
 /* End of file Delta.h */
