@@ -40,7 +40,7 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses) {
 
 	/* Laryngeal system. Data for male speaker from Ishizaka and Flanagan.	*/
 
-	if (kindOfSpeaker.compare("Female")) {
+	if (kindOfSpeaker.compare("Female")==0) {
 		lowerCord.thickness = 1.4e-3;   // dx, in metres
 		upperCord.thickness = 0.7e-3;
 		cord.length = 10e-3;
@@ -48,23 +48,25 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses) {
 		upperCord.mass = 0.01e-3;
 		lowerCord.k1 = 10;   // Newtons per metre
 		upperCord.k1 = 4;
-	} else if (kindOfSpeaker.compare("Male")) {
-		lowerCord.thickness = 2.0e-3;   // dx, in metres
-		upperCord.thickness = 1.0e-3;
-		cord.length = 18e-3;
-		lowerCord.mass = 0.1e-3;   // kilograms
-		upperCord.mass = 0.05e-3;
-		lowerCord.k1 = 12;   // Newtons per metre
-		upperCord.k1 = 4;
-	} else /* "Child" */ {
-		lowerCord.thickness = 0.7e-3;   // dx, in metres
-		upperCord.thickness = 0.3e-3;
-		cord.length = 6e-3;
-		lowerCord.mass = 0.003e-3;   // kilograms
-		upperCord.mass = 0.002e-3;
-		lowerCord.k1 = 6;   // Newtons per metre
-		upperCord.k1 = 2;
-	}
+	} else { 
+        if (kindOfSpeaker.compare("Male")==0) {
+		    lowerCord.thickness = 2.0e-3;   // dx, in metres
+		    upperCord.thickness = 1.0e-3;
+		    cord.length = 18e-3;
+		    lowerCord.mass = 0.1e-3;   // kilograms
+		    upperCord.mass = 0.05e-3;
+		    lowerCord.k1 = 12;   // Newtons per metre
+		    upperCord.k1 = 4;
+    	} else /* "Child" */ {
+		    lowerCord.thickness = 0.7e-3;   // dx, in metres
+		    upperCord.thickness = 0.3e-3;
+		    cord.length = 6e-3;
+    		lowerCord.mass = 0.003e-3;   // kilograms
+		    upperCord.mass = 0.002e-3;
+		    lowerCord.k1 = 6;   // Newtons per metre
+		    upperCord.k1 = 2;
+        }
+    }
 	cord.numberOfMasses = numberOfVocalCordMasses;
 	if (numberOfVocalCordMasses == 1) {
 		lowerCord.thickness += upperCord.thickness;
