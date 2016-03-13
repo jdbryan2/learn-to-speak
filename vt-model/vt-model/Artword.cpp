@@ -32,6 +32,8 @@ using namespace std;
  rest unchanged;
  */
 
+// TODO: The for-loop in is causing a bad_alloc error to thrown when I run this on my machine.
+//       I'm not totally seeing why this is happening but I'll dig through it more closely...
 Artword::Artword(double totalTime) {
 	this->totalTime = totalTime;
     for (int i = 0; i <= kArt_muscle_MAX; i ++) {
