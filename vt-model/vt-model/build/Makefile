@@ -115,6 +115,51 @@ vocal_tract/fast:
 .PHONY : vocal_tract/fast
 
 # target to build an object file
+Art_Speaker.o:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker.o
+.PHONY : Art_Speaker.o
+
+# target to preprocess a source file
+Art_Speaker.i:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker.i
+.PHONY : Art_Speaker.i
+
+# target to generate assembly for a file
+Art_Speaker.s:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker.s
+.PHONY : Art_Speaker.s
+
+# target to build an object file
+Art_Speaker_Delta.o:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker_Delta.o
+.PHONY : Art_Speaker_Delta.o
+
+# target to preprocess a source file
+Art_Speaker_Delta.i:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker_Delta.i
+.PHONY : Art_Speaker_Delta.i
+
+# target to generate assembly for a file
+Art_Speaker_Delta.s:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Art_Speaker_Delta.s
+.PHONY : Art_Speaker_Delta.s
+
+# target to build an object file
+Artword.o:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Artword.o
+.PHONY : Artword.o
+
+# target to preprocess a source file
+Artword.i:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Artword.i
+.PHONY : Artword.i
+
+# target to generate assembly for a file
+Artword.s:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Artword.s
+.PHONY : Artword.s
+
+# target to build an object file
 Delta.o:
 	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Delta.o
 .PHONY : Delta.o
@@ -145,6 +190,21 @@ Speaker.s:
 .PHONY : Speaker.s
 
 # target to build an object file
+Speaker_to_Delta.o:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Speaker_to_Delta.o
+.PHONY : Speaker_to_Delta.o
+
+# target to preprocess a source file
+Speaker_to_Delta.i:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Speaker_to_Delta.i
+.PHONY : Speaker_to_Delta.i
+
+# target to generate assembly for a file
+Speaker_to_Delta.s:
+	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/Speaker_to_Delta.s
+.PHONY : Speaker_to_Delta.s
+
+# target to build an object file
 main.o:
 	$(MAKE) -f CMakeFiles/vocal_tract.dir/build.make CMakeFiles/vocal_tract.dir/main.o
 .PHONY : main.o
@@ -168,12 +228,24 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... vocal_tract"
+	@echo "... Art_Speaker.o"
+	@echo "... Art_Speaker.i"
+	@echo "... Art_Speaker.s"
+	@echo "... Art_Speaker_Delta.o"
+	@echo "... Art_Speaker_Delta.i"
+	@echo "... Art_Speaker_Delta.s"
+	@echo "... Artword.o"
+	@echo "... Artword.i"
+	@echo "... Artword.s"
 	@echo "... Delta.o"
 	@echo "... Delta.i"
 	@echo "... Delta.s"
 	@echo "... Speaker.o"
 	@echo "... Speaker.i"
 	@echo "... Speaker.s"
+	@echo "... Speaker_to_Delta.o"
+	@echo "... Speaker_to_Delta.i"
+	@echo "... Speaker_to_Delta.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
