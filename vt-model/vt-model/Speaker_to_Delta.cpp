@@ -30,7 +30,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	int closed [40];
 	int itube;
 	assert(me.cord.numberOfMasses == 1 || me.cord.numberOfMasses == 2 || me.cord.numberOfMasses == 10);
-
+    assert(thee.numberOfTubes == 89);
 	/* Lungs: tubes 0..22. */
 
 	for (itube = 0; itube <= 22; itube ++) {
@@ -263,8 +263,8 @@ void Speaker_to_Delta (Speaker &me, Delta &thee) {
 		t -> s1 = 5e6 * t -> Dx * t -> Dz;
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 		t -> dy = 1e-5;
-		t -> left1 = t - 1;   // connect to the previous tube on the left
-		t -> right1 = t + 1;   // connect to the next tube on the right
+		t -> left1 = &(thee.tube[itube-1]);   // connect to the previous tube on the left
+		t -> right1 = &(thee.tube[itube+1]);   // connect to the next tube on the right
 	}
 
 	/***** Connections: boundaries and interfaces. *****/

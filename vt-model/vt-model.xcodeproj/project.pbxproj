@@ -14,6 +14,12 @@
 		C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B906D1C8DF1C500B37B7B /* Delta.cpp */; };
 		C36B907E1C91EF5900B37B7B /* Art_Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B907C1C91EF5900B37B7B /* Art_Speaker.cpp */; };
 		C36B90811C91F57600B37B7B /* Speaker_to_Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B907F1C91F57600B37B7B /* Speaker_to_Delta.cpp */; };
+		C3F641DF1C94CDBE0060F202 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641DD1C94CDBE0060F202 /* libportaudio.a */; };
+		C3F641E11C94CEB90060F202 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E01C94CEB90060F202 /* CoreAudio.framework */; };
+		C3F641E31C94CEC40060F202 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E21C94CEC40060F202 /* AudioToolbox.framework */; };
+		C3F641E51C94CED00060F202 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E41C94CED00060F202 /* AudioUnit.framework */; };
+		C3F641E71C94CEE70060F202 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E61C94CEE70060F202 /* CoreServices.framework */; };
+		C3F641E91C94CEFF0060F202 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E81C94CEFF0060F202 /* Carbon.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -47,6 +53,13 @@
 		C36B907D1C91EF5900B37B7B /* Art_Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Art_Speaker.h; sourceTree = "<group>"; };
 		C36B907F1C91F57600B37B7B /* Speaker_to_Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker_to_Delta.cpp; sourceTree = "<group>"; };
 		C36B90801C91F57600B37B7B /* Speaker_to_Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker_to_Delta.h; sourceTree = "<group>"; };
+		C3F641DD1C94CDBE0060F202 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = external_libs/portaudio/libportaudio.a; sourceTree = "<group>"; };
+		C3F641DE1C94CDBE0060F202 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = external_libs/portaudio/portaudio.h; sourceTree = "<group>"; };
+		C3F641E01C94CEB90060F202 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		C3F641E21C94CEC40060F202 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		C3F641E41C94CED00060F202 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		C3F641E61C94CEE70060F202 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
+		C3F641E81C94CEFF0060F202 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +67,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3F641E91C94CEFF0060F202 /* Carbon.framework in Frameworks */,
+				C3F641E71C94CEE70060F202 /* CoreServices.framework in Frameworks */,
+				C3F641E51C94CED00060F202 /* AudioUnit.framework in Frameworks */,
+				C3F641E31C94CEC40060F202 /* AudioToolbox.framework in Frameworks */,
+				C3F641E11C94CEB90060F202 /* CoreAudio.framework in Frameworks */,
+				C3F641DF1C94CDBE0060F202 /* libportaudio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,6 +82,12 @@
 		C36B90221C8CE93600B37B7B = {
 			isa = PBXGroup;
 			children = (
+				C3F641E81C94CEFF0060F202 /* Carbon.framework */,
+				C3F641E61C94CEE70060F202 /* CoreServices.framework */,
+				C3F641E41C94CED00060F202 /* AudioUnit.framework */,
+				C3F641E21C94CEC40060F202 /* AudioToolbox.framework */,
+				C3F641E01C94CEB90060F202 /* CoreAudio.framework */,
+				C3F641DB1C94CD9B0060F202 /* External Libraries */,
 				C36B902D1C8CE93600B37B7B /* vt-model */,
 				C36B902C1C8CE93600B37B7B /* Products */,
 			);
@@ -98,6 +123,23 @@
 				C36B902E1C8CE93600B37B7B /* main.cpp */,
 			);
 			path = "vt-model";
+			sourceTree = "<group>";
+		};
+		C3F641DB1C94CD9B0060F202 /* External Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				C3F641DC1C94CDAC0060F202 /* portaudio */,
+			);
+			name = "External Libraries";
+			sourceTree = "<group>";
+		};
+		C3F641DC1C94CDAC0060F202 /* portaudio */ = {
+			isa = PBXGroup;
+			children = (
+				C3F641DD1C94CDBE0060F202 /* libportaudio.a */,
+				C3F641DE1C94CDBE0060F202 /* portaudio.h */,
+			);
+			name = portaudio;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -251,6 +293,10 @@
 		C36B90331C8CE93600B37B7B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/external_libs/portaudio",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -258,6 +304,10 @@
 		C36B90341C8CE93600B37B7B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/external_libs/portaudio",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

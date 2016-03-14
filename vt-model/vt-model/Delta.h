@@ -20,6 +20,7 @@
  */
 #include <vector>
 #include <memory>
+#define MAX_NUMBER_OF_TUBES 89
 
 struct structDelta_Tube{
     /* Structure: static. */
@@ -55,11 +56,10 @@ typedef struct structDelta_Tube* Delta_Tube;
 class Delta {
 public:
     int numberOfTubes;              // >= 0
-    std::vector <structDelta_Tube>  tube; // tube [0..numberOfTubes-1]
+    structDelta_Tube tube[MAX_NUMBER_OF_TUBES];
 public:
     Delta();
     Delta(int numberOfTubes);
-    ~Delta();
 };
 
 /* End of file Delta.h */

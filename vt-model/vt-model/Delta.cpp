@@ -29,17 +29,12 @@ Delta::Delta (int numberOfTubes) {
         all members of result -> tube [1..numberOfTubes] are zero or null,
         except 'parallel', which is 1.
      */
-    assert(numberOfTubes >= 0);
+    assert(numberOfTubes >= 0 && numberOfTubes <= MAX_NUMBER_OF_TUBES);
     this->numberOfTubes = numberOfTubes;
-    // TODO: Don't know if this is a problem, but we are implicitly dynamically allocating memeory for these structs.
-    tube.resize(numberOfTubes);
 }
 
 // Default Constructor
 Delta::Delta () : Delta(89) {}
 
-Delta::~Delta () {
-	//TODO: I don't think I need to delete tube because vector's destructor should do it, but I should double check.
-}
 
 /* End of file Delta.cpp */
