@@ -78,6 +78,11 @@ void Artword::setTarget (int feature, double time, double target) {
 }
 
 // TODO: What does this imply about the behavior of the system? Do we want it to interpolate, or do we want it to latch?
+// Followup: Do you mean latch as in "zero-order hold" or piece-wise constant? 
+//           I think that linear interp is definitely what we want (or some other smooth interp). 
+//           The consequence of this is that it won't allow muscles to snap from one target to another - 
+//           if they did, the mass-spring system would probably get some nasty oscillations.
+//           
 // Returns a linear interpolated target at the specified time for the specified feature
 double Artword::getTarget (int feature, double time) {
     assert(time <= totalTime && time >= 0.0);
