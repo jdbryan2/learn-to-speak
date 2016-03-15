@@ -24,7 +24,7 @@ int main(int argc, const char * argv[]) {
     Speaker_to_Delta(newspeaker, newdelta1);
     Artword artword_test(1.0);
     Art test;
-    //artword_test.intoArt(test, 0.5);
+    artword_test.intoArt(test, 0.5);
     test.art[kArt_muscle_LUNGS] = 0.67;
     Art_Speaker_intoDelta(test, newspeaker, newdelta2);
     

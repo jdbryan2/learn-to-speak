@@ -20,6 +20,7 @@
 #include "Artword.h"
 #include <assert.h>
 #include <vector>
+#include <iostream> // for printing debug, may be removed once bugs are squashed
 using namespace std;
 
 /*
@@ -36,7 +37,7 @@ using namespace std;
 //       I'm not totally seeing why this is happening but I'll dig through it more closely...
 Artword::Artword(double totalTime) {
 	this->totalTime = totalTime;
-    for (int i = 0; i <= kArt_muscle_MAX; i ++) {
+    for (int i = 0; i < kArt_muscle_MAX; i ++) {
         ArtwordData* f = &(data[i]);
         f->numberOfTargets = 2;
         f->targets.push_back(art_target{});
@@ -48,7 +49,7 @@ Artword::Artword(double totalTime) {
 // TODO: Wow this was bad!!!! I tried to rework some of it, but it needs revisited.
 void Artword::setTarget (int feature, double time, double target) {
     assert (feature >= 0);
-    assert (feature <= kArt_muscle_MAX);
+    assert (feature < kArt_muscle_MAX);
     ArtwordData* f = &(data[feature]);
     assert (f->numberOfTargets >= 2);
     vector<art_target>::iterator it = f->targets.begin();
@@ -134,7 +135,7 @@ void Artword::removeTarget (int feature, int iTarget) {
  art != nullptr;
  */
 void Artword::intoArt (Art &art, double time) {
-	for (int feature = 0; feature <= kArt_muscle_MAX; feature ++) {
+	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
 		art.art [feature] = getTarget (feature, time);
 	}
 }

@@ -61,7 +61,7 @@ enum kArt_muscle {
     
     kArt_muscle_DEFAULT = kArt_muscle_LUNGS,
     kArt_muscle_MIN = kArt_muscle_LUNGS,
-    kArt_muscle_MAX = kArt_muscle_BUCCINATOR
+    kArt_muscle_MAX = kArt_muscle_BUCCINATOR+1 // +1 so that this can be used to initialize arrays properly
 };
 
 /* End of file Articulation.enums */
