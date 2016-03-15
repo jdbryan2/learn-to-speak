@@ -2,6 +2,8 @@
 ###################
 *.o
 /vt-model/vt-model/build/CMakeFiles/
+/vt-model/vt-model/build/vocal_tract # executable
+
 
 # vim swap files
 ################
