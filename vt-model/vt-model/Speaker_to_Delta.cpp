@@ -24,6 +24,8 @@
 #define SMOOTH_LUNGS  true
 #define FIRST_TUBE  6
 
+
+
 void Speaker_to_Delta (Speaker &me, Delta &thee) {
 	double f = me.relativeSize * 1e-3;   // we shall use millimetres and grams
 	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;

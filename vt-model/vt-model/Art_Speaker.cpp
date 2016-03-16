@@ -23,9 +23,21 @@
 #define DLIP  5e-3
 
 
-// TODO: These arrays (intX,intY,extX,extY)are being indexed starting @ 1.
-//       This is very confusing, but it would be time consuming to switch it over.
-//       We should change this at some point.
+// TODO: These arrays (intx,inty,extx,exty)are being indexed starting @ 1.
+//       this is very confusing, but it would be time consuming to switch it over.
+//       we should change this at some point.
+//
+//       It would seem that the indexing of these variables is meant to map directly 
+//       to the diagram on page 53 of functional phonology. Index 15 appears to be 
+//       the chin (not given an index in the book) and the next vertex after the chin 
+//       is at the larynx so index 16 wraps around to 1.
+//       
+//       In Speaker_to_Delta.cpp, it looks like these variables are initialized with 
+//       30 elements each before being passed in to the various functions. I guess the
+//       first element (0th index) is left unused and so are the remaining 3 at the end? 
+//       This is fucking weird but if the model works, then I don't think it's worth the 
+//       trouble to fix.
+//
 void Art_Speaker_toVocalTract (Art &_art, Speaker &speaker,
 	double intX [], double intY [], double extX [], double extY [],
 	double *bodyX, double *bodyY)
