@@ -21,10 +21,11 @@
 #include "Speaker.h"
 #include "Sound.h"
 
-autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
+void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
    double samplingFrequency, int oversampling,
-   autoSound *w1, int iw1, autoSound *w2, int iw2, autoSound *w3, int iw3,
-   autoSound *p1, int ip1, autoSound *p2, int ip2, autoSound *p3, int ip3,
-   autoSound *v1, int iv1, autoSound *v2, int iv2, autoSound *v3, int iv3);
+   Sound *w1, int iw1, Sound *w2, int iw2, Sound *w3, int iw3,
+   Sound *p1, int ip1, Sound *p2, int ip2, Sound *p3, int ip3,
+   Sound *v1, int iv1, Sound *v2, int iv2, Sound *v3, int iv3,
+   Sound *result);
 
 /* End of file Artword_Speaker_to_Sound.h */

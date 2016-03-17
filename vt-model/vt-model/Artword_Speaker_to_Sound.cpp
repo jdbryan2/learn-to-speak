@@ -20,6 +20,10 @@
 #include "Speaker_to_Delta.h"
 #include "Art_Speaker_Delta.h"
 #include "Artword_Speaker_to_Sound.h"
+#include <math.h>
+#include <random>
+#include <assert.h>
+#include <iostream>
 
 #define Dymin  0.00001
 #define criticalVelocity  10.0
@@ -38,16 +42,20 @@
 #define MASS_LEAPFROG  0
 #define B91  0
 
-autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
+void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 	double fsamp, int oversampling,
-	autoSound *out_w1, int iw1, autoSound *out_w2, int iw2, autoSound *out_w3, int iw3,
-	autoSound *out_p1, int ip1, autoSound *out_p2, int ip2, autoSound *out_p3, int ip3,
-	autoSound *out_v1, int iv1, autoSound *out_v2, int iv2, autoSound *out_v3, int iv3)
+	Sound *w1, int iw1, Sound *w2, int iw2, Sound *w3, int iw3,
+	Sound *p1, int ip1, Sound *p2, int ip2, Sound *p3, int ip3,
+	Sound *v1, int iv1, Sound *v2, int iv2, Sound *v3, int iv3,
+    Sound *result)
 {
 	try {
-		autoSound result = Sound_createSimple (1, artword -> totalTime, fsamp);
-		long numberOfSamples = result -> nx;
-		double minTract [1+78], maxTract [1+78];   // for drawing
+        assert(result!=nullptr);
+		result->Initialize(1, artword -> totalTime, fsamp);
+		long numberOfSamples = result -> numberOfSamples;
+		/* TODO: Add in some sort of graphics.
+        double minTract [1+78], maxTract [1+78];   // for drawing
+         */
 		double Dt = 1.0 / fsamp / oversampling,
 			rho0 = 1.14,
 			c = 353.0,
@@ -59,31 +67,33 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 			twoc2Dt = 2.0 * c * c * Dt,
 			onebytworho0 = 1.0 / (2.0 * rho0),
 			Dtbytworho0 = Dt / (2.0 * rho0);
+        std::default_random_engine generator;
+        std::normal_distribution<double> distribution(1.0, noiseFactor);
 		double tension, rrad, onebygrad, totalVolume;
-		autoArt art = Art_create ();
-		autoDelta delta = Speaker_to_Delta (speaker);
-		autoMelderMonitor monitor (U"Articulatory synthesis");
-		Artword_intoArt (artword, art.peek(), 0.0);
-		Art_Speaker_intoDelta (art.peek(), speaker, delta.peek());
-		int M = delta -> numberOfTubes;
-		autoSound w1, w2, w3, p1, p2, p3, v1, v2, v3;
-		if (iw1 > 0 && iw1 <= M) w1 = Sound_createSimple (1, artword -> totalTime, fsamp); else iw1 = 0;
-		if (iw2 > 0 && iw2 <= M) w2 = Sound_createSimple (1, artword -> totalTime, fsamp); else iw2 = 0;
-		if (iw3 > 0 && iw3 <= M) w3 = Sound_createSimple (1, artword -> totalTime, fsamp); else iw3 = 0;
-		if (ip1 > 0 && ip1 <= M) p1 = Sound_createSimple (1, artword -> totalTime, fsamp); else ip1 = 0;
-		if (ip2 > 0 && ip2 <= M) p2 = Sound_createSimple (1, artword -> totalTime, fsamp); else ip2 = 0;
-		if (ip3 > 0 && ip3 <= M) p3 = Sound_createSimple (1, artword -> totalTime, fsamp); else ip3 = 0;
-		if (iv1 > 0 && iv1 <= M) v1 = Sound_createSimple (1, artword -> totalTime, fsamp); else iv1 = 0;
-		if (iv2 > 0 && iv2 <= M) v2 = Sound_createSimple (1, artword -> totalTime, fsamp); else iv2 = 0;
-		if (iv3 > 0 && iv3 <= M) v3 = Sound_createSimple (1, artword -> totalTime, fsamp); else iv3 = 0;
-		/* Initialize drawing. */
+        Art art;
+        Delta delta;
+        Speaker_to_Delta (*speaker,delta);
+        artword->intoArt(art, 0.0);
+        Art_Speaker_intoDelta(art, *speaker, delta);
+		int M = delta.numberOfTubes;
+		if (iw1 >= 0 && iw1 < M && w1!=nullptr) w1->Initialize(1, artword -> totalTime, fsamp); else iw1 = -1;
+		if (iw2 >= 0 && iw2 < M && w2!=nullptr) w2->Initialize(1, artword -> totalTime, fsamp); else iw2 = -1;
+		if (iw3 >= 0 && iw3 < M && w3!=nullptr) w3->Initialize(1, artword -> totalTime, fsamp); else iw3 = -1;
+		if (ip1 >= 0 && ip1 < M && p1!=nullptr) p1->Initialize(1, artword -> totalTime, fsamp); else ip1 = -1;
+		if (ip2 >= 0 && ip2 < M && p2!=nullptr) p2->Initialize(1, artword -> totalTime, fsamp); else ip2 = -1;
+		if (ip3 >= 0 && ip3 < M && p3!=nullptr) p3->Initialize(1, artword -> totalTime, fsamp); else ip3 = -1;
+		if (iv1 >= 0 && iv1 < M && v1!=nullptr) v1->Initialize(1, artword -> totalTime, fsamp); else iv1 = -1;
+		if (iv2 >= 0 && iv2 < M && v2!=nullptr) v2->Initialize(1, artword -> totalTime, fsamp); else iv2 = -1;
+		if (iv3 >= 0 && iv3 < M && v3!=nullptr) v3->Initialize(1, artword -> totalTime, fsamp); else iv3 = -1;
+		/* TODO: Add in some sort of graphics.
+        // Initialize drawing.
 		for (int i = 1; i <= 78; i ++) {
 			minTract [i] = 100.0;
 			maxTract [i] = -100.0;
-		}
+		} */
 		totalVolume = 0.0;
-		for (int m = 1; m <= M; m ++) {
-			Delta_Tube t = delta->tube + m;
+		for (int m = 0; m < M; m ++) {
+			Delta_Tube t = &(delta.tube[m]);
 			if (! t -> left1 && ! t -> right1) continue;
 			t->Dx = t->Dxeq; t->dDxdt = 0.0;   // 5.113 (numbers refer to equations in Boersma (1998)
 			t->Dy = t->Dyeq; t->dDydt = 0.0;   // 5.113
@@ -102,11 +112,12 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 			totalVolume += t->V;
 		}
 		//Melder_casual (U"Starting volume: ", totalVolume * 1000, U" litres.");
-		for (long sample = 1; sample <= numberOfSamples; sample ++) {
-			double time = (sample - 1) / fsamp;
-			Artword_intoArt (artword, art.peek(), time);
-			Art_Speaker_intoDelta (art.peek(), speaker, delta.peek());
-			if (sample % MONITOR_SAMPLES == 0 && monitor.graphics()) {   // because we can be in batch
+		for (long sample = 0; sample < numberOfSamples; sample ++) {
+			double time = (sample) / fsamp;
+			artword->intoArt(art, time);
+			Art_Speaker_intoDelta (art, *speaker, delta);
+			/* TODO: Add in some sort of graphics.
+             if (sample % MONITOR_SAMPLES == 0 && monitor.graphics()) {   // because we can be in batch
 				Graphics graphics = monitor.graphics();
 				double area [1+78];
 				for (int i = 1; i <= 78; i ++) {
@@ -164,10 +175,10 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 
 				Graphics_endMovieFrame (graphics, 0.0);
 				Melder_monitor ((double) sample / numberOfSamples, U"Articulatory synthesis: ", Melder_half (time), U" seconds");
-			}
+			} */
 			for (int n = 1; n <= oversampling; n ++) {
-				for (int m = 1; m <= M; m ++) {
-					Delta_Tube t = delta -> tube + m;
+				for (int m = 0; m < M; m ++) {
+					Delta_Tube t = &(delta.tube[m]);
 					if (! t -> left1 && ! t -> right1) continue;
 
 					/* New geometry. */
@@ -251,7 +262,8 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 					#endif
 				}
 				for (int m = 1; m <= M; m ++) {   // compute Jleftnew and Qleftnew
-					Delta_Tube l = delta->tube + m, r1 = l -> right1, r2 = l -> right2, r = r1;
+                    // TODO: This is some confusing use of the , operator. It saves space, but makes it hard to read.
+					Delta_Tube l = &(delta.tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
 					Delta_Tube l1 = l, l2 = r ? r -> left2 : nullptr;
 					if (! l->left1) {   // closed boundary at the left side (diaphragm)?
 						if (! r) continue;   // tube not connected at all
@@ -278,13 +290,13 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 							l->Pturbrightnew = -0.5 * rho0 * (l->v - criticalVelocity) *
 								(1.0 - l->A / r->A) * (1.0 - l->A / r->A) * l->v;
 							if (l->Pturbrightnew != 0.0)
-								l->Pturbrightnew *= NUMrandomGauss (1.0, noiseFactor) /* * l->A */;
+                                l->Pturbrightnew *= distribution (generator); /* * l->A */;
 						}
 						if (r->v < - criticalVelocity && r->A < l->A) {
 							l->Pturbrightnew = 0.5 * rho0 * (r->v + criticalVelocity) *
 								(1.0 - r->A / l->A) * (1.0 - r->A / l->A) * r->v;
 							if (l->Pturbrightnew != 0.0)
-								l->Pturbrightnew *= NUMrandomGauss (1.0, noiseFactor) /* * r->A */;
+                                l->Pturbrightnew *= distribution (generator); /* * r->A */;
 						}
 						#if NO_TURBULENCE
 							l->Pturbrightnew = 0.0;
@@ -335,7 +347,7 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 							 l->Krightnew * l->Vnew + r1->Kleftnew * r1->Vnew + r2->Kleftnew * r2->Vnew) /
 							(l->Vnew + r1->Vnew + r2->Vnew);   // 5.137
 					} else {
-						Melder_assert (l2 != nullptr);
+						assert (l2 != nullptr);
 						l1->Jrightnew =
 							(l1->Jright * l1->Dxhalf * (1.0 / (r->A + l2->A) + 1.0 / l1->A) -
 							 twoDt * ((r->Ahalf * r->Qhalf + l2->Ahalf * l2->Qhalf ) / (r->Ahalf  + l2->Ahalf) - l1->Qhalf)) /
@@ -365,25 +377,25 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 
 				if (n == (oversampling + 1) / 2) {
 					double out = 0.0;
-					for (int m = 1; m <= M; m ++) {
-						Delta_Tube t = delta->tube + m;
+					for (int m = 0; m < M; m ++) {
+						Delta_Tube t = &(delta.tube[m]);
 						out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
 						if (! t->right1)
 							out += t->Jrightnew - t->Jright;   // radiation of open tube end
 					}
-					result -> z [1] [sample] = out /= 4.0 * NUMpi * 0.4 * Dt;   // at 0.4 metres
-					if (iw1) w1 -> z [1] [sample] = delta->tube[iw1].Dy;
-					if (iw2) w2 -> z [1] [sample] = delta->tube[iw2].Dy;
-					if (iw3) w3 -> z [1] [sample] = delta->tube[iw3].Dy;
-					if (ip1) p1 -> z [1] [sample] = delta->tube[ip1].DeltaP;
-					if (ip2) p2 -> z [1] [sample] = delta->tube[ip2].DeltaP;
-					if (ip3) p3 -> z [1] [sample] = delta->tube[ip3].DeltaP;
-					if (iv1) v1 -> z [1] [sample] = delta->tube[iv1].v;
-					if (iv2) v2 -> z [1] [sample] = delta->tube[iv2].v;
-					if (iv3) v3 -> z [1] [sample] = delta->tube[iv3].v;
+					result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
+					if (iw1!=-1) w1 -> z [sample] = delta.tube[iw1].Dy;
+					if (iw2!=-1) w2 -> z [sample] = delta.tube[iw2].Dy;
+					if (iw3!=-1) w3 -> z [sample] = delta.tube[iw3].Dy;
+					if (ip1!=-1) p1 -> z [sample] = delta.tube[ip1].DeltaP;
+					if (ip2!=-1) p2 -> z [sample] = delta.tube[ip2].DeltaP;
+					if (ip3!=-1) p3 -> z [sample] = delta.tube[ip3].DeltaP;
+					if (iv1!=-1) v1 -> z [sample] = delta.tube[iv1].v;
+					if (iv2!=-1) v2 -> z [sample] = delta.tube[iv2].v;
+					if (iv3!=-1) v3 -> z [sample] = delta.tube[iv3].v;
 				}
-				for (int m = 1; m <= M; m ++) {
-					Delta_Tube t = delta->tube + m;
+				for (int m = 0; m < M; m ++) {
+                    Delta_Tube t = &(delta.tube[m]);
 					t->Jleft = t->Jleftnew;
 					t->Jright = t->Jrightnew;
 					t->Qleft = t->Qleftnew;
@@ -408,21 +420,11 @@ autoSound Artword_Speaker_to_Sound (Artword artword, Speaker speaker,
 			}
 		}
 		totalVolume = 0.0;
-		for (int m = 1; m <= M; m ++)
-			totalVolume += delta->tube [m]. V;
+		for (int m = 0; m < M; m ++)
+			totalVolume += delta.tube[m].V;
 		//Melder_casual (U"Ending volume: ", totalVolume * 1000, U" litres.");
-		if (out_w1) *out_w1 = w1.move();
-		if (out_w2) *out_w2 = w2.move();
-		if (out_w3) *out_w3 = w3.move();
-		if (out_p1) *out_p1 = p1.move();
-		if (out_p2) *out_p2 = p2.move();
-		if (out_p3) *out_p3 = p3.move();
-		if (out_v1) *out_v1 = v1.move();
-		if (out_v2) *out_v2 = v2.move();
-		if (out_v3) *out_v3 = v3.move();
-		return result;
-	} catch (MelderError) {
-		Melder_throw (artword, U" & ", speaker, U": articulatory synthesis not performed.");
+	} catch (int e) {
+        std::cout << "Articulatory synthesis not performed.\n";
 	}
 }
 

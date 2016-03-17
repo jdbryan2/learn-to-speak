@@ -24,7 +24,7 @@
 #include "Artword_def.h"
 
 class Artword {
-private:
+public:
     double totalTime;
     ArtwordData data[kArt_muscle_MAX]; // 
 public:

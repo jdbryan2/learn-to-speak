@@ -22,10 +22,16 @@ public:
     float samplingFrequency;
     int numberOfSamples;
     unsigned long framesPerBuffer;
+    static float amplitude;
+private:
+    bool isInitialized = false;
 public:
     Sound(long _numberOfChannels, float _duration, double _samplingFrequency);
+    Sound();
     ~Sound();
+    void Initialize(long _numberOfChannels, float _duration, double _samplingFrequency);
     int play();
+    void scale();
     // TODO: Not sure this variable should be static or not.
     //       I think it makes sense since we are only playing 1 sound at a time.
     static int buffer_offset;
