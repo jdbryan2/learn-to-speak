@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C35541841C9AE7C9004D585F /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35541831C9AE7C9004D585F /* Sound.cpp */; };
 		C35B59531C932D8F00BAC233 /* Art_Speaker_Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35B59511C932D8F00BAC233 /* Art_Speaker_Delta.cpp */; };
 		C35B595F1C937BAE00BAC233 /* Artword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35B595D1C937BAE00BAC233 /* Artword.cpp */; };
 		C36B902F1C8CE93600B37B7B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B902E1C8CE93600B37B7B /* main.cpp */; };
@@ -35,6 +36,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C35541821C9AE7AD004D585F /* Sound.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sound.h; sourceTree = "<group>"; };
+		C35541831C9AE7C9004D585F /* Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sound.cpp; sourceTree = "<group>"; };
 		C35B59511C932D8F00BAC233 /* Art_Speaker_Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Art_Speaker_Delta.cpp; sourceTree = "<group>"; };
 		C35B59521C932D8F00BAC233 /* Art_Speaker_Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Art_Speaker_Delta.h; sourceTree = "<group>"; };
 		C35B595C1C937BAE00BAC233 /* Artword_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword_def.h; sourceTree = "<group>"; };
@@ -121,6 +124,8 @@
 				C36B90671C8DCC4300B37B7B /* Speaker.cpp */,
 				C36B90681C8DCC4300B37B7B /* Speaker.h */,
 				C36B902E1C8CE93600B37B7B /* main.cpp */,
+				C35541821C9AE7AD004D585F /* Sound.h */,
+				C35541831C9AE7C9004D585F /* Sound.cpp */,
 			);
 			path = "vt-model";
 			sourceTree = "<group>";
@@ -201,6 +206,7 @@
 				C36B902F1C8CE93600B37B7B /* main.cpp in Sources */,
 				C36B907E1C91EF5900B37B7B /* Art_Speaker.cpp in Sources */,
 				C35B59531C932D8F00BAC233 /* Art_Speaker_Delta.cpp in Sources */,
+				C35541841C9AE7C9004D585F /* Sound.cpp in Sources */,
 				C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */,
 				C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */,
 				C36B90811C91F57600B37B7B /* Speaker_to_Delta.cpp in Sources */,
