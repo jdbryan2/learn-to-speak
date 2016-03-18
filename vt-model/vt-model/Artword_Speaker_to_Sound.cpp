@@ -261,7 +261,7 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 						t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
 					#endif
 				}
-				for (int m = 1; m <= M; m ++) {   // compute Jleftnew and Qleftnew
+				for (int m = 0; m < M; m ++) {   // compute Jleftnew and Qleftnew
                     // TODO: This is some confusing use of the , operator. It saves space, but makes it hard to read.
 					Delta_Tube l = &(delta.tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
 					Delta_Tube l1 = l, l2 = r ? r -> left2 : nullptr;
@@ -377,12 +377,20 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 
 				if (n == (oversampling + 1) / 2) {
 					double out = 0.0;
+                    double outarr[89] = {0};
 					for (int m = 0; m < M; m ++) {
+                        if (m==60) {
+                            outarr[m] = 0;
+                        }
 						Delta_Tube t = &(delta.tube[m]);
+                        outarr[m] = rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;;
 						out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
 						if (! t->right1)
 							out += t->Jrightnew - t->Jright;   // radiation of open tube end
+                        if (isnan(outarr[m])|| isnan(out))
+                            int temp =1;
 					}
+                    // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
 					result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
 					if (iw1!=-1) w1 -> z [sample] = delta.tube[iw1].Dy;
 					if (iw2!=-1) w2 -> z [sample] = delta.tube[iw2].Dy;

@@ -91,10 +91,16 @@ double Artword::getTarget (int feature, double time) {
     while(time > it->time) {
         it++;
     }
-    // y = b + m * x
-    return (it-1)->target_value + (time -(it-1)->time) *
-           (it->target_value-(it-1)->target_value) /
-           (it->time - (it-1)->time);
+    // Requested time is a target
+    if( it->time == time) {
+        return it->target_value;
+    }
+    // Interpolate y = b + m * x
+    else {
+        return (it-1)->target_value + (time -(it-1)->time) *
+               (it->target_value-(it-1)->target_value) /
+               (it->time - (it-1)->time);
+    }
 }
 
 /*

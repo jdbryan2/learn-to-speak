@@ -10,13 +10,14 @@
 #define Sound_h
 
 #include "portaudio.h"
+#include <vector>
 
 #define MAX_DURATION 5
 #define MAX_BUFFER_LEN 256
 
 class Sound {
 public:
-    float *z;
+    std::vector<float> z;
     long numberOfChannels;
     float duration;
     float samplingFrequency;

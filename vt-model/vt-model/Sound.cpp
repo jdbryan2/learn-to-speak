@@ -32,12 +32,11 @@ void Sound::Initialize(long _numberOfChannels, float _duration, double _sampling
     samplingFrequency = _samplingFrequency;
     numberOfSamples = round(duration*samplingFrequency);
     framesPerBuffer = MAX_BUFFER_LEN;
-    z = new float [numberOfSamples];
+    z.resize(numberOfSamples);
     isInitialized = true;
 }
 
 Sound::~Sound() {
-    delete [] z;
 }
 
 int Sound::play() {
