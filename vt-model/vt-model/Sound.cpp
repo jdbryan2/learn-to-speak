@@ -73,7 +73,6 @@ int Sound::play() {
     err = Pa_CloseStream( stream );
     if( err != paNoError ) goto error;
     Pa_Terminate();
-    printf("Test finished.\n");
     return err;
 error:
     Pa_Terminate();
@@ -110,7 +109,8 @@ int Sound::paCallback( const void *inputBuffer, void *outputBuffer,
             *out++ = 0;
         }
         else {
-            *out++ = sound->z[index]/amplitude;
+            // TODO: Probably need to figure out the proper way to scale sound. Maybe look through how Praat does it.
+            *out++ = sound->z[index]/amplitude*SOUND_VOLUME;
         }
     }
     buffer_offset += sound->framesPerBuffer;

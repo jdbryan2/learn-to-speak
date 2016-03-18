@@ -14,6 +14,7 @@
 
 #define MAX_DURATION 5
 #define MAX_BUFFER_LEN 256
+#define SOUND_VOLUME 0.4
 
 class Sound {
 public:
