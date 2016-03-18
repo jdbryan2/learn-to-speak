@@ -377,18 +377,11 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 
 				if (n == (oversampling + 1) / 2) {
 					double out = 0.0;
-                    double outarr[89] = {0};
 					for (int m = 0; m < M; m ++) {
-                        if (m==60) {
-                            outarr[m] = 0;
-                        }
 						Delta_Tube t = &(delta.tube[m]);
-                        outarr[m] = rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;;
 						out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
 						if (! t->right1)
 							out += t->Jrightnew - t->Jright;   // radiation of open tube end
-                        if (isnan(outarr[m])|| isnan(out))
-                            int temp =1;
 					}
                     // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
 					result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
