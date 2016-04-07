@@ -51,7 +51,7 @@ struct structDelta_Tube{
     double B, r, R, DeltaP, v = 0;
 };
 
-typedef struct structDelta_Tube* Delta_Tube;
+typedef struct structDelta_Tube* Delta_Tube; // not a huge fan of obfuscating the pointer like this...
 
 class Delta {
 public:

@@ -44,10 +44,10 @@
 
 void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 	double fsamp, int oversampling,
-	Sound *w1, int iw1, Sound *w2, int iw2, Sound *w3, int iw3,
-	Sound *p1, int ip1, Sound *p2, int ip2, Sound *p3, int ip3,
-	Sound *v1, int iv1, Sound *v2, int iv2, Sound *v3, int iv3,
-    Sound *result)
+	Sound *w1, int iw1, Sound *w2, int iw2, Sound *w3, int iw3, // what are all these extra parameters here?
+	Sound *p1, int ip1, Sound *p2, int ip2, Sound *p3, int ip3, // In the sample we have, null pointers are 
+	Sound *v1, int iv1, Sound *v2, int iv2, Sound *v3, int iv3, // passed in. It looks like a means of saving  
+    Sound *result)                                              // information about tube dynamics.
 {
 	try {
         assert(result!=nullptr);
