@@ -20,10 +20,13 @@
  */
 
 #include "Speaker_def.h"
+#include "Delta.h"
+#include "Articulation_enums.h"
 #include <string>
 
 class Speaker {
-public:
+//private:
+public: 
     /* In the larynx. */
     Speaker_CordDimensions cord;
     Speaker_CordSpring lowerCord;
@@ -31,7 +34,6 @@ public:
     Speaker_GlottalShunt shunt;
     
     /* Above the larynx. */
-    
     Speaker_Velum velum;
     Speaker_Palate palate;
     Speaker_Tip tip;
@@ -44,12 +46,21 @@ public:
     Speaker_Lip upperLip;
     
     /* In the nasal cavity. */
-    
     Speaker_Nose nose;
     
-    Speaker(std::string, int);
-
+    /* relative size of the parameters. */
     double relativeSize;  // different for female, male, child
+
+    /* Incorporate Delta-tube model and vocal articulation */
+    Delta delta;
+    double art[kArt_muscle_MAX]={}; // all values are defaulted to zero  
+    
+//public: 
+    Speaker(std::string, int);
+    void InitializeDelta(); // map speaker parameters into delta tube
+    void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
+    double getMuscle(int muscle) const {return art[muscle];}
+    void UpdateTube();
 };
 
 /* End of file Speaker.h */

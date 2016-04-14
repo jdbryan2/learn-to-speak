@@ -112,10 +112,18 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 			totalVolume += t->V;
 		}
 		//Melder_casual (U"Starting volume: ", totalVolume * 1000, U" litres.");
+
+        /*
+         * Loop through each acoustic sampling time step
+         *  Muscle parameters update on these time steps
+         */
 		for (long sample = 0; sample < numberOfSamples; sample ++) {
+
+            // Artuculation updates are input here
 			double time = (sample) / fsamp;
 			artword->intoArt(art, time);
 			Art_Speaker_intoDelta (art, *speaker, delta);
+
 			/* TODO: Add in some sort of graphics.
              if (sample % MONITOR_SAMPLES == 0 && monitor.graphics()) {   // because we can be in batch
 				Graphics graphics = monitor.graphics();
@@ -176,7 +184,13 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 				Graphics_endMovieFrame (graphics, 0.0);
 				Melder_monitor ((double) sample / numberOfSamples, U"Articulatory synthesis: ", Melder_half (time), U" seconds");
 			} */
+
+            /*
+             * Oversample to simulate dynamics of the vocal tract walls
+             */
 			for (int n = 1; n <= oversampling; n ++) {
+
+                /* Loop along each tube segment */
 				for (int m = 0; m < M; m ++) {
 					Delta_Tube t = &(delta.tube[m]);
 					if (! t -> left1 && ! t -> right1) continue;
@@ -260,7 +274,9 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 					#if NO_BERNOULLI_EFFECT
 						t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
 					#endif
-				}
+				}// end Tube segment loop
+
+                /* Loop tube segments again?  */
 				for (int m = 0; m < M; m ++) {   // compute Jleftnew and Qleftnew
                     // TODO: This is some confusing use of the , operator. It saves space, but makes it hard to read.
 					Delta_Tube l = &(delta.tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
@@ -370,11 +386,10 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 							(r->eleft + l1->eright + l2->eright + twoc2Dt * (l1->Jhalf + l2->Jhalf - r->Jhalf) +
 							 r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
 							(r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
-					}
-				}
+					} 
+				} // end tube loop? 
 
 				/* Save some results. */
-
 				if (n == (oversampling + 1) / 2) {
 					double out = 0.0;
 					for (int m = 0; m < M; m ++) {
@@ -395,6 +410,8 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 					if (iv2!=-1) v2 -> z [sample] = delta.tube[iv2].v;
 					if (iv3!=-1) v3 -> z [sample] = delta.tube[iv3].v;
 				}
+
+                /* increment tube parameters for next iteration */
 				for (int m = 0; m < M; m ++) {
                     Delta_Tube t = &(delta.tube[m]);
 					t->Jleft = t->Jleftnew;
@@ -418,8 +435,9 @@ void Artword_Speaker_to_Sound (Artword* artword, Speaker* speaker,
 					t->V = t->Vnew;
 					t->Pturbright = t->Pturbrightnew;
 				}
-			}
-		}
+
+			} // end oversample loop 
+		} // end sampling loop
 		totalVolume = 0.0;
 		for (int m = 0; m < M; m ++)
 			totalVolume += delta.tube[m].V;

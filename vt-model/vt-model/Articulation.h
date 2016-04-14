@@ -25,9 +25,15 @@
 /* Members represent muscle activities for speech production. */
 /* All members have values from 0 (no activity) to 1 (maximum activity). */
 
+/* Fun fact: In C++, classes are equivalent to structs but are defaulted to 
+ *              have private members while structs are defaulted to have 
+ *              public members. Otherwise, there isn't any real difference. */
 class Art {
 public:
-    double art[kArt_muscle_MAX]={0};
+    double art[kArt_muscle_MAX]={0}; 
+    /* The zero in braces here only defaults the first element to zero manually. 
+     * The other elements of this array are set to the default value for doubles,
+     * which happens to be zero... */
 };
 
 /* End of file Articulation.h */
