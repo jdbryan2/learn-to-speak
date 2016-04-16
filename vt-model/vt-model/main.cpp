@@ -35,27 +35,30 @@ int main(int argc, const char * argv[]) {
     // otherwise, we just get a strong discontinuity after the first instant
     apa.intoArt(female.art, 0.0);
 
+    // initialize the simulation and tell it how many seconds to buffer
     female.InitSim(0.5);
-    cout << female.numberOfSamples << endl; 
-    cout << female.numberOfSamples/2 << endl; 
 
     cout << "Simulating...\n";
     while (female.NotDone())
     {
+        // adjust articulators using controller
+        // Artword class is being used for this currently
         apa.intoArt(female.art, female.NowSeconds());
+
+
+        // generate the next acoustic sample
         female.IterateSim();
-        //cout << female.result->z[female.Now()-1] << endl;
-        
-        //cout << female.getMuscle(kArt_muscle_LUNGS)<<endl;
+
     }
     cout << "Done!\n";
 
+    // simple interface for playing back the sound that was generated
     int input = 1;
     while (input == 1){
         cout << "Press (1) to play the sound or any key to quit.\n";
         cin >> input;
         if(input == 1) {
-            cout << female.Speak();
+            cout << female.Speak() << endl;
         } else {
             break;
         }
