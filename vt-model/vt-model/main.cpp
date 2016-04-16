@@ -8,19 +8,61 @@
 
 #include <iostream>
 #include "Speaker.h"
-#include "Delta.h"
-#include "Articulation_enums.h"
-#include "Articulation.h"
-#include "Speaker_to_Delta.h"
-#include "Art_Speaker_Delta.h"
+//#include "Delta.h"
+//#include "Articulation_enums.h"
+//#include "Articulation.h"
+//#include "Speaker_to_Delta.h"
+//#include "Art_Speaker_Delta.h"
 #include "Artword.h"
-#include "Artword_Speaker_to_Sound.h"
+//#include "Artword_Speaker_to_Sound.h"
 
 using namespace std;
 
 int main(int argc, const char * argv[]) {
-    Speaker female("Female",2);
+                    // speaker type, number of glotal masses, fsamp, oversamp
+    Speaker female("Female",2, 22050, 25);
     Artword apa(0.5);
+    apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    apa.setTarget(kArt_muscle_LUNGS,0,0.2);
+    apa.setTarget(kArt_muscle_LUNGS,0.1,0);
+    apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
+    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+
+    // pass the articulator positions into the speaker BEFORE initializing the simulation
+    // otherwise, we just get a strong discontinuity after the first instant
+    apa.intoArt(female.art, 0.0);
+
+    female.InitSim(0.5);
+    cout << female.numberOfSamples << endl; 
+    cout << female.numberOfSamples/2 << endl; 
+
+    cout << "Simulating...\n";
+    while (female.NotDone())
+    {
+        apa.intoArt(female.art, female.NowSeconds());
+        female.IterateSim();
+        //cout << female.result->z[female.Now()-1] << endl;
+        
+        //cout << female.getMuscle(kArt_muscle_LUNGS)<<endl;
+    }
+    cout << "Done!\n";
+
+    int input = 1;
+    while (input == 1){
+        cout << "Press (1) to play the sound or any key to quit.\n";
+        cin >> input;
+        if(input == 1) {
+            cout << female.Speak();
+        } else {
+            break;
+        }
+
+    }
+
+    /*Artword apa(0.5);
     Sound apa_sound;
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -36,7 +78,7 @@ int main(int argc, const char * argv[]) {
     err = apa_sound.play();
     err = apa_sound.play();
     
-    std::cout << err << "\n";
+    std::cout << err << "\n";*/
 
     return 0;
 }

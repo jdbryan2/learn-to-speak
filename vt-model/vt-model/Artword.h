@@ -19,7 +19,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "Articulation.h"
+//#include "Articulation.h"
 #include "Articulation_enums.h"
 #include "Artword_def.h"
 
@@ -32,7 +32,7 @@ public:
     void setTarget(int feature, double tim, double value);
     double getTarget(int feature, double tim);
     void removeTarget(int feature, int iTarget);
-    void intoArt(Art &art, double tim);
+    void intoArt(double *art, double tim);
     //void Artword_draw (Artword me, Graphics graphics, int feature, int garnish);
 };
 

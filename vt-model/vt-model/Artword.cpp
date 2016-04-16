@@ -143,9 +143,9 @@ void Artword::removeTarget (int feature, int iTarget) {
  me != nullptr;
  art != nullptr;
  */
-void Artword::intoArt (Art &art, double time) {
+void Artword::intoArt (double *art, double time) {
 	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
-		art.art [feature] = getTarget (feature, time);
+		art [feature] = getTarget (feature, time);
 	}
 }
 

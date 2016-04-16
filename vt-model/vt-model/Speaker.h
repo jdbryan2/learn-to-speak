@@ -22,7 +22,9 @@
 #include "Speaker_def.h"
 #include "Delta.h"
 #include "Articulation_enums.h"
+#include "Sound.h"
 #include <string>
+#include <random>
 
 class Speaker {
 //private:
@@ -53,14 +55,51 @@ public:
 
     /* Incorporate Delta-tube model and vocal articulation */
     Delta delta;
-    double art[kArt_muscle_MAX]={}; // all values are defaulted to zero  
+    double art[kArt_muscle_MAX]={0}; // all values are defaulted to zero  
     
+    // simulation parameters
+    double fsamp;
+    double oversamp;
+    long numberOfSamples;
+    long sample;
+
+    int M; // number of tubes
+
+    double Dt, 
+           rho0, 
+           c, 
+           onebyc2, 
+           rho0c2, 
+           halfDt, 
+           twoDt, 
+           halfc2Dt, 
+           twoc2Dt, 
+           onebytworho0,
+           Dtbytworho0;
+    
+    double tension, 
+           rrad, 
+           onebygrad, 
+           totalVolume;
+
+    Sound *result;
+
+    std::default_random_engine generator;
+    std::normal_distribution<double> distribution;
+
 //public: 
-    Speaker(std::string, int);
-    void InitializeDelta(); // map speaker parameters into delta tube
+    Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
+    ~Speaker() { delete result;}
+    void InitializeTube(); // map speaker parameters into delta tube
+    void UpdateTube();
+    void InitSim(double totalTime);
+    void IterateSim();
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
     double getMuscle(int muscle) const {return art[muscle];}
-    void UpdateTube();
+    int Speak();
+    double NowSeconds(){return (sample)/fsamp;}
+    long Now() {return sample;}
+    bool NotDone() {return (sample<(numberOfSamples-1));}
 };
 
 /* End of file Speaker.h */
