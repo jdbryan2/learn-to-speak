@@ -12,7 +12,8 @@
 #define FIRST_TUBE  6
 #define DLIP  5e-3
 
-void Speaker_to_Delta (Speaker &me, Delta &thee) {
+void Speaker_to_Delta (Speaker &me, Delta &thee) 
+{
 	double f = me.relativeSize * 1e-3;   // we shall use millimetres and grams
 	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;
 	int closed [40];

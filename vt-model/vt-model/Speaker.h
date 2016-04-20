@@ -59,7 +59,7 @@ public:
     
     // simulation parameters
     double fsamp;
-    double oversamp;
+    double oversamp; // was double but caused trouble with even values...
     long numberOfSamples;
     long sample;
 
@@ -92,6 +92,7 @@ public:
     ~Speaker() { delete result;}
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
+    void UpdateSegment(int m); 
     void InitSim(double totalTime);
     void IterateSim();
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1

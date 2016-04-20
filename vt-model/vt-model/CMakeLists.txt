@@ -20,11 +20,17 @@ add_definitions(-std=c++11)
 # add required linker flags
 #SET(COMPILE_FLAGS "-std=c++11")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS} -lrt -lm -lasound -pthread")              
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -funroll-loops")
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+
 #ADD_LIBRARY(portaudio /home/jacob/Projects/learn-to-speak/vt-model/external_libs/portaudio/portaudio.h)
 #ADD_LIBRARY(portaudio STATIC IMPORTED)
 #SET_TARGET_PROPERTIES(portaudio PROPERTIES IMPORTED_LOCATION /home/jacob/Projects/learn-to-speak/vt-model/external_libs/portaudio/libportaudio.a)
 
-ADD_EXECUTABLE(vocal_tract main.cpp Speaker.cpp Delta.cpp Artword.cpp Sound.cpp support_functions.cpp )
+ADD_EXECUTABLE(vocal_tract main.cpp Speaker.cpp Artword.cpp Sound.cpp support_functions.cpp )
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vocal_tract ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)

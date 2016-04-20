@@ -26,6 +26,8 @@
 
 
 #include <iostream> //necessary?
+#include <thread>
+
 
 /* constants for modifying acoustic simulation */
 #define Dymin  0.00001
@@ -37,7 +39,7 @@
 
 // While debugging, some of these can be 1; otherwise, they are all 0: 
 #define EQUAL_TUBE_WIDTHS  0
-#define CONSTANT_TUBE_LENGTHS  1
+#define CONSTANT_TUBE_LENGTHS  0 // was set to 1
 #define NO_MOVING_WALLS  0
 #define NO_TURBULENCE  0
 #define NO_RADIATION_DAMPING  0
@@ -45,7 +47,8 @@
 #define MASS_LEAPFROG  0
 #define B91  0
 
-#define INTERMEDIATE_SOUNDS 0
+#define INTERMEDIATE_SOUNDS 0 // currently not supported...
+
 // end acoustic simulation constants
 
 using namespace std;
@@ -159,7 +162,14 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 			halfc2Dt = 0.5 * c * c * Dt,
 			twoc2Dt = 2.0 * c * c * Dt,
 			onebytworho0 = 1.0 / (2.0 * rho0),
-			Dtbytworho0 = Dt / (2.0 * rho0);
+			Dtbytworho0 = Dt / (2.0 * rho0),
+            rrad = 1.0 - c * Dt / 0.02,   // radiation resistance, 5.135
+            onebygrad = 1.0 / (1.0 + c * Dt / 0.02);   // radiation conductance, 5.135
+
+    #if NO_RADIATION_DAMPING
+        rrad = 0;
+        onebygrad = 0;
+    #endif
 }
 
 //void Speaker_to_Delta (Speaker &me, Delta &thee) {
@@ -291,7 +301,8 @@ void Speaker::InitSim(double totalTime)
 	}
 }
 
-void Speaker::IterateSim() {
+void Speaker::IterateSim() 
+{
 			/* TODO: Add in some sort of graphics.
              if (sample % MONITOR_SAMPLES == 0 && monitor.graphics()) {   // because we can be in batch
 				Graphics graphics = monitor.graphics();
@@ -362,6 +373,12 @@ void Speaker::IterateSim() {
 
         //Loop along each tube segment 
         for (int m = 0; m < M; m ++) {
+
+            UpdateSegment(m); // only defined for the purpose of threading. Remove and uncomment section below to speed up
+            // causes program to slow WAAAAAY down.
+            //std::thread mythread(&Speaker::UpdateSegment, this, m);
+            //mythread.detach();
+            /*
             Delta_Tube t = &(delta.tube[m]);
             if (! t -> left1 && ! t -> right1) continue;
 
@@ -374,9 +391,11 @@ void Speaker::IterateSim() {
                     (1.0 + 200.0 * Dt);   // critical damping, 10 ms
                 t->Dxnew = t->Dx + t->dDxdtnew * Dt;
             #endif
+
             // 3-way: equal lengths. 
             // This requires left tubes to be processed before right tubes. 
             if (t->left1 && t->left1->right2) t->Dxnew = t->left1->Dxnew;
+
             t->Dz = t->Dzeq;   // immediate... 
             t->eleft = (t->Qleft - t->Kleft) * t->V;   // 5.115
             t->eright = (t->Qright - t->Kright) * t->V;   // 5.115
@@ -384,7 +403,8 @@ void Speaker::IterateSim() {
             t->p = 0.5 * (t->pleft + t->pright);   // 5.116
             t->DeltaP = t->e / t->V - rho0c2;   // 5.117
             t->v = t->p / (rho0 + onebyc2 * t->DeltaP);   // 5.118
-            {
+
+            { 
                 double dDy = t->Dyeq - t->Dy;
                 double cubic = t->k3 * dDy * dDy;
                 Delta_Tube l1 = t->left1, l2 = t->left2, r1 = t->right1, r2 = t->right2;
@@ -399,6 +419,7 @@ void Speaker::IterateSim() {
                 if (t->k1right2 != 0.0 && r2)
                     tension += t->k1right2 * t->k1 * (dDy - (r2->Dyeq - r2->Dy));
             }
+
             if (t->Dy < t->dy) {
                 if (t->Dy >= - t->dy) {
                     double dDy = t->dy - t->Dy, dDy2 = dDy * dDy;
@@ -410,8 +431,8 @@ void Speaker::IterateSim() {
                     t->B += 2.0 * sqrt (t->mass * (t->s1 + t->s3 * (3.0 * t->Dy * t->Dy + t->dy * t->dy)));
                 }
             }
-            t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) /
-                (1.0 + t->B * Dt / t->mass);   // 5.119
+
+            t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) / (1.0 + t->B * Dt / t->mass);   // 5.119
             t->Dynew = t->Dy + t->dDydtnew * Dt;   // 5.119
             #if NO_MOVING_WALLS
                 t->Dynew = t->Dy;
@@ -425,16 +446,18 @@ void Speaker::IterateSim() {
             t->Ahalf = 0.5 * (t->A + t->Anew);   // 5.120
             t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
             t->Vnew = t->Anew * t->Dxnew;   // 5.128
+
             { 
-            double oneByDyav = t->Dz / t->A;
-            //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
-            if (t->Dy < 0.0)
-                t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
-            else
-                t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
-                    ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
-            t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
+                double oneByDyav = t->Dz / t->A;
+                //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
+                if (t->Dy < 0.0)
+                    t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
+                else
+                    t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
+                        ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
+                t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
             }
+
             t->r = (1.0 + t->R * Dt / rho0) * t->Dxhalf / t->Anew;   // 5.122
             t->ehalf = t->e + halfc2Dt * (t->Jleft - t->Jright);   // 5.123
             t->phalf = (t->p + halfDt * (t->Qleft - t->Qright) / t->Dx) / (1.0 + Dtbytworho0 * t->R);   // 5.123
@@ -446,13 +469,15 @@ void Speaker::IterateSim() {
             #if NO_BERNOULLI_EFFECT
                 t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
             #endif
+                */
         }// end Tube segment loop
 
-        // Loop tube segments again?  
+        // Loop tube segments again? Combining the loops makes it crap it's pants...
         for (int m = 0; m < M; m ++) {   // compute Jleftnew and Qleftnew
             // TODO: This is some confusing use of the , operator. It saves space, but makes it hard to read.
             Delta_Tube l = &(delta.tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
             Delta_Tube l1 = l, l2 = r ? r -> left2 : nullptr;
+
             if (! l->left1) {   // closed boundary at the left side (diaphragm)?
                 if (! r) continue;   // tube not connected at all
                 l->Jleftnew = 0;   // 5.132
@@ -460,13 +485,8 @@ void Speaker::IterateSim() {
             }
             else   // left boundary open to another tube will be handled...
                 (void) 0;   // ...together with the right boundary of the tube to the left
+
             if (! r) {   // open boundary at the right side (lips, nostrils)?
-                rrad = 1.0 - c * Dt / 0.02;   // radiation resistance, 5.135
-                onebygrad = 1.0 / (1.0 + c * Dt / 0.02);   // radiation conductance, 5.135
-                #if NO_RADIATION_DAMPING
-                    rrad = 0;
-                    onebygrad = 0;
-                #endif
                 l->prightnew = ((l->Dxhalf / Dt + c * onebygrad) * l->pright +
                      2.0 * ((l->Qhalf - rho0c2) - (l->Qright - rho0c2) * onebygrad)) /
                     (l->r * l->Anew / Dt + c * onebygrad);   // 5.136
@@ -481,45 +501,40 @@ void Speaker::IterateSim() {
                         l->Pturbrightnew *= distribution (generator); // * l->A; 
                 }
                 if (r->v < - criticalVelocity && r->A < l->A) {
-                    l->Pturbrightnew = 0.5 * rho0 * (r->v + criticalVelocity) *
-                        (1.0 - r->A / l->A) * (1.0 - r->A / l->A) * r->v;
+                    l->Pturbrightnew = 0.5 * rho0 * (r->v + criticalVelocity) * (1.0 - r->A / l->A) * (1.0 - r->A / l->A) * r->v;
                     if (l->Pturbrightnew != 0.0)
                         l->Pturbrightnew *= distribution (generator); // * r->A ;
                 }
+                
                 #if NO_TURBULENCE
                     l->Pturbrightnew = 0.0;
                 #endif
-                l->Jrightnew = r->Jleftnew =
-                    (l->Dxhalf * l->pright + r->Dxhalf * r->pleft +
-                     twoDt * (l->Qhalf - r->Qhalf + l->Pturbright)) /
-                    (l->r + r->r);   // 5.127
+
+                l->Jrightnew = r->Jleftnew = (l->Dxhalf * l->pright + r->Dxhalf * r->pleft + twoDt * (l->Qhalf - r->Qhalf + l->Pturbright)) / (l->r + r->r);   // 5.127
+
                 #if B91
-                    l->Jrightnew = r->Jleftnew =
-                        (l->pright + r->pleft +
-                         2.0 * twoDt * (l->Qhalf - r->Qhalf + l->Pturbright) / (l->Dxhalf + r->Dxhalf)) /
-                        (l->r / l->Dxhalf + r->r / r->Dxhalf);
+                    l->Jrightnew = r->Jleftnew = (l->pright + r->pleft + 2.0 * twoDt * (l->Qhalf - r->Qhalf + l->Pturbright) / (l->Dxhalf + r->Dxhalf)) / (l->r / l->Dxhalf + r->r / r->Dxhalf);
                 #endif
+
                 l->prightnew = l->Jrightnew / l->Anew;   // 5.128
                 r->pleftnew = r->Jleftnew / r->Anew;   // 5.128
                 l->Krightnew = onebytworho0 * l->prightnew * l->prightnew;   // 5.128
                 r->Kleftnew = onebytworho0 * r->pleftnew * r->pleftnew;   // 5.128
+
                 #if NO_BERNOULLI_EFFECT
                     l->Krightnew = r->Kleftnew = 0.0;
                 #endif
-                l->Qrightnew =
-                    (l->eright + r->eleft + twoc2Dt * (l->Jhalf - r->Jhalf)
-                     + l->Krightnew * l->Vnew + (r->Kleftnew - l->Pturbrightnew) * r->Vnew) /
-                    (l->Vnew + r->Vnew);   // 5.131
+
+                l->Qrightnew = (l->eright + r->eleft + twoc2Dt * (l->Jhalf - r->Jhalf) + l->Krightnew * l->Vnew + (r->Kleftnew - l->Pturbrightnew) * r->Vnew) / (l->Vnew + r->Vnew);   // 5.131
                 r->Qleftnew = l->Qrightnew + l->Pturbrightnew;   // 5.131
+
             } else if (r2) {   // two adjacent tubes at the right side (velic)
-                r1->Jleftnew =
-                    (r1->Jleft * r1->Dxhalf * (1.0 / (l->A + r2->A) + 1.0 / r1->A) +
-                     twoDt * ((l->Ahalf * l->Qhalf + r2->Ahalf * r2->Qhalf ) / (l->Ahalf  + r2->Ahalf) - r1->Qhalf)) /
-                    (1.0 / (1.0 / l->r + 1.0 / r2->r) + r1->r);   // 5.138
-                r2->Jleftnew =
-                    (r2->Jleft * r2->Dxhalf * (1.0 / (l->A + r1->A) + 1.0 / r2->A) +
-                     twoDt * ((l->Ahalf * l->Qhalf + r1->Ahalf * r1->Qhalf ) / (l->Ahalf  + r1->Ahalf) - r2->Qhalf)) /
-                    (1.0 / (1.0 / l->r + 1.0 / r1->r) + r2->r);   // 5.138
+                r1->Jleftnew = (r1->Jleft * r1->Dxhalf * (1.0 / (l->A + r2->A) + 1.0 / r1->A) +
+                                twoDt * ((l->Ahalf * l->Qhalf + r2->Ahalf * r2->Qhalf ) / (l->Ahalf  + r2->Ahalf) - r1->Qhalf)) /
+                                (1.0 / (1.0 / l->r + 1.0 / r2->r) + r1->r);   // 5.138
+                r2->Jleftnew = (r2->Jleft * r2->Dxhalf * (1.0 / (l->A + r1->A) + 1.0 / r2->A) +
+                                twoDt * ((l->Ahalf * l->Qhalf + r1->Ahalf * r1->Qhalf ) / (l->Ahalf  + r1->Ahalf) - r2->Qhalf)) /
+                                (1.0 / (1.0 / l->r + 1.0 / r1->r) + r2->r);   // 5.138
                 l->Jrightnew = r1->Jleftnew + r2->Jleftnew;   // 5.139
                 l->prightnew = l->Jrightnew / l->Anew;   // 5.128
                 r1->pleftnew = r1->Jleftnew / r1->Anew;   // 5.128
@@ -527,9 +542,11 @@ void Speaker::IterateSim() {
                 l->Krightnew = onebytworho0 * l->prightnew * l->prightnew;   // 5.128
                 r1->Kleftnew = onebytworho0 * r1->pleftnew * r1->pleftnew;   // 5.128
                 r2->Kleftnew = onebytworho0 * r2->pleftnew * r2->pleftnew;   // 5.128
+
                 #if NO_BERNOULLI_EFFECT
                     l->Krightnew = r1->Kleftnew = r2->Kleftnew = 0;
                 #endif
+
                 l->Qrightnew = r1->Qleftnew = r2->Qleftnew =
                     (l->eright + r1->eleft + r2->eleft + twoc2Dt * (l->Jhalf - r1->Jhalf - r2->Jhalf) +
                      l->Krightnew * l->Vnew + r1->Kleftnew * r1->Vnew + r2->Kleftnew * r2->Vnew) /
@@ -559,10 +576,10 @@ void Speaker::IterateSim() {
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
             } 
-        } // end tube loop? 
+        } // end second tube loop 
 
         // Save some results. 
-        if (n == (oversamp+ 1) / 2) {
+        if (n == ((long)oversamp+ 1) / 2) {
             double out = 0.0;
             for (int m = 0; m < M; m ++) {
                 Delta_Tube t = &(delta.tube[m]);
@@ -600,7 +617,7 @@ void Speaker::IterateSim() {
         }
 
     } // end oversample loop 
-    sample++;
+    ++sample;
 }
 /* End of file Artword_Speaker_to_Sound.cpp */
 
@@ -608,3 +625,96 @@ int Speaker::Speak()
 {
     return result->play();
 }
+
+void Speaker::UpdateSegment(int m) {
+            Delta_Tube t = &(delta.tube[m]);
+            if (! t -> left1 && ! t -> right1) return;
+
+            // New geometry. 
+
+            #if CONSTANT_TUBE_LENGTHS
+                t->Dxnew = t->Dx;
+            #else
+                t->dDxdtnew = (t->dDxdt + Dt * 10000.0 * (t->Dxeq - t->Dx)) /
+                    (1.0 + 200.0 * Dt);   // critical damping, 10 ms
+                t->Dxnew = t->Dx + t->dDxdtnew * Dt;
+            #endif
+
+            // 3-way: equal lengths. 
+            // This requires left tubes to be processed before right tubes. 
+            if (t->left1 && t->left1->right2) t->Dxnew = t->left1->Dxnew;
+
+            t->Dz = t->Dzeq;   // immediate... 
+            t->eleft = (t->Qleft - t->Kleft) * t->V;   // 5.115
+            t->eright = (t->Qright - t->Kright) * t->V;   // 5.115
+            t->e = 0.5 * (t->eleft + t->eright);   // 5.116
+            t->p = 0.5 * (t->pleft + t->pright);   // 5.116
+            t->DeltaP = t->e / t->V - rho0c2;   // 5.117
+            t->v = t->p / (rho0 + onebyc2 * t->DeltaP);   // 5.118
+
+            { 
+                double dDy = t->Dyeq - t->Dy;
+                double cubic = t->k3 * dDy * dDy;
+                Delta_Tube l1 = t->left1, l2 = t->left2, r1 = t->right1, r2 = t->right2;
+                tension = dDy * (t->k1 + cubic);
+                t->B = 2.0 * t->Brel * sqrt (t->mass * (t->k1 + 3.0 * cubic));
+                if (t->k1left1 != 0.0 && l1)
+                    tension += t->k1left1 * t->k1 * (dDy - (l1->Dyeq - l1->Dy));
+                if (t->k1left2 != 0.0 && l2)
+                    tension += t->k1left2 * t->k1 * (dDy - (l2->Dyeq - l2->Dy));
+                if (t->k1right1 != 0.0 && r1)
+                    tension += t->k1right1 * t->k1 * (dDy - (r1->Dyeq - r1->Dy));
+                if (t->k1right2 != 0.0 && r2)
+                    tension += t->k1right2 * t->k1 * (dDy - (r2->Dyeq - r2->Dy));
+            }
+
+            if (t->Dy < t->dy) {
+                if (t->Dy >= - t->dy) {
+                    double dDy = t->dy - t->Dy, dDy2 = dDy * dDy;
+                    tension += dDy2 / (4.0 * t->dy) * (t->s1 + 0.5 * t->s3 * dDy2);
+                    t->B += 2.0 * dDy / (2.0 * t->dy) *
+                        sqrt (t->mass * (t->s1 + t->s3 * dDy2));
+                } else {
+                    tension -= t->Dy * (t->s1 + t->s3 * (t->Dy * t->Dy + t->dy * t->dy));
+                    t->B += 2.0 * sqrt (t->mass * (t->s1 + t->s3 * (3.0 * t->Dy * t->Dy + t->dy * t->dy)));
+                }
+            }
+
+            t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) / (1.0 + t->B * Dt / t->mass);   // 5.119
+            t->Dynew = t->Dy + t->dDydtnew * Dt;   // 5.119
+            #if NO_MOVING_WALLS
+                t->Dynew = t->Dy;
+            #endif
+            t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + Dymin :
+                t->Dynew <= - t->dy ? Dymin :
+                (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
+            #if EQUAL_TUBE_WIDTHS
+                t->Anew = 0.0001;
+            #endif
+            t->Ahalf = 0.5 * (t->A + t->Anew);   // 5.120
+            t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
+            t->Vnew = t->Anew * t->Dxnew;   // 5.128
+
+            { 
+                double oneByDyav = t->Dz / t->A;
+                //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
+                if (t->Dy < 0.0)
+                    t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
+                else
+                    t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
+                        ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
+                t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
+            }
+
+            t->r = (1.0 + t->R * Dt / rho0) * t->Dxhalf / t->Anew;   // 5.122
+            t->ehalf = t->e + halfc2Dt * (t->Jleft - t->Jright);   // 5.123
+            t->phalf = (t->p + halfDt * (t->Qleft - t->Qright) / t->Dx) / (1.0 + Dtbytworho0 * t->R);   // 5.123
+            #if MASS_LEAPFROG
+                t->ehalf = t->ehalfold + 2.0 * halfc2Dt * (t->Jleft - t->Jright);
+            #endif
+            t->Jhalf = t->phalf * t->Ahalf;   // 5.124
+            t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf) + onebytworho0 * t->phalf * t->phalf;   // 5.124
+            #if NO_BERNOULLI_EFFECT
+                t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
+            #endif
+}// end Tube segment loop

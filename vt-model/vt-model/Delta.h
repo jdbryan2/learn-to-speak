@@ -20,6 +20,7 @@
  */
 #include <vector>
 #include <memory>
+#include <assert.h>
 #define MAX_NUMBER_OF_TUBES 89
 
 struct structDelta_Tube{
@@ -53,13 +54,21 @@ struct structDelta_Tube{
 
 typedef struct structDelta_Tube* Delta_Tube; // not a huge fan of obfuscating the pointer like this...
 
+/*
+ Preconditions:
+    numberOfTubes >= 1;
+ Postconditions:
+    result -> numberOfTubes = numberOfTubes;
+    all members of result -> tube [1..numberOfTubes] are zero or null,
+    except 'parallel', which is 1.
+ */
 class Delta {
 public:
     int numberOfTubes;              // >= 0
     structDelta_Tube tube[MAX_NUMBER_OF_TUBES];
 public:
-    Delta();
-    Delta(int numberOfTubes);
+    Delta():numberOfTubes(89){ assert(numberOfTubes >= 0 && numberOfTubes <= MAX_NUMBER_OF_TUBES); }
+    Delta(int numTubes):numberOfTubes(numTubes){}
 };
 
 /* End of file Delta.h */
