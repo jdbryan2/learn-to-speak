@@ -20,7 +20,8 @@
 
 using namespace std;
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char * argv[]) 
+{
     Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -65,7 +66,7 @@ int main(int argc, const char * argv[]) {
 
         // simple interface for playing back the sound that was generated
         int input =  0;// set to zero to test the speed of simulation.
-        while (input == 1){
+        while (true){
             cout << "Press (1) to play the sound or any key to quit.\n";
             cin >> input;
             if(input == 1) {

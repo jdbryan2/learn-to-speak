@@ -26,7 +26,8 @@
 #include <string>
 #include <random>
 
-class Speaker {
+class Speaker 
+{
 //private:
 public: 
     /* In the larynx. */
@@ -92,7 +93,7 @@ public:
     ~Speaker() { delete result;}
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
-    void UpdateSegment(int m); 
+//    void UpdateSegment(int m); 
     void InitSim(double totalTime);
     void IterateSim();
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1

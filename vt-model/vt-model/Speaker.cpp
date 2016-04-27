@@ -374,11 +374,11 @@ void Speaker::IterateSim()
         //Loop along each tube segment 
         for (int m = 0; m < M; m ++) {
 
-            UpdateSegment(m); // only defined for the purpose of threading. Remove and uncomment section below to speed up
+            //UpdateSegment(m); // only defined for the purpose of threading. Remove and uncomment section below to speed up
             // causes program to slow WAAAAAY down.
             //std::thread mythread(&Speaker::UpdateSegment, this, m);
             //mythread.detach();
-            /*
+            //
             Delta_Tube t = &(delta.tube[m]);
             if (! t -> left1 && ! t -> right1) continue;
 
@@ -469,7 +469,7 @@ void Speaker::IterateSim()
             #if NO_BERNOULLI_EFFECT
                 t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
             #endif
-                */
+                //*/
         }// end Tube segment loop
 
         // Loop tube segments again? Combining the loops makes it crap it's pants...
@@ -626,95 +626,96 @@ int Speaker::Speak()
     return result->play();
 }
 
-void Speaker::UpdateSegment(int m) {
-            Delta_Tube t = &(delta.tube[m]);
-            if (! t -> left1 && ! t -> right1) return;
+/*void inline Speaker::UpdateSegment(int m) 
+{
+    Delta_Tube t = &(delta.tube[m]);
+    if (! t -> left1 && ! t -> right1) return;
 
-            // New geometry. 
+    // New geometry. 
 
-            #if CONSTANT_TUBE_LENGTHS
-                t->Dxnew = t->Dx;
-            #else
-                t->dDxdtnew = (t->dDxdt + Dt * 10000.0 * (t->Dxeq - t->Dx)) /
-                    (1.0 + 200.0 * Dt);   // critical damping, 10 ms
-                t->Dxnew = t->Dx + t->dDxdtnew * Dt;
-            #endif
+    #if CONSTANT_TUBE_LENGTHS
+        t->Dxnew = t->Dx;
+    #else
+        t->dDxdtnew = (t->dDxdt + Dt * 10000.0 * (t->Dxeq - t->Dx)) /
+            (1.0 + 200.0 * Dt);   // critical damping, 10 ms
+        t->Dxnew = t->Dx + t->dDxdtnew * Dt;
+    #endif
 
-            // 3-way: equal lengths. 
-            // This requires left tubes to be processed before right tubes. 
-            if (t->left1 && t->left1->right2) t->Dxnew = t->left1->Dxnew;
+    // 3-way: equal lengths. 
+    // This requires left tubes to be processed before right tubes. 
+    if (t->left1 && t->left1->right2) t->Dxnew = t->left1->Dxnew;
 
-            t->Dz = t->Dzeq;   // immediate... 
-            t->eleft = (t->Qleft - t->Kleft) * t->V;   // 5.115
-            t->eright = (t->Qright - t->Kright) * t->V;   // 5.115
-            t->e = 0.5 * (t->eleft + t->eright);   // 5.116
-            t->p = 0.5 * (t->pleft + t->pright);   // 5.116
-            t->DeltaP = t->e / t->V - rho0c2;   // 5.117
-            t->v = t->p / (rho0 + onebyc2 * t->DeltaP);   // 5.118
+    t->Dz = t->Dzeq;   // immediate... 
+    t->eleft = (t->Qleft - t->Kleft) * t->V;   // 5.115
+    t->eright = (t->Qright - t->Kright) * t->V;   // 5.115
+    t->e = 0.5 * (t->eleft + t->eright);   // 5.116
+    t->p = 0.5 * (t->pleft + t->pright);   // 5.116
+    t->DeltaP = t->e / t->V - rho0c2;   // 5.117
+    t->v = t->p / (rho0 + onebyc2 * t->DeltaP);   // 5.118
 
-            { 
-                double dDy = t->Dyeq - t->Dy;
-                double cubic = t->k3 * dDy * dDy;
-                Delta_Tube l1 = t->left1, l2 = t->left2, r1 = t->right1, r2 = t->right2;
-                tension = dDy * (t->k1 + cubic);
-                t->B = 2.0 * t->Brel * sqrt (t->mass * (t->k1 + 3.0 * cubic));
-                if (t->k1left1 != 0.0 && l1)
-                    tension += t->k1left1 * t->k1 * (dDy - (l1->Dyeq - l1->Dy));
-                if (t->k1left2 != 0.0 && l2)
-                    tension += t->k1left2 * t->k1 * (dDy - (l2->Dyeq - l2->Dy));
-                if (t->k1right1 != 0.0 && r1)
-                    tension += t->k1right1 * t->k1 * (dDy - (r1->Dyeq - r1->Dy));
-                if (t->k1right2 != 0.0 && r2)
-                    tension += t->k1right2 * t->k1 * (dDy - (r2->Dyeq - r2->Dy));
-            }
+    { 
+        double dDy = t->Dyeq - t->Dy;
+        double cubic = t->k3 * dDy * dDy;
+        Delta_Tube l1 = t->left1, l2 = t->left2, r1 = t->right1, r2 = t->right2;
+        tension = dDy * (t->k1 + cubic);
+        t->B = 2.0 * t->Brel * sqrt (t->mass * (t->k1 + 3.0 * cubic));
+        if (t->k1left1 != 0.0 && l1)
+            tension += t->k1left1 * t->k1 * (dDy - (l1->Dyeq - l1->Dy));
+        if (t->k1left2 != 0.0 && l2)
+            tension += t->k1left2 * t->k1 * (dDy - (l2->Dyeq - l2->Dy));
+        if (t->k1right1 != 0.0 && r1)
+            tension += t->k1right1 * t->k1 * (dDy - (r1->Dyeq - r1->Dy));
+        if (t->k1right2 != 0.0 && r2)
+            tension += t->k1right2 * t->k1 * (dDy - (r2->Dyeq - r2->Dy));
+    }
 
-            if (t->Dy < t->dy) {
-                if (t->Dy >= - t->dy) {
-                    double dDy = t->dy - t->Dy, dDy2 = dDy * dDy;
-                    tension += dDy2 / (4.0 * t->dy) * (t->s1 + 0.5 * t->s3 * dDy2);
-                    t->B += 2.0 * dDy / (2.0 * t->dy) *
-                        sqrt (t->mass * (t->s1 + t->s3 * dDy2));
-                } else {
-                    tension -= t->Dy * (t->s1 + t->s3 * (t->Dy * t->Dy + t->dy * t->dy));
-                    t->B += 2.0 * sqrt (t->mass * (t->s1 + t->s3 * (3.0 * t->Dy * t->Dy + t->dy * t->dy)));
-                }
-            }
+    if (t->Dy < t->dy) {
+        if (t->Dy >= - t->dy) {
+            double dDy = t->dy - t->Dy, dDy2 = dDy * dDy;
+            tension += dDy2 / (4.0 * t->dy) * (t->s1 + 0.5 * t->s3 * dDy2);
+            t->B += 2.0 * dDy / (2.0 * t->dy) *
+                sqrt (t->mass * (t->s1 + t->s3 * dDy2));
+        } else {
+            tension -= t->Dy * (t->s1 + t->s3 * (t->Dy * t->Dy + t->dy * t->dy));
+            t->B += 2.0 * sqrt (t->mass * (t->s1 + t->s3 * (3.0 * t->Dy * t->Dy + t->dy * t->dy)));
+        }
+    }
 
-            t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) / (1.0 + t->B * Dt / t->mass);   // 5.119
-            t->Dynew = t->Dy + t->dDydtnew * Dt;   // 5.119
-            #if NO_MOVING_WALLS
-                t->Dynew = t->Dy;
-            #endif
-            t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + Dymin :
-                t->Dynew <= - t->dy ? Dymin :
-                (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
-            #if EQUAL_TUBE_WIDTHS
-                t->Anew = 0.0001;
-            #endif
-            t->Ahalf = 0.5 * (t->A + t->Anew);   // 5.120
-            t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
-            t->Vnew = t->Anew * t->Dxnew;   // 5.128
+    t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) / (1.0 + t->B * Dt / t->mass);   // 5.119
+    t->Dynew = t->Dy + t->dDydtnew * Dt;   // 5.119
+    #if NO_MOVING_WALLS
+        t->Dynew = t->Dy;
+    #endif
+    t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + Dymin :
+        t->Dynew <= - t->dy ? Dymin :
+        (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
+    #if EQUAL_TUBE_WIDTHS
+        t->Anew = 0.0001;
+    #endif
+    t->Ahalf = 0.5 * (t->A + t->Anew);   // 5.120
+    t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
+    t->Vnew = t->Anew * t->Dxnew;   // 5.128
 
-            { 
-                double oneByDyav = t->Dz / t->A;
-                //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
-                if (t->Dy < 0.0)
-                    t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
-                else
-                    t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
-                        ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
-                t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
-            }
+    { 
+        double oneByDyav = t->Dz / t->A;
+        //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
+        if (t->Dy < 0.0)
+            t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
+        else
+            t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
+                ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
+        t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
+    }
 
-            t->r = (1.0 + t->R * Dt / rho0) * t->Dxhalf / t->Anew;   // 5.122
-            t->ehalf = t->e + halfc2Dt * (t->Jleft - t->Jright);   // 5.123
-            t->phalf = (t->p + halfDt * (t->Qleft - t->Qright) / t->Dx) / (1.0 + Dtbytworho0 * t->R);   // 5.123
-            #if MASS_LEAPFROG
-                t->ehalf = t->ehalfold + 2.0 * halfc2Dt * (t->Jleft - t->Jright);
-            #endif
-            t->Jhalf = t->phalf * t->Ahalf;   // 5.124
-            t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf) + onebytworho0 * t->phalf * t->phalf;   // 5.124
-            #if NO_BERNOULLI_EFFECT
-                t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
-            #endif
-}// end Tube segment loop
+    t->r = (1.0 + t->R * Dt / rho0) * t->Dxhalf / t->Anew;   // 5.122
+    t->ehalf = t->e + halfc2Dt * (t->Jleft - t->Jright);   // 5.123
+    t->phalf = (t->p + halfDt * (t->Qleft - t->Qright) / t->Dx) / (1.0 + Dtbytworho0 * t->R);   // 5.123
+    #if MASS_LEAPFROG
+        t->ehalf = t->ehalfold + 2.0 * halfc2Dt * (t->Jleft - t->Jright);
+    #endif
+    t->Jhalf = t->phalf * t->Ahalf;   // 5.124
+    t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf) + onebytworho0 * t->phalf * t->phalf;   // 5.124
+    #if NO_BERNOULLI_EFFECT
+        t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
+    #endif
+}// end Tube segment loop */
