@@ -1,5 +1,5 @@
 #ifndef _support_functions_h_
-#define _support_fun
+#define _support_functions_h_
 //  support_funtions.h
 //  vt-model
 //

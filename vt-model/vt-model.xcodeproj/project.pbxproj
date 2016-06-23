@@ -8,14 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		C35541841C9AE7C9004D585F /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35541831C9AE7C9004D585F /* Sound.cpp */; };
-		C35B59531C932D8F00BAC233 /* Art_Speaker_Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35B59511C932D8F00BAC233 /* Art_Speaker_Delta.cpp */; };
 		C35B595F1C937BAE00BAC233 /* Artword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35B595D1C937BAE00BAC233 /* Artword.cpp */; };
 		C36B902F1C8CE93600B37B7B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B902E1C8CE93600B37B7B /* main.cpp */; };
 		C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B90671C8DCC4300B37B7B /* Speaker.cpp */; };
-		C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B906D1C8DF1C500B37B7B /* Delta.cpp */; };
-		C36B907E1C91EF5900B37B7B /* Art_Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B907C1C91EF5900B37B7B /* Art_Speaker.cpp */; };
-		C36B90811C91F57600B37B7B /* Speaker_to_Delta.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B907F1C91F57600B37B7B /* Speaker_to_Delta.cpp */; };
-		C3D576811C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3D5767F1C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.cpp */; };
+		C3EB287B1D1C230D0000AB02 /* support_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3EB28791D1C230D0000AB02 /* support_functions.cpp */; };
 		C3F641DF1C94CDBE0060F202 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641DD1C94CDBE0060F202 /* libportaudio.a */; };
 		C3F641E11C94CEB90060F202 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E01C94CEB90060F202 /* CoreAudio.framework */; };
 		C3F641E31C94CEC40060F202 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E21C94CEC40060F202 /* AudioToolbox.framework */; };
@@ -39,8 +35,6 @@
 /* Begin PBXFileReference section */
 		C35541821C9AE7AD004D585F /* Sound.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sound.h; sourceTree = "<group>"; };
 		C35541831C9AE7C9004D585F /* Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sound.cpp; sourceTree = "<group>"; };
-		C35B59511C932D8F00BAC233 /* Art_Speaker_Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Art_Speaker_Delta.cpp; sourceTree = "<group>"; };
-		C35B59521C932D8F00BAC233 /* Art_Speaker_Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Art_Speaker_Delta.h; sourceTree = "<group>"; };
 		C35B595C1C937BAE00BAC233 /* Artword_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword_def.h; sourceTree = "<group>"; };
 		C35B595D1C937BAE00BAC233 /* Artword.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Artword.cpp; sourceTree = "<group>"; };
 		C35B595E1C937BAE00BAC233 /* Artword.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword.h; sourceTree = "<group>"; };
@@ -49,16 +43,10 @@
 		C36B90661C8DCC4300B37B7B /* Speaker_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker_def.h; sourceTree = "<group>"; };
 		C36B90671C8DCC4300B37B7B /* Speaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker.cpp; sourceTree = "<group>"; };
 		C36B90681C8DCC4300B37B7B /* Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker.h; sourceTree = "<group>"; };
-		C36B906D1C8DF1C500B37B7B /* Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Delta.cpp; sourceTree = "<group>"; };
-		C36B906E1C8DF1C500B37B7B /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
 		C36B90741C91DBC500B37B7B /* Articulation_enums.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Articulation_enums.h; sourceTree = "<group>"; };
-		C36B907A1C91E59600B37B7B /* Articulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Articulation.h; sourceTree = "<group>"; };
-		C36B907C1C91EF5900B37B7B /* Art_Speaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Art_Speaker.cpp; sourceTree = "<group>"; };
-		C36B907D1C91EF5900B37B7B /* Art_Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Art_Speaker.h; sourceTree = "<group>"; };
-		C36B907F1C91F57600B37B7B /* Speaker_to_Delta.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker_to_Delta.cpp; sourceTree = "<group>"; };
-		C36B90801C91F57600B37B7B /* Speaker_to_Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker_to_Delta.h; sourceTree = "<group>"; };
-		C3D5767F1C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Artword_Speaker_to_Sound.cpp; sourceTree = "<group>"; };
-		C3D576801C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword_Speaker_to_Sound.h; sourceTree = "<group>"; };
+		C3EB28791D1C230D0000AB02 /* support_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = support_functions.cpp; sourceTree = "<group>"; };
+		C3EB287A1D1C230D0000AB02 /* support_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = support_functions.h; sourceTree = "<group>"; };
+		C3EB287C1D1C288C0000AB02 /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
 		C3F641DD1C94CDBE0060F202 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = external_libs/portaudio/libportaudio.a; sourceTree = "<group>"; };
 		C3F641DE1C94CDBE0060F202 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = external_libs/portaudio/portaudio.h; sourceTree = "<group>"; };
 		C3F641E01C94CEB90060F202 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -110,21 +98,13 @@
 		C36B902D1C8CE93600B37B7B /* vt-model */ = {
 			isa = PBXGroup;
 			children = (
-				C3D5767F1C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.cpp */,
-				C3D576801C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.h */,
+				C3EB287C1D1C288C0000AB02 /* Delta.h */,
+				C3EB28791D1C230D0000AB02 /* support_functions.cpp */,
+				C3EB287A1D1C230D0000AB02 /* support_functions.h */,
 				C35B595C1C937BAE00BAC233 /* Artword_def.h */,
 				C35B595D1C937BAE00BAC233 /* Artword.cpp */,
 				C35B595E1C937BAE00BAC233 /* Artword.h */,
-				C35B59511C932D8F00BAC233 /* Art_Speaker_Delta.cpp */,
-				C35B59521C932D8F00BAC233 /* Art_Speaker_Delta.h */,
-				C36B907F1C91F57600B37B7B /* Speaker_to_Delta.cpp */,
-				C36B90801C91F57600B37B7B /* Speaker_to_Delta.h */,
-				C36B907C1C91EF5900B37B7B /* Art_Speaker.cpp */,
-				C36B907D1C91EF5900B37B7B /* Art_Speaker.h */,
-				C36B907A1C91E59600B37B7B /* Articulation.h */,
 				C36B90741C91DBC500B37B7B /* Articulation_enums.h */,
-				C36B906D1C8DF1C500B37B7B /* Delta.cpp */,
-				C36B906E1C8DF1C500B37B7B /* Delta.h */,
 				C36B90661C8DCC4300B37B7B /* Speaker_def.h */,
 				C36B90671C8DCC4300B37B7B /* Speaker.cpp */,
 				C36B90681C8DCC4300B37B7B /* Speaker.h */,
@@ -208,15 +188,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C3D576811C9B12AF00AC3F72 /* Artword_Speaker_to_Sound.cpp in Sources */,
 				C36B902F1C8CE93600B37B7B /* main.cpp in Sources */,
-				C36B907E1C91EF5900B37B7B /* Art_Speaker.cpp in Sources */,
-				C35B59531C932D8F00BAC233 /* Art_Speaker_Delta.cpp in Sources */,
 				C35541841C9AE7C9004D585F /* Sound.cpp in Sources */,
 				C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */,
-				C36B906F1C8DF1C500B37B7B /* Delta.cpp in Sources */,
-				C36B90811C91F57600B37B7B /* Speaker_to_Delta.cpp in Sources */,
 				C35B595F1C937BAE00BAC233 /* Artword.cpp in Sources */,
+				C3EB287B1D1C230D0000AB02 /* support_functions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,6 +281,7 @@
 		C36B90331C8CE93600B37B7B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_USE_OPTIMIZATION_PROFILE = NO;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external_libs/portaudio",
@@ -316,7 +293,9 @@
 		C36B90341C8CE93600B37B7B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_OPTIMIZATION_LEVEL = 0;
+				CLANG_USE_OPTIMIZATION_PROFILE = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_UNROLL_LOOPS = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/external_libs/portaudio",
