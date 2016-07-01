@@ -25,6 +25,8 @@
 #include "Sound.h"
 #include <string>
 #include <random>
+#include <fstream>
+
 
 class Speaker 
 {
@@ -65,6 +67,8 @@ public:
     long sample;
 
     int M; // number of tubes
+    bool log_data = false;
+    std::ofstream * log_stream;
 
     double Dt, 
            rho0, 
@@ -99,9 +103,11 @@ public:
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
     double getMuscle(int muscle) const {return art[muscle];}
     int Speak();
+    int SaveSound(std::string filepath);
+    int InitDataLogger(std::string filepath);
     double NowSeconds(){return (sample)/fsamp;}
     long Now() {return sample;}
-    bool NotDone() {return (sample<(numberOfSamples-1));}
+    bool NotDone() {return (sample<=(numberOfSamples-1));}
 };
 
 /* End of file Speaker.h */

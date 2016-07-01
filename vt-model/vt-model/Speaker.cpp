@@ -28,6 +28,10 @@
 #include <iostream> //necessary?
 #include <thread>
 
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+
 
 /* constants for modifying acoustic simulation */
 #define Dymin  0.00001
@@ -589,6 +593,29 @@ void Speaker::IterateSim()
             }
             // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
             result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
+            if (log_data)
+            {
+                for(int ind=0; ind<delta.numberOfTubes; ind++)
+                {
+                    *log_stream << delta.tube[ind].Dxeq;
+                    *log_stream << "\t";
+                    *log_stream << delta.tube[ind].Dyeq;
+                    *log_stream << "\t";
+                    *log_stream << delta.tube[ind].Dzeq;
+                    *log_stream << "\t";
+                }
+                for(int ind=0; ind<kArt_muscle_MAX; ind++)
+                {
+                    *log_stream << art[ind];
+                    *log_stream << "\t";
+                }
+                *log_stream << result->z[sample];
+                *log_stream << "\n";
+                if (sample+1==numberOfSamples)
+                {
+                    log_stream->close();
+                }
+            }
         }
 
         // increment tube parameters for next iteration 
@@ -624,6 +651,46 @@ void Speaker::IterateSim()
 int Speaker::Speak() 
 {
     return result->play();
+}
+
+int Speaker::InitDataLogger(std::string filepath)
+{
+    // !!! This should be called only after InitSim() is called
+    log_data = true;
+    log_stream = new std::ofstream(filepath);
+    if(!log_stream)
+    {
+        exit(1);
+    }
+    *log_stream << "Sampling Frequency :";
+    *log_stream << fsamp;
+    *log_stream << "\n";
+    *log_stream << "Number of Samples :" ;
+    *log_stream << numberOfSamples;
+    *log_stream << "\n\n";
+    for(int ind=0; ind<delta.numberOfTubes; ind++)
+    {
+        *log_stream << ind;
+        *log_stream << "X\t";
+        *log_stream << ind;
+        *log_stream << "Y\t";
+        *log_stream << ind;
+        *log_stream << "Z\t";
+    }
+    for(int ind=0; ind<kArt_muscle_MAX; ind++)
+    {
+        *log_stream << "Art ";
+        *log_stream << ind;
+        *log_stream << "\t";
+    }
+    *log_stream << "Sound\n";
+    return 0;
+}
+
+
+int Speaker::SaveSound(std::string filepath)
+{
+    return result->save(filepath);
 }
 
 /*void inline Speaker::UpdateSegment(int m) 

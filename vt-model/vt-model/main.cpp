@@ -43,6 +43,8 @@ int main(int argc, const char * argv[])
 
         // initialize the simulation and tell it how many seconds to buffer
         female.InitSim(0.5);
+        
+        female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"));
 
         cout << "Simulating...\n";
         cout << "Oversample rate = " << oversamp << endl;
@@ -76,6 +78,7 @@ int main(int argc, const char * argv[])
             }
 
         }
+        female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded.log"));
 
     /*Artword apa(0.5);
     Sound apa_sound;

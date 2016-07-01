@@ -12,6 +12,10 @@
 #include <cmath>
 #include <stdio.h>
 
+#include <algorithm>
+#include <iostream>
+#include <fstream>
+
 int Sound::buffer_offset = 0;
 float Sound::amplitude = 0;
 
@@ -88,6 +92,24 @@ void Sound::scale() {
         if (std::abs(z[i])>amplitude)
             amplitude = std::abs(z[i]);
     }
+}
+
+int Sound::save(std::string filepath) {
+    std::ofstream out1(filepath);
+    if(!out1)
+    {
+        exit(1);
+    }
+    out1 << "Sampling Frequency :" ;
+    out1 << samplingFrequency;
+    out1 << "\n";
+    out1 << "Duration :" ;
+    out1 << duration;
+    out1 << "\n\n";
+    
+    copy(z.begin(),z.end(),std::ostream_iterator<float>(out1,"\n"));
+    out1.close();
+    return 0;
 }
 
 int Sound::paCallback( const void *inputBuffer, void *outputBuffer,

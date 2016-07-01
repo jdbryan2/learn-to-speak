@@ -17,3 +17,7 @@ vt-model/vt-model/build/vocal_tract
 
 # X-Code
 xcuserdata/
+
+# VT log files
+################
+*.log
