@@ -44,7 +44,7 @@ int main(int argc, const char * argv[])
         // initialize the simulation and tell it how many seconds to buffer
         female.InitSim(0.5);
         
-        female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"));
+        //female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"),800.0);
 
         cout << "Simulating...\n";
         cout << "Oversample rate = " << oversamp << endl;

@@ -177,12 +177,14 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 }
 
 //void Speaker_to_Delta (Speaker &me, Delta &thee) {
-void Speaker::InitializeTube() 
+void Speaker::InitializeTube()
 {// map speaker parameters into delta tube
 
     Speaker_to_Delta(*this, delta);
     
 }
+
+//TODO: Add a reset function to reset the logCounter
 
 //void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
 void Speaker::UpdateTube()
@@ -593,15 +595,18 @@ void Speaker::IterateSim()
             }
             // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
             result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
-            if (log_data)
+        }
+        if (log_data)
+        {
+            if(logCounter == numberOfOversampLogSamples)
             {
                 for(int ind=0; ind<delta.numberOfTubes; ind++)
                 {
-                    *log_stream << delta.tube[ind].Dxeq;
+                    *log_stream << delta.tube[ind].Dxnew;
                     *log_stream << "\t";
-                    *log_stream << delta.tube[ind].Dyeq;
+                    *log_stream << delta.tube[ind].Dynew;
                     *log_stream << "\t";
-                    *log_stream << delta.tube[ind].Dzeq;
+                    *log_stream << delta.tube[ind].Dz;
                     *log_stream << "\t";
                 }
                 for(int ind=0; ind<kArt_muscle_MAX; ind++)
@@ -609,16 +614,31 @@ void Speaker::IterateSim()
                     *log_stream << art[ind];
                     *log_stream << "\t";
                 }
-                *log_stream << result->z[sample];
+                // TODO: This is copied from above where the sound is recorded. Don't like this duplicate code.
+                //*********
+                /*double out = 0.0;
+                for (int m = 0; m < M; m ++) {
+                    Delta_Tube t = &(delta.tube[m]);
+                    out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
+                    if (! t->right1)
+                        out += t->Jrightnew - t->Jright;   // radiation of open tube end
+                }
+                out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
+                *log_stream << out; */
+                *log_stream << 1;
+                //***********
                 *log_stream << "\n";
-                if (sample+1==numberOfSamples)
+                if (logSample+1==numberOfLogSamples)
                 {
                     log_stream->close();
                 }
+                ++logSample;
+                logCounter = 0;
             }
+            ++logCounter;
         }
 
-        // increment tube parameters for next iteration 
+        // increment tube parameters for next iteration
         for (int m = 0; m < M; m ++) {
             Delta_Tube t = &(delta.tube[m]);
             t->Jleft = t->Jleftnew;
@@ -653,20 +673,28 @@ int Speaker::Speak()
     return result->play();
 }
 
-int Speaker::InitDataLogger(std::string filepath)
+int Speaker::InitDataLogger(std::string filepath, double log_freq)
 {
     // !!! This should be called only after InitSim() is called
     log_data = true;
     log_stream = new std::ofstream(filepath);
+    logfreq = log_freq;
+    numberOfOversampLogSamples = round((oversamp*fsamp)/logfreq);
+    numberOfLogSamples = result->duration*logfreq; //TODO: This could be wrong
+    logCounter = numberOfOversampLogSamples; // Setup logger to take first sample
+    logSample = 0;
     if(!log_stream)
     {
         exit(1);
     }
-    *log_stream << "Sampling Frequency :";
-    *log_stream << fsamp;
+    *log_stream << "Desired Sampling Frequency :";
+    *log_stream << logfreq;
+    *log_stream << "\n";
+    *log_stream << "Actual Sampling Frequency :";
+    *log_stream << logfreq;
     *log_stream << "\n";
     *log_stream << "Number of Samples :" ;
-    *log_stream << numberOfSamples;
+    *log_stream << numberOfLogSamples;
     *log_stream << "\n\n";
     for(int ind=0; ind<delta.numberOfTubes; ind++)
     {

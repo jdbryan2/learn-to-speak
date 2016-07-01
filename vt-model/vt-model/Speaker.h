@@ -69,6 +69,11 @@ public:
     int M; // number of tubes
     bool log_data = false;
     std::ofstream * log_stream;
+    double logfreq;
+    long numberOfLogSamples;
+    int numberOfOversampLogSamples;
+    int logCounter;
+    long logSample;
 
     double Dt, 
            rho0, 
@@ -104,7 +109,7 @@ public:
     double getMuscle(int muscle) const {return art[muscle];}
     int Speak();
     int SaveSound(std::string filepath);
-    int InitDataLogger(std::string filepath);
+    int InitDataLogger(std::string filepath,double log_freq);
     double NowSeconds(){return (sample)/fsamp;}
     long Now() {return sample;}
     bool NotDone() {return (sample<=(numberOfSamples-1));}
