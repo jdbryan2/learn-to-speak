@@ -20,8 +20,10 @@
 
 using namespace std;
 
-int main(int argc, const char * argv[]) 
+int main(int argc, const char * argv[])
+//int main()
 {
+    //double bananna1[500];
     Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -32,71 +34,52 @@ int main(int argc, const char * argv[])
     apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
     apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
 
-    for(int oversamp = 70; oversamp<71; oversamp+=10) {
-                        // speaker type, number of glotal masses, fsamp, oversamp
-        //Speaker female("Female",2, 22050, 25);
-        Speaker female("Female",2, 8000, oversamp);
+    int oversamp = 70;
+    // speaker type, number of glotal masses, fsamp, oversamp
+    //Speaker female("Female",2, 22050, 25);
+    Speaker female("Female",2, 8000, oversamp);
 
-        // pass the articulator positions into the speaker BEFORE initializing the simulation
-        // otherwise, we just get a strong discontinuity after the first instant
-        apa.intoArt(female.art, 0.0);
+    // pass the articulator positions into the speaker BEFORE initializing the simulation
+    // otherwise, we just get a strong discontinuity after the first instant
+    apa.intoArt(female.art, 0.0);
 
-        // initialize the simulation and tell it how many seconds to buffer
-        female.InitSim(0.5);
-        
-        //female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"),800.0);
-
-        cout << "Simulating...\n";
-        cout << "Oversample rate = " << oversamp << endl;
-        while (female.NotDone())
-        {
-            // adjust articulators using controller
-            // Artword class is being used for this currently
-            apa.intoArt(female.art, female.NowSeconds());
-
-
-            // generate the next acoustic sample
-            female.IterateSim();
-
-        }
-        cout << "Done!\n";
-        for(int i =0; i< 10; i++) {
-            cout << female.result->z[100*i] << ", ";
-        }
-        cout << endl;
-        //cout << female.Speak() << endl;
-
-        // simple interface for playing back the sound that was generated
-        int input =  0;// set to zero to test the speed of simulation.
-        while (true){
-            cout << "Press (1) to play the sound or any key to quit.\n";
-            cin >> input;
-            if(input == 1) {
-                cout << female.Speak() << endl;
-            } else {
-                break;
-            }
-
-        }
-        female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded.log"));
-
-    /*Artword apa(0.5);
-    Sound apa_sound;
-    apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
-    apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
-    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
-    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
-    apa.setTarget(kArt_muscle_LUNGS,0,0.2);
-    apa.setTarget(kArt_muscle_LUNGS,0.1,0);
-    apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
-    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
-
-    Artword_Speaker_to_Sound(&apa, &female, 22050, 25, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, nullptr, -1, &apa_sound);
-    int err = apa_sound.play();
-    err = apa_sound.play();
-    err = apa_sound.play();
+    // initialize the simulation and tell it how many seconds to buffer
+    female.InitSim(0.5);
     
-    std::cout << err << "\n";*/
+    //female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"),800.0);
+
+    cout << "Simulating...\n";
+    cout << "Oversample rate = " << oversamp << endl;
+    while (female.NotDone())
+    {
+        // adjust articulators using controller
+        // Artword class is being used for this currently
+        apa.intoArt(female.art, female.NowSeconds());
+
+
+        // generate the next acoustic sample
+        female.IterateSim();
+
     }
+    cout << "Done!\n";
+    for(int i =0; i< 10; i++)
+    {
+        cout << female.result->z[100*i] << ", ";
+    }
+    cout << endl;
+
+    // simple interface for playing back the sound that was generated
+    int input =  0;// set to zero to test the speed of simulation.
+    while (true)
+    {
+        cout << "Press (1) to play the sound or any key to quit.\n";
+        cin >> input;
+        if(input == 1) {
+            cout << female.Speak() << endl;
+        } else {
+            break;
+        }
+    }
+    female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded.log"));
     return 0;
 }

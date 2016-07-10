@@ -31,7 +31,10 @@
 class Speaker 
 {
 //private:
-public: 
+public:
+    Delta delta;
+    //double bannana[3];
+    //int bannana1[2];
     /* In the larynx. */
     Speaker_CordDimensions cord;
     Speaker_CordSpring lowerCord;
@@ -57,8 +60,9 @@ public:
     double relativeSize;  // different for female, male, child
 
     /* Incorporate Delta-tube model and vocal articulation */
-    Delta delta;
-    double art[kArt_muscle_MAX]={0}; // all values are defaulted to zero  
+    //Delta delta;
+    //double bannana[2];
+    double art[kArt_muscle_MAX]={0}; // all values are defaulted to zero
     
     // simulation parameters
     double fsamp;
@@ -71,8 +75,9 @@ public:
     std::ofstream * log_stream;
     double logfreq;
     long numberOfLogSamples;
-    int numberOfOversampLogSamples;
-    int logCounter;
+    // int bannana[2];
+    //int numberOfOversampLogSamples;
+    //int logCounter;
     long logSample;
 
     double Dt, 
@@ -109,10 +114,11 @@ public:
     double getMuscle(int muscle) const {return art[muscle];}
     int Speak();
     int SaveSound(std::string filepath);
-    int InitDataLogger(std::string filepath,double log_freq);
+    //int InitDataLogger(std::string filepath,double log_freq);
     double NowSeconds(){return (sample)/fsamp;}
     long Now() {return sample;}
     bool NotDone() {return (sample<=(numberOfSamples-1));}
+    //double bannana1[100];
 };
 
 /* End of file Speaker.h */

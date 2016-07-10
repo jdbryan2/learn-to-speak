@@ -26,7 +26,8 @@
 class Artword {
 public:
     double totalTime;
-    ArtwordData data[kArt_muscle_MAX]; // 
+    ArtwordData data[kArt_muscle_MAX]; //
+    //double bannana1[1];
 public:
     Artword(double _totalTime);
     void setTarget(int feature, double tim, double value);

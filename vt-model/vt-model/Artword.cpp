@@ -38,7 +38,7 @@ Artword::Artword(double totalTime) {
     for (int i = 0; i < kArt_muscle_MAX; i ++) {
         ArtwordData* f = &(data[i]);
         f->numberOfTargets = 2;
-        f->targets.push_back(art_target{});
+        f->targets.push_back(art_target{0.0,0.0});
         f->targets.push_back(art_target{totalTime,0.0});
         //f->_iTarget = 1;
     }

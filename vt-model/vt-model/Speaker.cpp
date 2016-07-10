@@ -74,8 +74,8 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 
 	double scaling;
 	if (kindOfSpeaker.compare("Male") == 0){ relativeSize = 1.1;}
-	else { if  (kindOfSpeaker.compare("Child") == 0) { relativeSize = 0.7;} 
-	else { relativeSize = 1.0; } }
+    else if (kindOfSpeaker.compare("Child") == 0) { relativeSize = 0.7;}
+	else { relativeSize = 1.0; }
 	scaling = relativeSize;
 
 	/* Laryngeal system. Data for male speaker from Ishizaka and Flanagan.	*/
@@ -88,24 +88,22 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 		upperCord.mass = 0.01e-3;
 		lowerCord.k1 = 10;   // Newtons per metre
 		upperCord.k1 = 4;
-	} else { 
-        if (kindOfSpeaker.compare("Male")==0) {
-		    lowerCord.thickness = 2.0e-3;   // dx, in metres
-		    upperCord.thickness = 1.0e-3;
-		    cord.length = 18e-3;
-		    lowerCord.mass = 0.1e-3;   // kilograms
-		    upperCord.mass = 0.05e-3;
-		    lowerCord.k1 = 12;   // Newtons per metre
-		    upperCord.k1 = 4;
-    	} else /* "Child" */ {
-		    lowerCord.thickness = 0.7e-3;   // dx, in metres
-		    upperCord.thickness = 0.3e-3;
-		    cord.length = 6e-3;
-    		lowerCord.mass = 0.003e-3;   // kilograms
-		    upperCord.mass = 0.002e-3;
-		    lowerCord.k1 = 6;   // Newtons per metre
-		    upperCord.k1 = 2;
-        }
+	} else if (kindOfSpeaker.compare("Male")==0) {
+        lowerCord.thickness = 2.0e-3;   // dx, in metres
+        upperCord.thickness = 1.0e-3;
+        cord.length = 18e-3;
+        lowerCord.mass = 0.1e-3;   // kilograms
+        upperCord.mass = 0.05e-3;
+        lowerCord.k1 = 12;   // Newtons per metre
+        upperCord.k1 = 4;
+    } else /* "Child" */ {
+        lowerCord.thickness = 0.7e-3;   // dx, in metres
+        upperCord.thickness = 0.3e-3;
+        cord.length = 6e-3;
+        lowerCord.mass = 0.003e-3;   // kilograms
+        upperCord.mass = 0.002e-3;
+        lowerCord.k1 = 6;   // Newtons per metre
+        upperCord.k1 = 2;
     }
 	cord.numberOfMasses = numberOfVocalCordMasses;
 	if (numberOfVocalCordMasses == 1) {
@@ -113,6 +111,10 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 		lowerCord.mass += upperCord.mass;
 		lowerCord.k1 += upperCord.k1;
 	}
+    
+    shunt.Dx = 0;
+    shunt.Dy = 0;
+    shunt.Dz = 0;
 
 	/* Supralaryngeal system. Data from Mermelstein. */
 
@@ -170,6 +172,7 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
             rrad = 1.0 - c * Dt / 0.02,   // radiation resistance, 5.135
             onebygrad = 1.0 / (1.0 + c * Dt / 0.02);   // radiation conductance, 5.135
 
+    tension = 0;
     #if NO_RADIATION_DAMPING
         rrad = 0;
         onebygrad = 0;
@@ -596,7 +599,7 @@ void Speaker::IterateSim()
             // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
             result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
         }
-        if (log_data)
+        /*if (log_data)
         {
             if(logCounter == numberOfOversampLogSamples)
             {
@@ -615,8 +618,8 @@ void Speaker::IterateSim()
                     *log_stream << "\t";
                 }
                 // TODO: This is copied from above where the sound is recorded. Don't like this duplicate code.
-                //*********
-                /*double out = 0.0;
+                //-*********
+                double out = 0.0;
                 for (int m = 0; m < M; m ++) {
                     Delta_Tube t = &(delta.tube[m]);
                     out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
@@ -624,9 +627,9 @@ void Speaker::IterateSim()
                         out += t->Jrightnew - t->Jright;   // radiation of open tube end
                 }
                 out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
-                *log_stream << out; */
-                *log_stream << 1;
-                //***********
+                *log_stream << out;
+                //(*log_stream) << 1;
+                //-***********
                 *log_stream << "\n";
                 if (logSample+1==numberOfLogSamples)
                 {
@@ -636,7 +639,7 @@ void Speaker::IterateSim()
                 logCounter = 0;
             }
             ++logCounter;
-        }
+        }*/
 
         // increment tube parameters for next iteration
         for (int m = 0; m < M; m ++) {
@@ -673,7 +676,7 @@ int Speaker::Speak()
     return result->play();
 }
 
-int Speaker::InitDataLogger(std::string filepath, double log_freq)
+/*int Speaker::InitDataLogger(std::string filepath, double log_freq)
 {
     // !!! This should be called only after InitSim() is called
     log_data = true;
@@ -713,7 +716,7 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
     }
     *log_stream << "Sound\n";
     return 0;
-}
+}*/
 
 
 int Speaker::SaveSound(std::string filepath)

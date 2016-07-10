@@ -15,8 +15,9 @@
 void Speaker_to_Delta (Speaker &me, Delta &thee) 
 {
 	double f = me.relativeSize * 1e-3;   // we shall use millimetres and grams
-	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;
-	int closed [40];
+	double xe [30] = {0.0}, ye [30] = {0.0}, xi [30] = {0.0}, yi [30] = {0.0},
+           xmm [30] = {0.0}, ymm [30] = {0.0}, dx = 0, dy = 0;
+	int closed [40] = {0};
 	int itube;
 	assert(me.cord.numberOfMasses == 1 || me.cord.numberOfMasses == 2 || me.cord.numberOfMasses == 10);
     assert(thee.numberOfTubes == 89);
@@ -206,7 +207,7 @@ void Speaker_to_Delta (Speaker &me, Delta &thee)
 
 	/* Vocal tract from neutral articulation. */
 	{
-        double art[kArt_muscle_MAX]={}; // all values are defaulted to zero  
+        double art[kArt_muscle_MAX]={0.0}; // all values are defaulted to zero
 		Art_Speaker_meshVocalTract (art, me, xi, yi, xe, ye, xmm, ymm, closed);
 	}
 
@@ -253,7 +254,13 @@ void Speaker_to_Delta (Speaker &me, Delta &thee)
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 		t -> dy = 1e-5;
 		t -> left1 = &(thee.tube[itube-1]);   // connect to the previous tube on the left
-		t -> right1 = &(thee.tube[itube+1]);   // connect to the next tube on the right
+        // TODO: This is overrunning the buffer here, but it gets turned into a null pointer below. Is this a problem?
+        /*if (itube==thee.numberOfTubes-1)
+            t -> right1 = nullptr;
+        else
+            t -> right1 = &(thee.tube[itube+1]);   // connect to the next tube on the right */
+        t -> right1 = &(thee.tube[itube+1]);   // connect to the next tube on the right
+
 	}
 
 	/***** Connections: boundaries and interfaces. *****/
@@ -597,8 +604,9 @@ void Art_Speaker_meshVocalTract (double *art, Speaker &speaker,
 	double xmm [], double ymm [], int closed [])
 {
 	double f = speaker.relativeSize * 1e-3;
-	double intX [1 + 16], intY [1 + 16], extX [1 + 11], extY [1 + 11], d_angle;
-	double xm [40], ym [40];
+    double intX [1 + 16] = {0.0}, intY [1 + 16] = {0.0}, extX [1 + 11] = {0.0},
+           extY [1 + 11] = {0.0}, d_angle = {0.0};
+    double xm [40] = {0.0}, ym [40] = {0.0};
 	int i;
 
 	Art_Speaker_toVocalTract (art, speaker, intX, intY, extX, extY, & bodyX, & bodyY);

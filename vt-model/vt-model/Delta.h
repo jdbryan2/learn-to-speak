@@ -33,23 +33,24 @@ struct structDelta_Tube{
     
     /* Controlled by articulation: quasistatic. */
     
-    double Dxeq, Dyeq, Dzeq = 0;
-    double mass, k1, k3, Brel, s1, s3, dy = 0;
-    double k1left1, k1left2, k1right1, k1right2 = 0;   /* Linear coupling factors. */
-    double k3left1, k3left2, k3right1, k3right2 = 0;   /* Cubic coupling factors. */
+    double Dxeq = 0, Dyeq = 0, Dzeq = 0;
+    double mass = 0, k1 = 0, k3 = 0, Brel = 0, s1 = 0, s3 = 0, dy = 0;
+    double k1left1 = 0, k1left2 = 0, k1right1 = 0, k1right2 = 0;   /* Linear coupling factors. */
+    double k3left1 = 0, k3left2 = 0, k3right1 = 0, k3right2 = 0;   /* Cubic coupling factors. */
     
     /* Dynamic. */
     
-    double Jhalf, Jleft, Jleftnew, Jright, Jrightnew = 0;
-    double Qhalf, Qleft, Qleftnew, Qright, Qrightnew = 0;
-    double Dx, Dxnew, dDxdt, dDxdtnew, Dxhalf = 0;
-    double Dy, Dynew, dDydt, dDydtnew = 0;
+    double Jhalf = 0, Jleft = 0, Jleftnew = 0, Jright = 0, Jrightnew = 0;
+    double Qhalf = 0, Qleft = 0, Qleftnew = 0, Qright = 0, Qrightnew = 0;
+    double Dx = 0, Dxnew = 0, dDxdt = 0, dDxdtnew = 0, Dxhalf = 0;
+    double Dy = 0, Dynew = 0, dDydt = 0, dDydtnew = 0;
     double Dz = 0;
-    double A, Ahalf, Anew, V, Vnew = 0;
-    double e, ehalf, eleft, eleftnew, eright, erightnew, ehalfold = 0;
-    double p, phalf, pleft, pleftnew, pright, prightnew = 0;
-    double Kleft, Kleftnew, Kright, Krightnew, Pturbright, Pturbrightnew = 0;
-    double B, r, R, DeltaP, v = 0;
+    double A = 0, Ahalf = 0, Anew = 0, V = 0, Vnew = 0;
+    double e = 0, ehalf = 0, eleft = 0, eleftnew = 0, eright = 0, erightnew = 0, ehalfold = 0;
+    double p = 0, phalf = 0, pleft = 0, pleftnew = 0, pright = 0, prightnew = 0;
+    double Kleft = 0, Kleftnew = 0, Kright = 0, Krightnew = 0, Pturbright = 0, Pturbrightnew = 0;
+    double B = 0, r = 0, R = 0, DeltaP = 0, v = 0;
+    //double bannana[8];
 };
 
 typedef struct structDelta_Tube* Delta_Tube; // not a huge fan of obfuscating the pointer like this...
@@ -66,9 +67,10 @@ class Delta {
 public:
     int numberOfTubes;              // >= 0
     structDelta_Tube tube[MAX_NUMBER_OF_TUBES];
+    //double bannana1[1];
 public:
-    Delta():numberOfTubes(89){ assert(numberOfTubes >= 0 && numberOfTubes <= MAX_NUMBER_OF_TUBES); }
-    Delta(int numTubes):numberOfTubes(numTubes){}
+    Delta():numberOfTubes(MAX_NUMBER_OF_TUBES){}
+    Delta(int numTubes):numberOfTubes(numTubes){ assert(numTubes >= 1 && numberOfTubes <= MAX_NUMBER_OF_TUBES); }
 };
 
 /* End of file Delta.h */
