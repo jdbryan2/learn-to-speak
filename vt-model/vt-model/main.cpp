@@ -10,20 +10,12 @@
 
 #include <iostream>
 #include "Speaker.h"
-//#include "Delta.h"
-//#include "Articulation_enums.h"
-//#include "Articulation.h"
-//#include "Speaker_to_Delta.h"
-//#include "Art_Speaker_Delta.h"
 #include "Artword.h"
-//#include "Artword_Speaker_to_Sound.h"
 
 using namespace std;
 
-int main(int argc, const char * argv[])
-//int main()
+int main()
 {
-    //double bananna1[500];
     Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -36,7 +28,6 @@ int main(int argc, const char * argv[])
 
     int oversamp = 70;
     // speaker type, number of glotal masses, fsamp, oversamp
-    //Speaker female("Female",2, 22050, 25);
     Speaker female("Female",2, 8000, oversamp);
 
     // pass the articulator positions into the speaker BEFORE initializing the simulation
@@ -44,9 +35,7 @@ int main(int argc, const char * argv[])
     apa.intoArt(female.art, 0.0);
 
     // initialize the simulation and tell it how many seconds to buffer
-    female.InitSim(0.5);
-    
-    //female.InitDataLogger(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog.log"),800.0);
+    female.InitSim(0.5, std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog1.log"),800.0);
 
     cout << "Simulating...\n";
     cout << "Oversample rate = " << oversamp << endl;
@@ -59,6 +48,10 @@ int main(int argc, const char * argv[])
 
         // generate the next acoustic sample
         female.IterateSim();
+        if (!female.NotDone())
+        {
+            double bannana = 1;
+        }
 
     }
     cout << "Done!\n";
@@ -80,6 +73,6 @@ int main(int argc, const char * argv[])
             break;
         }
     }
-    female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded.log"));
+    female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded1.log"));
     return 0;
 }

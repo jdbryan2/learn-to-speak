@@ -50,24 +50,14 @@ struct structDelta_Tube{
     double p = 0, phalf = 0, pleft = 0, pleftnew = 0, pright = 0, prightnew = 0;
     double Kleft = 0, Kleftnew = 0, Kright = 0, Krightnew = 0, Pturbright = 0, Pturbrightnew = 0;
     double B = 0, r = 0, R = 0, DeltaP = 0, v = 0;
-    //double bannana[8];
 };
 
 typedef struct structDelta_Tube* Delta_Tube; // not a huge fan of obfuscating the pointer like this...
 
-/*
- Preconditions:
-    numberOfTubes >= 1;
- Postconditions:
-    result -> numberOfTubes = numberOfTubes;
-    all members of result -> tube [1..numberOfTubes] are zero or null,
-    except 'parallel', which is 1.
- */
 class Delta {
 public:
-    int numberOfTubes;              // >= 0
+    int numberOfTubes;              // >= 1
     structDelta_Tube tube[MAX_NUMBER_OF_TUBES];
-    //double bannana1[1];
 public:
     Delta():numberOfTubes(MAX_NUMBER_OF_TUBES){}
     Delta(int numTubes):numberOfTubes(numTubes){ assert(numTubes >= 1 && numberOfTubes <= MAX_NUMBER_OF_TUBES); }

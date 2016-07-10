@@ -29,7 +29,6 @@ typedef struct {
 typedef struct {
     int numberOfTargets;
     std::vector <art_target> targets;
-    // int _iTarget;
 } ArtwordData;
 
 /* End of file Artword_def.h */

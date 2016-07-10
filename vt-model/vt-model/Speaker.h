@@ -30,18 +30,16 @@
 
 class Speaker 
 {
-//private:
 public:
-    Delta delta;
-    //double bannana[3];
-    //int bannana1[2];
-    /* In the larynx. */
+    
+    // ***** FIXED PARAMETERS FOR MERMELSTEIN'S MODEL ***** //
+    double relativeSize;  // Relative size of the parameters. Different for female, male, child.
+    // In the larynx.
     Speaker_CordDimensions cord;
     Speaker_CordSpring lowerCord;
     Speaker_CordSpring upperCord;
     Speaker_GlottalShunt shunt;
-    
-    /* Above the larynx. */
+    // Above the larynx.
     Speaker_Velum velum;
     Speaker_Palate palate;
     Speaker_Tip tip;
@@ -52,73 +50,68 @@ public:
     Speaker_UpperTeeth upperTeeth;
     Speaker_Lip lowerLip;
     Speaker_Lip upperLip;
-    
-    /* In the nasal cavity. */
+    // In the nasal cavity.
     Speaker_Nose nose;
     
-    /* relative size of the parameters. */
-    double relativeSize;  // different for female, male, child
-
-    /* Incorporate Delta-tube model and vocal articulation */
-    //Delta delta;
-    //double bannana[2];
-    double art[kArt_muscle_MAX]={0}; // all values are defaulted to zero
-    
-    // simulation parameters
+    // ***** SIMULATION VARIABLES ***** //
     double fsamp;
-    double oversamp; // was double but caused trouble with even values...
+    double oversamp;
     long numberOfSamples;
     long sample;
-
-    int M; // number of tubes
-    bool log_data = false;
-    std::ofstream * log_stream;
-    double logfreq;
-    long numberOfLogSamples;
-    // int bannana[2];
-    //int numberOfOversampLogSamples;
-    //int logCounter;
-    long logSample;
-
-    double Dt, 
-           rho0, 
-           c, 
-           onebyc2, 
-           rho0c2, 
-           halfDt, 
-           twoDt, 
-           halfc2Dt, 
-           twoc2Dt, 
-           onebytworho0,
-           Dtbytworho0;
     
-    double tension, 
-           rrad, 
-           onebygrad, 
-           totalVolume;
-
-    Sound *result;
-
+    Delta delta; // Delta-tube model and vocal articulation
+    int M; // number of tubes
+    double art[kArt_muscle_MAX]={0}; // Activations of muscles
+    
+    double Dt,
+    rho0,
+    c,
+    onebyc2,
+    rho0c2,
+    halfDt,
+    twoDt,
+    halfc2Dt,
+    twoc2Dt,
+    onebytworho0,
+    Dtbytworho0;
+    
+    double tension,
+    rrad,
+    onebygrad,
+    totalVolume;
+    
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
+    
+    // ***** DATA LOGGING VARIABLES ***** //
+    bool log_data = false;
+    std::ofstream * log_stream = nullptr;
+    double logfreq;
+    long numberOfLogSamples;
+    int numberOfOversampLogSamples;
+    int logCounter;
+    long logSample;
+    Sound *result;
 
-//public: 
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
     ~Speaker() { delete result;}
-    void InitializeTube(); // map speaker parameters into delta tube
-    void UpdateTube();
-//    void UpdateSegment(int m); 
-    void InitSim(double totalTime);
+    void InitSim(double totalTime, std::string filepath = std::string(),double log_freq = 0);
     void IterateSim();
+    bool NotDone() {return (sample<=(numberOfSamples-1));}
+    double NowSeconds(){return (sample)/fsamp;}
+    long Now() {return sample;}
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
     double getMuscle(int muscle) const {return art[muscle];}
     int Speak();
     int SaveSound(std::string filepath);
-    //int InitDataLogger(std::string filepath,double log_freq);
-    double NowSeconds(){return (sample)/fsamp;}
-    long Now() {return sample;}
-    bool NotDone() {return (sample<=(numberOfSamples-1));}
-    //double bannana1[100];
+    
+private:
+    void InitializeTube(); // map speaker parameters into delta tube
+    void UpdateTube();
+    //void UpdateSegment(int m);
+    double ComputeSound();
+    int InitDataLogger(std::string filepath,double log_freq);
+    void Log();
 };
 
 /* End of file Speaker.h */

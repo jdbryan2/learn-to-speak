@@ -19,15 +19,13 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-//#include "Articulation.h"
 #include "Articulation_enums.h"
 #include "Artword_def.h"
 
 class Artword {
 public:
     double totalTime;
-    ArtwordData data[kArt_muscle_MAX]; //
-    //double bannana1[1];
+    ArtwordData data[kArt_muscle_MAX];
 public:
     Artword(double _totalTime);
     void setTarget(int feature, double tim, double value);

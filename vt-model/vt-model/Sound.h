@@ -32,6 +32,8 @@ public:
     Sound();
     ~Sound();
     void Initialize(long _numberOfChannels, float _duration, double _samplingFrequency);
+    void ResetArray(float _duration);
+    bool IsInitialized() {return isInitialized;};
     int play();
     void scale();
     int save(std::string filepath);

@@ -158,20 +158,27 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 
     InitializeTube();
     result = new Sound();
-    Dt = 1.0 / fsamp / oversamp,
-			rho0 = 1.14,
-			c = 353.0,
-			onebyc2 = 1.0 / (c * c),
-			rho0c2 = rho0 * c * c,
-			halfDt = 0.5 * Dt,
-			twoDt = 2.0 * Dt,
-			halfc2Dt = 0.5 * c * c * Dt,
-			twoc2Dt = 2.0 * c * c * Dt,
-			onebytworho0 = 1.0 / (2.0 * rho0),
-			Dtbytworho0 = Dt / (2.0 * rho0),
-            rrad = 1.0 - c * Dt / 0.02,   // radiation resistance, 5.135
-            onebygrad = 1.0 / (1.0 + c * Dt / 0.02);   // radiation conductance, 5.135
+}
 
+//void Speaker_to_Delta (Speaker &me, Delta &thee) {
+void Speaker::InitializeTube()
+{
+    // Map speaker parameters into delta tube
+    // TODO: Determine wheter it is necessary to call this each time we run a new articulation with the same speaker
+    Speaker_to_Delta(*this, delta);
+    Dt = 1.0 / fsamp / oversamp,
+    rho0 = 1.14,
+    c = 353.0,
+    onebyc2 = 1.0 / (c * c),
+    rho0c2 = rho0 * c * c,
+    halfDt = 0.5 * Dt,
+    twoDt = 2.0 * Dt,
+    halfc2Dt = 0.5 * c * c * Dt,
+    twoc2Dt = 2.0 * c * c * Dt,
+    onebytworho0 = 1.0 / (2.0 * rho0),
+    Dtbytworho0 = Dt / (2.0 * rho0),
+    rrad = 1.0 - c * Dt / 0.02,   // radiation resistance, 5.135
+    onebygrad = 1.0 / (1.0 + c * Dt / 0.02);   // radiation conductance, 5.135
     tension = 0;
     #if NO_RADIATION_DAMPING
         rrad = 0;
@@ -179,17 +186,10 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
     #endif
 }
 
-//void Speaker_to_Delta (Speaker &me, Delta &thee) {
-void Speaker::InitializeTube()
-{// map speaker parameters into delta tube
-
-    Speaker_to_Delta(*this, delta);
-    
-}
-
 //TODO: Add a reset function to reset the logCounter
 
 //void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
+// TODO: MOVE THIS FUNCTION INTO DELTA.CPP
 void Speaker::UpdateTube()
 {
     Speaker &speaker = *this;
@@ -199,18 +199,18 @@ void Speaker::UpdateTube()
 	int closed [40];
 	int itube;
 
-	/* Lungs. */
+	// Lungs.
 
 	for (itube = 6; itube <= 17; itube ++)
 		delta.tube[itube]. Dyeq = 120 * f * (1 + art [kArt_muscle_LUNGS]);
 
-	/* Glottis. */
+	// Glottis.
 
 	{
 		Delta_Tube t = &(delta.tube[35]);
 		t -> Dyeq = f * (5 - 10 * art [kArt_muscle_INTERARYTENOID]
 		      + 3 * art [kArt_muscle_POSTERIOR_CRICOARYTENOID]
-		      - 3 * art [kArt_muscle_LATERAL_CRICOARYTENOID]);   /* 4.38 */
+		      - 3 * art [kArt_muscle_LATERAL_CRICOARYTENOID]);   // 4.38
 		t -> k1 = speaker.lowerCord.k1 * (1 + art [kArt_muscle_CRICOTHYROID]);
 		t -> k3 = t -> k1 * (20 / t -> Dz) * (20 / t -> Dz);
 	}
@@ -232,7 +232,7 @@ void Speaker::UpdateTube()
 				(20 / delta.tube[itube]. Dz) * (20 / delta.tube[itube]. Dz);
 	}
 
-	/* Vocal tract. */
+	// Vocal tract.
 
 	Art_Speaker_meshVocalTract (art, speaker, xi, yi, xe, ye, xmm, ymm, closed);
 	for (itube = 37; itube <= 63; itube ++) {
@@ -245,11 +245,11 @@ void Speaker::UpdateTube()
 		if (closed [i]) t -> Dyeq = - t -> Dyeq;
 	}
 	delta.tube[64]. Dxeq = delta.tube[50]. Dxeq = delta.tube[49]. Dxeq;
-	/* Voor [r]:  thy tube [59]. Brel = 0.1; thy tube [59]. k1 = 3; */
+	// Voor [r]:  thy tube [59]. Brel = 0.1; thy tube [59]. k1 = 3;
 
-	/* Nasopharyngeal port. */
+	// Nasopharyngeal port.
 
-	delta.tube[64]. Dyeq = f * (18 - 25 * art [kArt_muscle_LEVATOR_PALATINI]);   /* 4.40 */
+	delta.tube[64]. Dyeq = f * (18 - 25 * art [kArt_muscle_LEVATOR_PALATINI]);   // 4.40
 
 	for (itube = 0; itube < delta.numberOfTubes; itube ++) {
         Delta_Tube t = &(delta.tube[itube]);
@@ -259,12 +259,21 @@ void Speaker::UpdateTube()
 }
 
 
-void Speaker::InitSim(double totalTime)
+void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
 {
 	try {
-        assert(result!=nullptr);
-
-		result->Initialize(1, totalTime, fsamp);
+        InitializeTube();
+        if(!result->IsInitialized()) {
+            result->Initialize(1, totalTime, fsamp);
+        }
+        else {
+            result->ResetArray(totalTime);
+        }
+        // Test if the user wants to log data or not
+        if (!filepath.empty()) {
+            assert(log_freq>0);
+            InitDataLogger( filepath, log_freq);
+        }
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;
 
@@ -272,7 +281,6 @@ void Speaker::InitSim(double totalTime)
         double minTract [1+78], maxTract [1+78];   // for drawing
          */
 
-		//double tension, rrad, onebygrad, totalVolume;
         UpdateTube();
 		M = delta.numberOfTubes;
 
@@ -587,61 +595,16 @@ void Speaker::IterateSim()
             } 
         } // end second tube loop 
 
-        // Save some results. 
+        // Save Sound at middle sample
         if (n == ((long)oversamp+ 1) / 2) {
-            double out = 0.0;
-            for (int m = 0; m < M; m ++) {
-                Delta_Tube t = &(delta.tube[m]);
-                out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
-                if (! t->right1)
-                    out += t->Jrightnew - t->Jright;   // radiation of open tube end
-            }
-            // at sample 13 I am seeing Nan's and Inf's pop up in delta.tube[29] through [43]
-            result->z[sample] = out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
+            result->z[sample] = ComputeSound();
         }
-        /*if (log_data)
-        {
-            if(logCounter == numberOfOversampLogSamples)
-            {
-                for(int ind=0; ind<delta.numberOfTubes; ind++)
-                {
-                    *log_stream << delta.tube[ind].Dxnew;
-                    *log_stream << "\t";
-                    *log_stream << delta.tube[ind].Dynew;
-                    *log_stream << "\t";
-                    *log_stream << delta.tube[ind].Dz;
-                    *log_stream << "\t";
-                }
-                for(int ind=0; ind<kArt_muscle_MAX; ind++)
-                {
-                    *log_stream << art[ind];
-                    *log_stream << "\t";
-                }
-                // TODO: This is copied from above where the sound is recorded. Don't like this duplicate code.
-                //-*********
-                double out = 0.0;
-                for (int m = 0; m < M; m ++) {
-                    Delta_Tube t = &(delta.tube[m]);
-                    out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
-                    if (! t->right1)
-                        out += t->Jrightnew - t->Jright;   // radiation of open tube end
-                }
-                out /= 4.0 * M_PI * 0.4 * Dt;   // at 0.4 metres
-                *log_stream << out;
-                //(*log_stream) << 1;
-                //-***********
-                *log_stream << "\n";
-                if (logSample+1==numberOfLogSamples)
-                {
-                    log_stream->close();
-                }
-                ++logSample;
-                logCounter = 0;
-            }
-            ++logCounter;
-        }*/
+        // Outupt some data to log file
+        if (log_data) {
+            Log();
+        }
 
-        // increment tube parameters for next iteration
+        // Increment tube parameters for next iteration
         for (int m = 0; m < M; m ++) {
             Delta_Tube t = &(delta.tube[m]);
             t->Jleft = t->Jleftnew;
@@ -666,7 +629,7 @@ void Speaker::IterateSim()
             t->Pturbright = t->Pturbrightnew;
         }
 
-    } // end oversample loop 
+    } // End oversample loop
     ++sample;
 }
 /* End of file Artword_Speaker_to_Sound.cpp */
@@ -676,14 +639,69 @@ int Speaker::Speak()
     return result->play();
 }
 
-/*int Speaker::InitDataLogger(std::string filepath, double log_freq)
+double Speaker::ComputeSound()
+{
+    double out = 0.0;
+    for (int m = 0; m < M; m ++)
+    {
+        Delta_Tube t = &(delta.tube[m]);
+        out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
+        if (! t->right1)
+            out += t->Jrightnew - t->Jright;   // radiation of open tube end
+    }
+    out /= 4.0 * M_PI * 0.4 * Dt;
+    return out;
+}
+
+void Speaker::Log()
+{
+    if(logCounter == numberOfOversampLogSamples)
+    {
+        for(int ind=0; ind<delta.numberOfTubes; ind++)
+        {
+            if(logSample+2==numberOfLogSamples && ind == 39)
+            {double bannana = 1;}
+            *log_stream << delta.tube[ind].Dxnew;
+            *log_stream << "\t";
+            *log_stream << delta.tube[ind].Dynew;
+            *log_stream << "\t";
+            *log_stream << delta.tube[ind].Dz;
+            *log_stream << "\t";
+        }
+        for(int ind=0; ind<kArt_muscle_MAX; ind++)
+        {
+            *log_stream << art[ind];
+            *log_stream << "\t";
+        }
+        *log_stream << ComputeSound();
+        *log_stream << "\n";
+        if (logSample+1==numberOfLogSamples)
+        {
+            // TODO: Think about if we need to do anything here or not
+            //log_stream->close();
+            log_data = false;
+        }
+        ++logSample;
+        logCounter = 0;
+    }
+    ++logCounter;
+}
+
+int Speaker::InitDataLogger(std::string filepath, double log_freq)
 {
     // !!! This should be called only after InitSim() is called
     log_data = true;
-    log_stream = new std::ofstream(filepath);
+    if( log_stream == nullptr) {
+        log_stream = new std::ofstream(filepath);
+    }
+    else {
+        log_stream->close();
+        log_stream->clear();
+        log_stream->open(filepath);
+    }
     logfreq = log_freq;
     numberOfOversampLogSamples = round((oversamp*fsamp)/logfreq);
-    numberOfLogSamples = result->duration*logfreq; //TODO: This could be wrong
+    numberOfLogSamples = result->duration*logfreq+1; //TODO: This could be wrong
     logCounter = numberOfOversampLogSamples; // Setup logger to take first sample
     logSample = 0;
     if(!log_stream)
@@ -716,7 +734,7 @@ int Speaker::Speak()
     }
     *log_stream << "Sound\n";
     return 0;
-}*/
+}
 
 
 int Speaker::SaveSound(std::string filepath)

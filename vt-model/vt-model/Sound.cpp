@@ -11,7 +11,6 @@
 #include <math.h>
 #include <cmath>
 #include <stdio.h>
-
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -34,6 +33,16 @@ void Sound::Initialize(long _numberOfChannels, float _duration, double _sampling
     numberOfChannels = _numberOfChannels;
     duration = _duration;
     samplingFrequency = _samplingFrequency;
+    numberOfSamples = round(duration*samplingFrequency);
+    framesPerBuffer = MAX_BUFFER_LEN;
+    z.resize(numberOfSamples);
+    isInitialized = true;
+}
+
+void Sound::ResetArray(float _duration) {
+    assert(isInitialized);
+    std::vector<float>().swap(z);   // clear x reallocating
+    duration = _duration;
     numberOfSamples = round(duration*samplingFrequency);
     framesPerBuffer = MAX_BUFFER_LEN;
     z.resize(numberOfSamples);
