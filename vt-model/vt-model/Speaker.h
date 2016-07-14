@@ -97,7 +97,7 @@ public:
     ~Speaker() { delete result;}
     void InitSim(double totalTime, std::string filepath = std::string(),double log_freq = 0);
     void IterateSim();
-    bool NotDone() {return (sample<=(numberOfSamples-1));}
+    bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
     long Now() {return sample;}
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1

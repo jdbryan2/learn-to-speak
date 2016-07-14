@@ -659,7 +659,7 @@ void Speaker::Log()
     {
         for(int ind=0; ind<delta.numberOfTubes; ind++)
         {
-            if(logSample+2==numberOfLogSamples && ind == 39)
+            if(logSample+1==numberOfLogSamples && ind == 40)
             {double bannana = 1;}
             *log_stream << delta.tube[ind].Dxnew;
             *log_stream << "\t";
@@ -678,11 +678,12 @@ void Speaker::Log()
         if (logSample+1==numberOfLogSamples)
         {
             // TODO: Think about if we need to do anything here or not
-            //log_stream->close();
+            log_stream->flush();
             log_data = false;
         }
         ++logSample;
         logCounter = 0;
+        return;
     }
     ++logCounter;
 }
@@ -700,8 +701,9 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
         log_stream->open(filepath);
     }
     logfreq = log_freq;
-    numberOfOversampLogSamples = round((oversamp*fsamp)/logfreq);
-    numberOfLogSamples = result->duration*logfreq+1; //TODO: This could be wrong
+    numberOfOversampLogSamples = floor((oversamp*fsamp)/logfreq);
+    //TODO: Clean this all up. logfreq is not actual frequency of logging, because we are rounding.
+    numberOfLogSamples = result->duration*(oversamp*fsamp/(numberOfOversampLogSamples+1)); //TODO: This could be wrong
     logCounter = numberOfOversampLogSamples; // Setup logger to take first sample
     logSample = 0;
     if(!log_stream)
