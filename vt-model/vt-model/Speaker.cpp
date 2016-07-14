@@ -19,26 +19,14 @@
 
 #include "Speaker.h"
 #include <math.h>
-#include <assert.h>
-#define SMOOTH_LUNGS  true
-#define FIRST_TUBE  6
-#include "support_functions.h"
-
-
-#include <iostream> //necessary?
-#include <thread>
-
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 
-
-/* constants for modifying acoustic simulation */
-#define Dymin  0.00001
-#define criticalVelocity  10.0
-
-#define noiseFactor  0.1
-
+// ***** Constants for modifying acoustic simulation
+#define DYMIN  0.00001
+#define CRITICAL_VELOCITY  10.0
+#define NOISE_FACTOR  0.1
 #define MONITOR_SAMPLES  100
 
 // While debugging, some of these can be 1; otherwise, they are all 0: 
@@ -50,122 +38,352 @@
 #define NO_BERNOULLI_EFFECT  0
 #define MASS_LEAPFROG  0
 #define B91  0
-
-#define INTERMEDIATE_SOUNDS 0 // currently not supported...
-
-// end acoustic simulation constants
+// ***** End acoustic simulation constants
 
 using namespace std;
 
 Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq):
+    VocalTract(kindOfSpeaker,numberOfVocalCordMasses),
+    Delta(),
     fsamp(samplefreq),
     oversamp(oversamplefreq),
-    distribution(1.0, noiseFactor)
+    distribution(1.0, NOISE_FACTOR)
 {
-    /* Preconditions:								
-    *    1 <= numberOfVocalCordMasses <= 2;					
-    * Failures:									
-    *    Kind of speaker is not one of "Female", "Male", or "Child".	*/	
-
-	/* Supralaryngeal dimensions are taken from P. Mermelstein (1973):		
-	*    "Articulatory model for the study of speech production",		
-	*    Journal of the Acoustical Society of America 53,1070 - 1082.	
-	* That was a male speaker, so we need scaling for other speakers:		*/
-
-	double scaling;
-	if (kindOfSpeaker.compare("Male") == 0){ relativeSize = 1.1;}
-    else if (kindOfSpeaker.compare("Child") == 0) { relativeSize = 0.7;}
-	else { relativeSize = 1.0; }
-	scaling = relativeSize;
-
-	/* Laryngeal system. Data for male speaker from Ishizaka and Flanagan.	*/
-
-	if (kindOfSpeaker.compare("Female")==0) {
-		lowerCord.thickness = 1.4e-3;   // dx, in metres
-		upperCord.thickness = 0.7e-3;
-		cord.length = 10e-3;
-		lowerCord.mass = 0.02e-3;   // kilograms
-		upperCord.mass = 0.01e-3;
-		lowerCord.k1 = 10;   // Newtons per metre
-		upperCord.k1 = 4;
-	} else if (kindOfSpeaker.compare("Male")==0) {
-        lowerCord.thickness = 2.0e-3;   // dx, in metres
-        upperCord.thickness = 1.0e-3;
-        cord.length = 18e-3;
-        lowerCord.mass = 0.1e-3;   // kilograms
-        upperCord.mass = 0.05e-3;
-        lowerCord.k1 = 12;   // Newtons per metre
-        upperCord.k1 = 4;
-    } else /* "Child" */ {
-        lowerCord.thickness = 0.7e-3;   // dx, in metres
-        upperCord.thickness = 0.3e-3;
-        cord.length = 6e-3;
-        lowerCord.mass = 0.003e-3;   // kilograms
-        upperCord.mass = 0.002e-3;
-        lowerCord.k1 = 6;   // Newtons per metre
-        upperCord.k1 = 2;
-    }
-	cord.numberOfMasses = numberOfVocalCordMasses;
-	if (numberOfVocalCordMasses == 1) {
-		lowerCord.thickness += upperCord.thickness;
-		lowerCord.mass += upperCord.mass;
-		lowerCord.k1 += upperCord.k1;
-	}
-    
-    shunt.Dx = 0;
-    shunt.Dy = 0;
-    shunt.Dz = 0;
-
-	/* Supralaryngeal system. Data from Mermelstein. */
-
-	velum.x = -0.031 * scaling;
-	velum.y = 0.023 * scaling;
-	velum.a = atan2 (velum.y, velum.x);
-	palate.radius = sqrt (velum.x * velum.x + velum.y * velum.y);
-	tip.length = 0.034 * scaling;
-	neutralBodyDistance = 0.086 * scaling;
-	alveoli.x = 0.024 * scaling;
-	alveoli.y = 0.0302 * scaling;
-	alveoli.a = atan2 (alveoli.y, alveoli.x);
-	teethCavity.dx1 = -0.009 * scaling;
-	teethCavity.dx2 = -0.004 * scaling;
-	teethCavity.dy = -0.011 * scaling;
-	lowerTeeth.a = -0.30;   // radians
-	lowerTeeth.r = 0.113 * scaling;   // metres
-	upperTeeth.x = 0.036 * scaling;
-	upperTeeth.y = 0.026 * scaling;
-	lowerLip.dx = 0.010 * scaling;
-	lowerLip.dy = -0.004 * scaling;
-	upperLip.dx = 0.010 * scaling;
-	upperLip.dy = 0.004 * scaling;
-
-	nose.Dx = 0.007 * scaling;
-	nose.Dz = 0.014 * scaling;
-	nose.weq [0] = 0.018 * scaling;
-	nose.weq [1] = 0.016 * scaling;
-	nose.weq [2] = 0.014 * scaling;
-	nose.weq [3] = 0.020 * scaling;
-	nose.weq [4] = 0.023 * scaling;
-	nose.weq [5] = 0.020 * scaling;
-	nose.weq [6] = 0.035 * scaling;
-	nose.weq [7] = 0.035 * scaling;
-	nose.weq [8] = 0.030 * scaling;
-	nose.weq [9] = 0.022 * scaling;
-	nose.weq [10] = 0.016 * scaling;
-	nose.weq [11] = 0.010 * scaling;
-	nose.weq [12] = 0.012 * scaling;
-	nose.weq [13] = 0.013 * scaling;
-
     InitializeTube();
     result = new Sound();
 }
 
-//void Speaker_to_Delta (Speaker &me, Delta &thee) {
 void Speaker::InitializeTube()
 {
     // Map speaker parameters into delta tube
     // TODO: Determine wheter it is necessary to call this each time we run a new articulation with the same speaker
-    Speaker_to_Delta(*this, delta);
+    // *******************************MIGHT ONLY NEED CALLED ONCE TODO: DETERMINE IF IT RESETS ANY VALUES************** //
+    double f = relativeSize * 1e-3;   // we shall use millimetres and grams
+    int itube;
+    assert(cord.numberOfMasses == 1 || cord.numberOfMasses == 2 || cord.numberOfMasses == 10);
+    assert(numberOfTubes == 89);
+    
+    // Lungs: tubes 0..22.
+    for (itube = 0; itube <= 22; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        t -> Dx = t -> Dxeq = 10.0 * f;
+        t -> Dy = t -> Dyeq = 100.0 * f;
+        t -> Dz = t -> Dzeq = 230.0 * f;
+        t -> mass = 10.0 * relativeSize * t -> Dx * t -> Dz;   // 80 * f; 35 * Dx * Dz
+        t -> k1 = 200.0;   // 90000 * Dx * Dz; Newtons per metre
+        t -> k3 = 0.0;
+        t -> Brel = 0.8;
+        t -> parallel = 1000;
+    }
+    
+    // Bronchi: tubes 23..28.
+    
+    for (itube = 23; itube <= 28; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        t -> Dx = t -> Dxeq = 10.0 * f;
+        t -> Dy = t -> Dyeq = 15.0 * f;
+        t -> Dz = t -> Dzeq = 30.0 * f;
+        t -> mass = 10.0 * f;
+        t -> k1 = 40.0;   // 125000 * Dx * Dz; Newtons per metre
+        t -> k3 = 0.0;
+        t -> Brel = 0.8;
+    }
+    
+    // Trachea: tubes 29..34; four of these may be replaced by conus elasticus (see below).
+    
+    for (itube = 29; itube <= 34; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        t -> Dx = t -> Dxeq = 10.0 * f;
+        t -> Dy = t -> Dyeq = 15.0 * f;
+        t -> Dz = t -> Dzeq = 16.0 * f;
+        t -> mass = 5.0 * f;
+        t -> k1 = 160.0;   // 100000 * Dx * Dz; Newtons per metre
+        t -> k3 = 0.0;
+        t -> Brel = 0.8;
+    }
+    
+    if (SMOOTH_LUNGS) {
+        struct { int itube; double Dy, Dz, parallel; } data [] = {
+            {  6, 120.0, 240.0, 5000.0 }, {  7, 120.0, 240.0, 5000.0 }, {  8, 120.0, 240.0, 5000.0 },
+            {  9, 120.0, 240.0, 5000.0 }, { 10, 120.0, 240.0, 5000.0 }, { 11, 120.0, 240.0, 5000.0 },
+            { 12, 120.0, 240.0, 2500.0 }, { 13, 120.0, 240.0, 1250.0 }, { 14, 120.0, 240.0,  640.0 },
+            { 15, 120.0, 240.0,  320.0 }, { 16, 120.0, 240.0,  160.0 }, { 17, 120.0, 140.0,   80.0 },
+            { 18,  70.0,  70.0,   40.0 }, { 19,  35.0,  35.0,   20.0 }, { 20,  18.0,  18.0,   10.0 },
+            { 21,  12.0,  12.0,    5.0 }, { 22,  12.0,  12.0,    3.0 }, { 23,  18.0,   9.0,    2.0 },
+            { 24,  18.0,  19.0,    2.0 }, { 0 } };
+        int i;
+        for (i = 0; data [i]. itube; i ++) {
+            Delta_Tube t = &(tube[data[i].itube]);
+            t -> Dy = t -> Dyeq = data [i]. Dy * f;
+            t -> Dz = t -> Dzeq = data [i]. Dz * f;
+            t -> parallel = data [i]. parallel;
+        }
+        for (itube = 25; itube <= 34; itube ++) {
+            Delta_Tube t = &(tube[itube]);
+            t -> Dy = t -> Dyeq = 11.0 * f;
+            t -> Dz = t -> Dzeq = 14.0 * f;
+            t -> parallel = 1;
+        }
+        for (itube = FIRST_TUBE; itube <= 17; itube ++) {
+            Delta_Tube t = &(tube[itube]);
+            t -> Dx = t -> Dxeq = 10.0 * f;
+            t -> mass = 10.0 * relativeSize * t -> Dx * t -> Dz;   // 10 mm
+            t -> k1 = 1e5 * t -> Dx * t -> Dz;   // elastic tissue: 1 mbar/mm
+            t -> k3 = 0.0;
+            t -> Brel = 1.0;
+        }
+        for (itube = 18; itube <= 34; itube ++) {
+            Delta_Tube t = &(tube[itube]);
+            t -> Dx = t -> Dxeq = 10.0 * f;
+            t -> mass = 3.0 * relativeSize * t -> Dx * t -> Dz;   // 3 mm
+            t -> k1 = 10e5 * t -> Dx * t -> Dz;   // cartilage: 10 mbar/mm
+            t -> k3 = 0.0;
+            t -> Brel = 1.0;
+        }
+    }
+    
+    // Glottis: tubes 35 and 36; the last one may be disconnected (see below).
+    {
+        Delta_Tube t = &(tube[35]);
+        t -> Dx = t -> Dxeq = lowerCord.thickness;
+        t -> Dy = t -> Dyeq = 0.0;
+        t -> Dz = t -> Dzeq = cord.length;
+        t -> mass = lowerCord.mass;
+        t -> k1 = lowerCord.k1;
+        t -> k3 = t -> k1 * (20.0 / t -> Dz) * (20.0 / t -> Dz);
+        t -> Brel = 0.2;
+    }
+    
+    // Fill in the values for the upper part of the glottis (tube 36) only if there is no one-mass model.
+    if (cord.numberOfMasses >= 2) {
+        Delta_Tube t = &(tube[36]);
+        t -> Dx = t -> Dxeq = upperCord.thickness;
+        t -> Dy = t -> Dyeq = 0.0;
+        t -> Dz = t -> Dzeq = cord.length;
+        t -> mass = upperCord.mass;
+        t -> k1 = upperCord.k1;
+        t -> k3 = t -> k1 * (20.0 / t -> Dz) * (20.0 / t -> Dz);
+        t -> Brel = 0.2;
+        
+        // Couple spring with lower cord.
+        t -> k1left1 = tube[35].k1right1 = 1.0;
+    }
+    
+    // Fill in the values for the conus elasticus (tubes 78..85) only if we want to model it.
+    if (cord.numberOfMasses == 10) {
+        tube[78].Dx = tube[78]. Dxeq = 8.0 * f;
+        tube[79].Dx = tube[79].Dxeq = 7.0 * f;
+        tube[80].Dx = tube[80].Dxeq = 6.0 * f;
+        tube[81].Dx = tube[81].Dxeq = 5.0 * f;
+        tube[82].Dx = tube[82].Dxeq = 4.0 * f;
+        tube[83].Dx = tube[83].Dxeq = 0.75 * 4.0 * f + 0.25 * lowerCord.thickness;
+        tube[84].Dx = tube[84].Dxeq = 0.50 * 4.0 * f + 0.50 * lowerCord.thickness;
+        tube[85].Dx = tube[85].Dxeq = 0.25 * 4.0 * f + 0.75 * lowerCord.thickness;
+        
+        tube[78].Dy = tube[78].Dyeq = 11.0 * f;
+        tube[79].Dy = tube[79].Dyeq = 7.0 * f;
+        tube[80].Dy = tube[80].Dyeq = 4.0 * f;
+        tube[81].Dy = tube[81].Dyeq = 2.0 * f;
+        tube[82].Dy = tube[82].Dyeq = 1.0 * f;
+        tube[83].Dy = tube[83].Dyeq = 0.75 * f;
+        tube[84].Dy = tube[84].Dyeq = 0.50 * f;
+        tube[85].Dy = tube[85].Dyeq = 0.25 * f;
+        
+        tube[78].Dz = tube[78].Dzeq = 16.0 * f;
+        tube[79].Dz = tube[79].Dzeq = 16.0 * f;
+        tube[80].Dz = tube[80].Dzeq = 16.0 * f;
+        tube[81].Dz = tube[81].Dzeq = 16.0 * f;
+        tube[82].Dz = tube[82].Dzeq = 16.0 * f;
+        tube[83].Dz = tube[83].Dzeq = 0.75 * 16.0 * f + 0.25 * cord.length;
+        tube[84].Dz = tube[84].Dzeq = 0.50 * 16.0 * f + 0.50 * cord.length;
+        tube[85].Dz = tube[85].Dzeq = 0.25 * 16.0 * f + 0.75 * cord.length;
+        
+        tube[78].k1 = 160.0;
+        tube[79].k1 = 160.0;
+        tube[80].k1 = 160.0;
+        tube[81].k1 = 160.0;
+        tube[82].k1 = 160.0;
+        tube[83].k1 = 0.75 * 160.0 * f + 0.25 * lowerCord.k1;
+        tube[84].k1 = 0.50 * 160.0 * f + 0.50 * lowerCord.k1;
+        tube[85].k1 = 0.25 * 160.0 * f + 0.75 * lowerCord.k1;
+        
+        tube[78].Brel = 0.7;
+        tube[79].Brel = 0.6;
+        tube[80].Brel = 0.5;
+        tube[81].Brel = 0.4;
+        tube[82].Brel = 0.3;
+        tube[83].Brel = 0.2;
+        tube[84].Brel = 0.2;
+        tube[85].Brel = 0.2;
+        
+        for (itube = 78; itube <= 85; itube ++) {
+            Delta_Tube t = &(tube[itube]);
+            t -> mass = t -> Dx * t -> Dz / (30.0 * f);
+            t -> k3 = t -> k1 * (20.0 / t -> Dz) * (20.0 / t -> Dz);
+            t -> k1left1 = t -> k1right1 = 1.0;
+        }
+        tube[78].k1left1 = 0.0;
+        tube[35].k1left1 = 1.0;   // the essence: couple spring with lower vocal cords
+    }
+    
+     // Fill in the values of the glottal shunt only if we want to model it.
+    if (shunt.Dx != 0.0) {
+        for (itube = 86; itube <= 88; itube ++) {
+            Delta_Tube t = &(tube[itube]);
+            t -> Dx = t -> Dxeq = shunt.Dx;
+            t -> Dy = t -> Dyeq = shunt.Dy;
+            t -> Dz = t -> Dzeq = shunt.Dz;
+            t -> mass = 3.0 * upperCord.mass;   // heavy...
+            t -> k1 = 3.0 * upperCord.k1;   // ...and stiff...
+            t -> k3 = t -> k1 * (20.0 / t -> Dz) * (20.0 / t -> Dz);
+            t -> Brel = 3.0;   // ...and inelastic, so that the walls will not vibrate
+        }
+    }
+    
+    // Vocal tract from neutral articulation.
+    {
+        // TODO: Add virtual art to vt class
+        double art_0[kArt_muscle_MAX]={0.0}; // all values are defaulted to zero
+        // TODO: Don't like having to call this and then the MeshSum () it is confusing.
+        MeshUpper(art_0);
+    }
+    
+    // Pharynx and mouth: tubes 37..63.
+    for (itube = 37; itube <= 63; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        int i = itube - 36;
+        // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy) starting @ 1.
+        //       So for now let i = itube - 36 so that we start at xmm[37-36=1] instead of xmm[0]
+        t -> Dx = t -> Dxeq = MeshSumX(i);
+        t -> Dyeq = MeshSumY(i);
+        if (closed [i]) t -> Dyeq = - t -> Dyeq;
+        t -> Dy = t -> Dyeq;
+        t -> Dz = t -> Dzeq = 0.015;
+        t -> mass = 0.006;
+        t -> k1 = 30.0;
+        t -> k3 = 0.0;
+        t -> Brel = 1.0;
+    }
+    
+    // For tongue-tip vibration [r]:  tube [59]. Brel = 0.1; tube [59]. k1 = 3;
+    
+    // Nose: tubes 64..77.
+    
+    for (itube = 64; itube <= 77; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        t -> Dx = t -> Dxeq = nose.Dx;
+        t -> Dy = t -> Dyeq = nose.weq [itube - 64]; // Zero indexing nose array
+        t -> Dz = t -> Dzeq = nose.Dz;
+        t -> mass = 0.006;
+        t -> k1 = 100.0;
+        t -> k3 = 0.0;
+        t -> Brel = 1.0;
+    }
+    tube[64].Dy = tube[64].Dyeq = 0.0;   // override: nasopharyngeal port closed
+    
+    // The default structure: every tube is connected on the left to the previous tube (index one lower).
+    // This corresponds to a two-mass model of the vocal cords without shunt.
+    for (itube = SMOOTH_LUNGS ? FIRST_TUBE : 0; itube < numberOfTubes; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        t -> s1 = 5e6 * t -> Dx * t -> Dz;
+        t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
+        t -> dy = 1e-5;
+        t -> left1 = &(tube[itube-1]);   // connect to the previous tube on the left
+        // TODO: This is overrunning the buffer here, but it gets turned into a null pointer below. Is this a problem?
+        /*
+        if (itube==numberOfTubes-1)
+         t -> right1 = nullptr;
+        else
+         t -> right1 = &(tube[itube+1]);   // connect to the next tube on the right
+        */
+        t -> right1 = &(tube[itube+1]);   // connect to the next tube on the right
+        
+    }
+    // **** Connections: boundaries and interfaces. ***** //
+    
+    // The leftmost boundary: the diaphragm (tube 1). Disconnect on the left.
+    tube[SMOOTH_LUNGS ? FIRST_TUBE : 0]. left1 = nullptr;   // closed at diaphragm
+    
+    // Optional one-mass model of the vocal cords. Short-circuit over tube 37 (upper glottis).
+    if (cord.numberOfMasses == 1) {
+        
+        // Connect the right side of tube 35 to the left side of tube 37.
+        tube[35]. right1 = &(tube[37]);
+        tube[37]. left1 = &(tube[35]);
+        
+        // Disconnect tube 36 on both sides.
+        tube[36].left1 = tube[36].right1 = nullptr;
+    }
+    
+    // Optionally couple vocal cords with conus elasticus.
+    // Replace tubes 31..34 (upper trachea) by tubes 78..85 (conus elasticus).
+    if (cord.numberOfMasses == 10) {
+        
+        // Connect the right side of tube 30 to the left side of tube 78.
+        tube[30].right1 = &(tube[78]);
+        tube[78].left1 = &(tube[30]);
+        
+        // Connect the right side of tube 85 to the left side of tube 35.
+        tube[85].right1 = &(tube[35]);
+        tube[35].left1 = &(tube[85]);
+        
+        // Disconnect tubes 31..34 on both sides.
+        tube[31].left1 = tube[31].right1 = nullptr;
+        tube[32].left1 = tube[32].right1 = nullptr;
+        tube[33].left1 = tube[33].right1 = nullptr;
+        tube[34].left1 = tube[34].right1 = nullptr;
+    } else {
+        
+        // Disconnect tubes 78..85 on both sides.
+        for (itube = 78; itube <= 85; itube ++)
+            tube[itube].left1 = tube[itube].right1 = nullptr;
+    }
+    
+    // Optionally add a shunt parallel to the glottis.
+    // Create a side branch from tube 33/34 (or 84/85) to tube 37/38 with tubes 86..88.
+    if (shunt.Dx != 0.0) {
+        int topOfTrachea = ( cord.numberOfMasses == 10 ? 85 : 34 );
+        
+        // Create a three-way interface below the shunt.
+        // Connect lowest shunt tube (87) with top of trachea (33/34 or 84/85).
+        tube[topOfTrachea - 1].right2 = &(tube[86]);   // trachea to shunt
+        tube[86].left1 = &(tube[topOfTrachea - 1]);   // shunt to trachea
+        tube[86].Dxeq = tube[topOfTrachea - 1].Dxeq = tube[topOfTrachea].Dxeq;   // equal length
+        tube[86].Dx = tube[topOfTrachea - 1].Dx = tube[topOfTrachea].Dx;
+        
+        // Create a three-way interface above the shunt.
+        // Connect highest shunt tube (88) with bottom of pharynx (37/38).
+        tube[88].right1 = &(tube[38]);   // shunt to pharynx
+        tube[38].left2 = &(tube[88]);   // pharynx to shunt
+        tube[88].Dxeq = tube[38].Dxeq = tube[37].Dxeq;   // all three of equal length
+        tube[88].Dx = tube[38].Dx = tube[37].Dx;
+    } else {
+        
+        // Disconnect tubes 86..88 on both sides.
+        for (itube = 86; itube <= 88; itube ++)
+            tube[itube].left1 = tube[itube].right1 = nullptr;
+    }
+    
+    // Create a three-way interface at the nasopharyngeal port.
+    // Connect tubes 49 (pharynx), 50 (mouth), and 64 (nose).
+    tube[49].right2 = &(tube[64]);   // pharynx to nose
+    tube[64].left1 = &(tube[49]);   // nose to pharynx
+    tube[64].Dxeq = tube[50].Dxeq = tube[49].Dxeq;   // all three must be of equal length
+    tube[64].Dx = tube[50].Dx = tube[49].Dx;
+    
+    // The rightmost boundaries: the lips (tube 63) and the nostrils (tube 77).
+    // Disconnect on the right.
+    tube[63]. right1 = nullptr;   // radiation at the lips
+    tube[77]. right1 = nullptr;   // radiation at the nostrils
+    
+    for (itube = 0; itube < numberOfTubes; itube ++) {
+        Delta_Tube t = &(tube[itube]);
+        assert(! t->left1 || t->left1->right1 == t || t->left1->right2 == t);
+        assert(! t->left2 || t->left2->right1 == t);
+        assert(! t->right1 || t->right1->left1 == t || t->right1->left2 == t);
+        assert(! t->right2 || t->right2->left1 == t);
+    }
+    // *******************************MIGHT ONLY NEED CALLED ONCE TODO: DETERMINE IF IT RESETS ANY VALUES************** //
     Dt = 1.0 / fsamp / oversamp,
     rho0 = 1.14,
     c = 353.0,
@@ -186,73 +404,67 @@ void Speaker::InitializeTube()
     #endif
 }
 
-//TODO: Add a reset function to reset the logCounter
-
-//void Art_Speaker_intoDelta (Art &art, Speaker &speaker, Delta &delta)
 // TODO: MOVE THIS FUNCTION INTO DELTA.CPP
 void Speaker::UpdateTube()
 {
-    Speaker &speaker = *this;
-    
-	double f = speaker.relativeSize * 1e-3;
-	double xe [30], ye [30], xi [30], yi [30], xmm [30], ymm [30], dx, dy;
-	int closed [40];
+	double f = relativeSize * 1e-3;
 	int itube;
 
 	// Lungs.
 
 	for (itube = 6; itube <= 17; itube ++)
-		delta.tube[itube]. Dyeq = 120 * f * (1 + art [kArt_muscle_LUNGS]);
+		tube[itube]. Dyeq = 120 * f * (1 + art [kArt_muscle_LUNGS]);
 
 	// Glottis.
 
 	{
-		Delta_Tube t = &(delta.tube[35]);
+		Delta_Tube t = &(tube[35]);
 		t -> Dyeq = f * (5 - 10 * art [kArt_muscle_INTERARYTENOID]
 		      + 3 * art [kArt_muscle_POSTERIOR_CRICOARYTENOID]
 		      - 3 * art [kArt_muscle_LATERAL_CRICOARYTENOID]);   // 4.38
-		t -> k1 = speaker.lowerCord.k1 * (1 + art [kArt_muscle_CRICOTHYROID]);
+		t -> k1 = lowerCord.k1 * (1 + art [kArt_muscle_CRICOTHYROID]);
 		t -> k3 = t -> k1 * (20 / t -> Dz) * (20 / t -> Dz);
 	}
-	if (speaker.cord.numberOfMasses >= 2) {
-		Delta_Tube t = &(delta.tube[36]);
-		t -> Dyeq = delta.tube[35]. Dyeq;
-		t -> k1 = speaker.upperCord.k1 * (1 + art [kArt_muscle_CRICOTHYROID]);
+	if (cord.numberOfMasses >= 2) {
+		Delta_Tube t = &(tube[36]);
+		t -> Dyeq = tube[35]. Dyeq;
+		t -> k1 = upperCord.k1 * (1 + art [kArt_muscle_CRICOTHYROID]);
 		t -> k3 = t -> k1 * (20 / t -> Dz) * (20 / t -> Dz);
 	}
-	if (speaker.cord.numberOfMasses >= 10) {
-		delta.tube[83]. Dyeq = 0.75 * 1 * f + 0.25 * delta.tube[35]. Dyeq;
-		delta.tube[84]. Dyeq = 0.50 * 1 * f + 0.50 * delta.tube[35]. Dyeq;
-		delta.tube[85]. Dyeq = 0.25 * 1 * f + 0.75 * delta.tube[35]. Dyeq;
-		delta.tube[83]. k1 = 0.75 * 160 + 0.25 * delta.tube[35]. k1;
-		delta.tube[84]. k1 = 0.50 * 160 + 0.50 * delta.tube[35]. k1;
-		delta.tube[85]. k1 = 0.25 * 160 + 0.75 * delta.tube[35]. k1;
+	if (cord.numberOfMasses >= 10) {
+		tube[83]. Dyeq = 0.75 * 1 * f + 0.25 * tube[35]. Dyeq;
+		tube[84]. Dyeq = 0.50 * 1 * f + 0.50 * tube[35]. Dyeq;
+		tube[85]. Dyeq = 0.25 * 1 * f + 0.75 * tube[35]. Dyeq;
+		tube[83]. k1 = 0.75 * 160 + 0.25 * tube[35]. k1;
+		tube[84]. k1 = 0.50 * 160 + 0.50 * tube[35]. k1;
+		tube[85]. k1 = 0.25 * 160 + 0.75 * tube[35]. k1;
 		for (itube = 83; itube <= 85; itube ++)
-			delta.tube[itube]. k3 = delta.tube[itube]. k1 *
-				(20 / delta.tube[itube]. Dz) * (20 / delta.tube[itube]. Dz);
+			tube[itube]. k3 = tube[itube]. k1 *
+				(20 / tube[itube]. Dz) * (20 / tube[itube]. Dz);
 	}
 
 	// Vocal tract.
 
-	Art_Speaker_meshVocalTract (art, speaker, xi, yi, xe, ye, xmm, ymm, closed);
+    // TODO: Don't like having to call this and then the MeshSum () it is confusing.
+    MeshUpper(art);
 	for (itube = 37; itube <= 63; itube ++) {
-		Delta_Tube t = &(delta.tube[itube]);
+		Delta_Tube t = &(tube[itube]);
         // TODO: It appears that he is indexing these other arrays (xmm,ymm,xi,yi,xe,ye,dx,dy) starting @ 1.
         //       So for now let i = itube - 36 so that we start at xmm[37-36=1] instead of xmm[0]
 		int i = itube - 36;
-		t -> Dxeq = sqrt (( dx = xmm [i] - xmm [i + 1], dx * dx ) + ( dy = ymm [i] - ymm [i + 1], dy * dy ));
-		t -> Dyeq = sqrt (( dx = xe [i] - xi [i], dx * dx ) + ( dy = ye [i] - yi [i], dy * dy ));
+		t -> Dxeq = MeshSumX(i);
+		t -> Dyeq = MeshSumY(i);
 		if (closed [i]) t -> Dyeq = - t -> Dyeq;
 	}
-	delta.tube[64]. Dxeq = delta.tube[50]. Dxeq = delta.tube[49]. Dxeq;
+	tube[64]. Dxeq = tube[50]. Dxeq = tube[49]. Dxeq;
 	// Voor [r]:  thy tube [59]. Brel = 0.1; thy tube [59]. k1 = 3;
 
 	// Nasopharyngeal port.
 
-	delta.tube[64]. Dyeq = f * (18 - 25 * art [kArt_muscle_LEVATOR_PALATINI]);   // 4.40
+	tube[64]. Dyeq = f * (18 - 25 * art [kArt_muscle_LEVATOR_PALATINI]);   // 4.40
 
-	for (itube = 0; itube < delta.numberOfTubes; itube ++) {
-        Delta_Tube t = &(delta.tube[itube]);
+	for (itube = 0; itube < numberOfTubes; itube ++) {
+        Delta_Tube t = &(tube[itube]);
 		t -> s1 = 5e6 * t -> Dxeq * t -> Dzeq;
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 	}
@@ -277,30 +489,18 @@ void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;
 
-		/* TODO: Add in some sort of graphics.
-        double minTract [1+78], maxTract [1+78];   // for drawing
-         */
-
         UpdateTube();
-		M = delta.numberOfTubes;
 
-		/* TODO: Add in some sort of graphics.
-        // Initialize drawing.
-		for (int i = 1; i <= 78; i ++) {
-			minTract [i] = 100.0;
-			maxTract [i] = -100.0;
-		} */
-
-		totalVolume = 0.0;
-		for (int m = 0; m < M; m ++) {
-			Delta_Tube t = &(delta.tube[m]);
+		double totalVolume = 0.0;
+		for (int m = 0; m < numberOfTubes; m ++) {
+			Delta_Tube t = &(tube[m]);
 			if (! t -> left1 && ! t -> right1) continue;
 			t->Dx = t->Dxeq; t->dDxdt = 0.0;   // 5.113 (numbers refer to equations in Boersma (1998)
 			t->Dy = t->Dyeq; t->dDydt = 0.0;   // 5.113
 			t->Dz = t->Dzeq;   // 5.113
-			t->A = t->Dz * ( t->Dy >= t->dy ? t->Dy + Dymin :
-				t->Dy <= - t->dy ? Dymin :
-				(t->dy + t->Dy) * (t->dy + t->Dy) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
+			t->A = t->Dz * ( t->Dy >= t->dy ? t->Dy + DYMIN :
+				t->Dy <= - t->dy ? DYMIN :
+				(t->dy + t->Dy) * (t->dy + t->Dy) / (4.0 * t->dy) + DYMIN );   // 4.4, 4.5
 			#if EQUAL_TUBE_WIDTHS
 				t->A = 0.0001;
 			#endif
@@ -311,7 +511,7 @@ void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
 			t->V = t->A * t->Dx;   // 5.114
 			totalVolume += t->V;
 		}
-		//Melder_casual (U"Starting volume: ", totalVolume * 1000, U" litres.");
+		printf("Starting volume: %f liters.\n", totalVolume * 1000);
 
 	} catch (int e) {
         std::cout << "Articulatory synthesizer not initialized.\n";
@@ -320,87 +520,18 @@ void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
 
 void Speaker::IterateSim() 
 {
-			/* TODO: Add in some sort of graphics.
-             if (sample % MONITOR_SAMPLES == 0 && monitor.graphics()) {   // because we can be in batch
-				Graphics graphics = monitor.graphics();
-				double area [1+78];
-				for (int i = 1; i <= 78; i ++) {
-					area [i] = delta -> tube [i]. A;
-					if (area [i] < minTract [i]) minTract [i] = area [i];
-					if (area [i] > maxTract [i]) maxTract [i] = area [i];
-				}
-				Graphics_beginMovieFrame (graphics, & Graphics_WHITE);
-
-				Graphics_Viewport vp = Graphics_insetViewport (monitor.graphics(), 0.0, 0.5, 0.5, 1.0);
-				Graphics_setWindow (graphics, 0.0, 1.0, 0.0, 0.05);
-				Graphics_setColour (graphics, Graphics_RED);
-				Graphics_function (graphics, minTract, 1, 35, 0.0, 0.9);
-				Graphics_function (graphics, maxTract, 1, 35, 0.0, 0.9);
-				Graphics_setColour (graphics, Graphics_BLACK);
-				Graphics_function (graphics, area, 1, 35, 0.0, 0.9);
-				Graphics_setLineType (graphics, Graphics_DOTTED);
-				Graphics_line (graphics, 0.0, 0.0, 1.0, 0.0);
-				Graphics_setLineType (graphics, Graphics_DRAWN);
-				Graphics_resetViewport (graphics, vp);
-
-				vp = Graphics_insetViewport (graphics, 0, 0.5, 0, 0.5);
-				Graphics_setWindow (graphics, 0.0, 1.0, -0.000003, 0.00001);
-				Graphics_setColour (graphics, Graphics_RED);
-				Graphics_function (graphics, minTract, 36, 37, 0.2, 0.8);
-				Graphics_function (graphics, maxTract, 36, 37, 0.2, 0.8);
-				Graphics_setColour (graphics, Graphics_BLACK);
-				Graphics_function (graphics, area, 36, 37, 0.2, 0.8);
-				Graphics_setLineType (graphics, Graphics_DOTTED);
-				Graphics_line (graphics, 0.0, 0.0, 1.0, 0.0);
-				Graphics_setLineType (graphics, Graphics_DRAWN);
-				Graphics_resetViewport (graphics, vp);
-
-				vp = Graphics_insetViewport (graphics, 0.5, 1.0, 0.5, 1.0);
-				Graphics_setWindow (graphics, 0.0, 1.0, 0.0, 0.001);
-				Graphics_setColour (graphics, Graphics_RED);
-				Graphics_function (graphics, minTract, 38, 64, 0.0, 1.0);
-				Graphics_function (graphics, maxTract, 38, 64, 0.0, 1.0);
-				Graphics_setColour (graphics, Graphics_BLACK);
-				Graphics_function (graphics, area, 38, 64, 0.0, 1.0);
-				Graphics_setLineType (graphics, Graphics_DOTTED);
-				Graphics_line (graphics, 0.0, 0.0, 1.0, 0.0);
-				Graphics_setLineType (graphics, Graphics_DRAWN);
-				Graphics_resetViewport (graphics, vp);
-
-				vp = Graphics_insetViewport (graphics, 0.5, 1.0, 0.0, 0.5);
-				Graphics_setWindow (graphics, 0.0, 1.0, 0.001, 0.0);
-				Graphics_setColour (graphics, Graphics_RED);
-				Graphics_function (graphics, minTract, 65, 78, 0.5, 1.0);
-				Graphics_function (graphics, maxTract, 65, 78, 0.5, 1.0);
-				Graphics_setColour (graphics, Graphics_BLACK);
-				Graphics_function (graphics, area, 65, 78, 0.5, 1.0);
-				Graphics_setLineType (graphics, Graphics_DRAWN);
-				Graphics_resetViewport (graphics, vp);
-
-				Graphics_endMovieFrame (graphics, 0.0);
-				Melder_monitor ((double) sample / numberOfSamples, U"Articulatory synthesis: ", Melder_half (time), U" seconds");
-			} */
 
     UpdateTube();
-
-    //
     // Oversample to simulate dynamics of the vocal tract walls
-    //
-    for (int n = 1; n <= oversamp; n ++) {
-
+    for (int n = 1; n <= oversamp; n ++)
+    {
         //Loop along each tube segment 
-        for (int m = 0; m < M; m ++) {
-
-            //UpdateSegment(m); // only defined for the purpose of threading. Remove and uncomment section below to speed up
-            // causes program to slow WAAAAAY down.
-            //std::thread mythread(&Speaker::UpdateSegment, this, m);
-            //mythread.detach();
-            //
-            Delta_Tube t = &(delta.tube[m]);
+        for (int m = 0; m < numberOfTubes; m ++)
+        {
+            Delta_Tube t = &(tube[m]);
             if (! t -> left1 && ! t -> right1) continue;
 
-            // New geometry. 
-
+            // New geometry.
             #if CONSTANT_TUBE_LENGTHS
                 t->Dxnew = t->Dx;
             #else
@@ -454,9 +585,9 @@ void Speaker::IterateSim()
             #if NO_MOVING_WALLS
                 t->Dynew = t->Dy;
             #endif
-            t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + Dymin :
-                t->Dynew <= - t->dy ? Dymin :
-                (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
+            t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + DYMIN :
+                t->Dynew <= - t->dy ? DYMIN :
+                (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + DYMIN );   // 4.4, 4.5
             #if EQUAL_TUBE_WIDTHS
                 t->Anew = 0.0001;
             #endif
@@ -468,10 +599,10 @@ void Speaker::IterateSim()
                 double oneByDyav = t->Dz / t->A;
                 //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
                 if (t->Dy < 0.0)
-                    t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
+                    t->R = 12.0 * 1.86e-5 / (DYMIN * DYMIN + t->dy * t->dy);
                 else
                     t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
-                        ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
+                        ((t->Dy + DYMIN) * (t->Dy + DYMIN) + t->dy * t->dy);
                 t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
             }
 
@@ -486,13 +617,12 @@ void Speaker::IterateSim()
             #if NO_BERNOULLI_EFFECT
                 t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
             #endif
-                //*/
         }// end Tube segment loop
 
         // Loop tube segments again? Combining the loops makes it crap it's pants...
-        for (int m = 0; m < M; m ++) {   // compute Jleftnew and Qleftnew
+        for (int m = 0; m < numberOfTubes; m ++) {   // compute Jleftnew and Qleftnew
             // TODO: This is some confusing use of the , operator. It saves space, but makes it hard to read.
-            Delta_Tube l = &(delta.tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
+            Delta_Tube l = &(tube[m]), r1 = l -> right1, r2 = l -> right2, r = r1;
             Delta_Tube l1 = l, l2 = r ? r -> left2 : nullptr;
 
             if (! l->left1) {   // closed boundary at the left side (diaphragm)?
@@ -511,14 +641,14 @@ void Speaker::IterateSim()
                 l->Qrightnew = (rrad * (l->Qright - rho0c2) +
                     c * (l->prightnew - l->pright)) * onebygrad + rho0c2;   // 5.136
             } else if (! l2 && ! r2) {   // two-way boundary
-                if (l->v > criticalVelocity && l->A < r->A) {
-                    l->Pturbrightnew = -0.5 * rho0 * (l->v - criticalVelocity) *
+                if (l->v > CRITICAL_VELOCITY && l->A < r->A) {
+                    l->Pturbrightnew = -0.5 * rho0 * (l->v - CRITICAL_VELOCITY) *
                         (1.0 - l->A / r->A) * (1.0 - l->A / r->A) * l->v;
                     if (l->Pturbrightnew != 0.0)
                         l->Pturbrightnew *= distribution (generator); // * l->A; 
                 }
-                if (r->v < - criticalVelocity && r->A < l->A) {
-                    l->Pturbrightnew = 0.5 * rho0 * (r->v + criticalVelocity) * (1.0 - r->A / l->A) * (1.0 - r->A / l->A) * r->v;
+                if (r->v < - CRITICAL_VELOCITY && r->A < l->A) {
+                    l->Pturbrightnew = 0.5 * rho0 * (r->v + CRITICAL_VELOCITY) * (1.0 - r->A / l->A) * (1.0 - r->A / l->A) * r->v;
                     if (l->Pturbrightnew != 0.0)
                         l->Pturbrightnew *= distribution (generator); // * r->A ;
                 }
@@ -605,8 +735,8 @@ void Speaker::IterateSim()
         }
 
         // Increment tube parameters for next iteration
-        for (int m = 0; m < M; m ++) {
-            Delta_Tube t = &(delta.tube[m]);
+        for (int m = 0; m < numberOfTubes; m ++) {
+            Delta_Tube t = &(tube[m]);
             t->Jleft = t->Jleftnew;
             t->Jright = t->Jrightnew;
             t->Qleft = t->Qleftnew;
@@ -631,8 +761,10 @@ void Speaker::IterateSim()
 
     } // End oversample loop
     ++sample;
+    if (!NotDone()) {
+        printf("Ending volume: %f liters.\n", getVolume() * 1000);
+    }
 }
-/* End of file Artword_Speaker_to_Sound.cpp */
 
 int Speaker::Speak() 
 {
@@ -642,9 +774,9 @@ int Speaker::Speak()
 double Speaker::ComputeSound()
 {
     double out = 0.0;
-    for (int m = 0; m < M; m ++)
+    for (int m = 0; m < numberOfTubes; m ++)
     {
-        Delta_Tube t = &(delta.tube[m]);
+        Delta_Tube t = &(tube[m]);
         out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
         if (! t->right1)
             out += t->Jrightnew - t->Jright;   // radiation of open tube end
@@ -653,19 +785,24 @@ double Speaker::ComputeSound()
     return out;
 }
 
+double Speaker::getVolume() {
+    double totalVolume = 0.0;
+    for (int m = 0; m < numberOfTubes; m ++)
+        totalVolume += tube [m].V;
+    return totalVolume;
+}
+
 void Speaker::Log()
 {
     if(logCounter == numberOfOversampLogSamples)
     {
-        for(int ind=0; ind<delta.numberOfTubes; ind++)
+        for(int ind=0; ind<numberOfTubes; ind++)
         {
-            if(logSample+1==numberOfLogSamples && ind == 40)
-            {double bannana = 1;}
-            *log_stream << delta.tube[ind].Dxnew;
+            *log_stream << tube[ind].Dxnew;
             *log_stream << "\t";
-            *log_stream << delta.tube[ind].Dynew;
+            *log_stream << tube[ind].Dynew;
             *log_stream << "\t";
-            *log_stream << delta.tube[ind].Dz;
+            *log_stream << tube[ind].Dz;
             *log_stream << "\t";
         }
         for(int ind=0; ind<kArt_muscle_MAX; ind++)
@@ -690,7 +827,6 @@ void Speaker::Log()
 
 int Speaker::InitDataLogger(std::string filepath, double log_freq)
 {
-    // !!! This should be called only after InitSim() is called
     log_data = true;
     if( log_stream == nullptr) {
         log_stream = new std::ofstream(filepath);
@@ -719,7 +855,7 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
     *log_stream << "Number of Samples :" ;
     *log_stream << numberOfLogSamples;
     *log_stream << "\n\n";
-    for(int ind=0; ind<delta.numberOfTubes; ind++)
+    for(int ind=0; ind<numberOfTubes; ind++)
     {
         *log_stream << ind;
         *log_stream << "X\t";
@@ -743,97 +879,3 @@ int Speaker::SaveSound(std::string filepath)
 {
     return result->save(filepath);
 }
-
-/*void inline Speaker::UpdateSegment(int m) 
-{
-    Delta_Tube t = &(delta.tube[m]);
-    if (! t -> left1 && ! t -> right1) return;
-
-    // New geometry. 
-
-    #if CONSTANT_TUBE_LENGTHS
-        t->Dxnew = t->Dx;
-    #else
-        t->dDxdtnew = (t->dDxdt + Dt * 10000.0 * (t->Dxeq - t->Dx)) /
-            (1.0 + 200.0 * Dt);   // critical damping, 10 ms
-        t->Dxnew = t->Dx + t->dDxdtnew * Dt;
-    #endif
-
-    // 3-way: equal lengths. 
-    // This requires left tubes to be processed before right tubes. 
-    if (t->left1 && t->left1->right2) t->Dxnew = t->left1->Dxnew;
-
-    t->Dz = t->Dzeq;   // immediate... 
-    t->eleft = (t->Qleft - t->Kleft) * t->V;   // 5.115
-    t->eright = (t->Qright - t->Kright) * t->V;   // 5.115
-    t->e = 0.5 * (t->eleft + t->eright);   // 5.116
-    t->p = 0.5 * (t->pleft + t->pright);   // 5.116
-    t->DeltaP = t->e / t->V - rho0c2;   // 5.117
-    t->v = t->p / (rho0 + onebyc2 * t->DeltaP);   // 5.118
-
-    { 
-        double dDy = t->Dyeq - t->Dy;
-        double cubic = t->k3 * dDy * dDy;
-        Delta_Tube l1 = t->left1, l2 = t->left2, r1 = t->right1, r2 = t->right2;
-        tension = dDy * (t->k1 + cubic);
-        t->B = 2.0 * t->Brel * sqrt (t->mass * (t->k1 + 3.0 * cubic));
-        if (t->k1left1 != 0.0 && l1)
-            tension += t->k1left1 * t->k1 * (dDy - (l1->Dyeq - l1->Dy));
-        if (t->k1left2 != 0.0 && l2)
-            tension += t->k1left2 * t->k1 * (dDy - (l2->Dyeq - l2->Dy));
-        if (t->k1right1 != 0.0 && r1)
-            tension += t->k1right1 * t->k1 * (dDy - (r1->Dyeq - r1->Dy));
-        if (t->k1right2 != 0.0 && r2)
-            tension += t->k1right2 * t->k1 * (dDy - (r2->Dyeq - r2->Dy));
-    }
-
-    if (t->Dy < t->dy) {
-        if (t->Dy >= - t->dy) {
-            double dDy = t->dy - t->Dy, dDy2 = dDy * dDy;
-            tension += dDy2 / (4.0 * t->dy) * (t->s1 + 0.5 * t->s3 * dDy2);
-            t->B += 2.0 * dDy / (2.0 * t->dy) *
-                sqrt (t->mass * (t->s1 + t->s3 * dDy2));
-        } else {
-            tension -= t->Dy * (t->s1 + t->s3 * (t->Dy * t->Dy + t->dy * t->dy));
-            t->B += 2.0 * sqrt (t->mass * (t->s1 + t->s3 * (3.0 * t->Dy * t->Dy + t->dy * t->dy)));
-        }
-    }
-
-    t->dDydtnew = (t->dDydt + Dt / t->mass * (tension + 2.0 * t->DeltaP * t->Dz * t->Dx)) / (1.0 + t->B * Dt / t->mass);   // 5.119
-    t->Dynew = t->Dy + t->dDydtnew * Dt;   // 5.119
-    #if NO_MOVING_WALLS
-        t->Dynew = t->Dy;
-    #endif
-    t->Anew = t->Dz * ( t->Dynew >= t->dy ? t->Dynew + Dymin :
-        t->Dynew <= - t->dy ? Dymin :
-        (t->dy + t->Dynew) * (t->dy + t->Dynew) / (4.0 * t->dy) + Dymin );   // 4.4, 4.5
-    #if EQUAL_TUBE_WIDTHS
-        t->Anew = 0.0001;
-    #endif
-    t->Ahalf = 0.5 * (t->A + t->Anew);   // 5.120
-    t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
-    t->Vnew = t->Anew * t->Dxnew;   // 5.128
-
-    { 
-        double oneByDyav = t->Dz / t->A;
-        //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
-        if (t->Dy < 0.0)
-            t->R = 12.0 * 1.86e-5 / (Dymin * Dymin + t->dy * t->dy);
-        else
-            t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel /
-                ((t->Dy + Dymin) * (t->Dy + Dymin) + t->dy * t->dy);
-        t->R += 0.3 * t->parallel * oneByDyav;   // 5.23 
-    }
-
-    t->r = (1.0 + t->R * Dt / rho0) * t->Dxhalf / t->Anew;   // 5.122
-    t->ehalf = t->e + halfc2Dt * (t->Jleft - t->Jright);   // 5.123
-    t->phalf = (t->p + halfDt * (t->Qleft - t->Qright) / t->Dx) / (1.0 + Dtbytworho0 * t->R);   // 5.123
-    #if MASS_LEAPFROG
-        t->ehalf = t->ehalfold + 2.0 * halfc2Dt * (t->Jleft - t->Jright);
-    #endif
-    t->Jhalf = t->phalf * t->Ahalf;   // 5.124
-    t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf) + onebytworho0 * t->phalf * t->phalf;   // 5.124
-    #if NO_BERNOULLI_EFFECT
-        t->Qhalf = t->ehalf / (t->Ahalf * t->Dxhalf);
-    #endif
-}// end Tube segment loop */

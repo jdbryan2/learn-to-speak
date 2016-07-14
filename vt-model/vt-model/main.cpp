@@ -35,7 +35,7 @@ int main()
     apa.intoArt(female.art, 0.0);
 
     // initialize the simulation and tell it how many seconds to buffer
-    female.InitSim(0.5, std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/datalog1.log"),800.0);
+    female.InitSim(0.5, std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/logs/datalog1.log"),800.0);
 
     cout << "Simulating...\n";
     cout << "Oversample rate = " << oversamp << endl;
@@ -45,14 +45,8 @@ int main()
         // Artword class is being used for this currently
         apa.intoArt(female.art, female.NowSeconds());
 
-
         // generate the next acoustic sample
         female.IterateSim();
-        if (!female.NotDone())
-        {
-            double bannana = 1;
-        }
-
     }
     cout << "Done!\n";
     for(int i =0; i< 10; i++)
@@ -73,6 +67,6 @@ int main()
             break;
         }
     }
-    female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/recorded1.log"));
+    female.SaveSound(std::string ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/logs/recorded1.log"));
     return 0;
 }

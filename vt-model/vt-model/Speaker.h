@@ -23,45 +23,22 @@
 #include "Delta.h"
 #include "Articulation_enums.h"
 #include "Sound.h"
+#include "VocalTract.h"
 #include <string>
 #include <random>
 #include <fstream>
 
 
-class Speaker 
-{
+class Speaker : private VocalTract, private Delta {
 public:
     
-    // ***** FIXED PARAMETERS FOR MERMELSTEIN'S MODEL ***** //
-    double relativeSize;  // Relative size of the parameters. Different for female, male, child.
-    // In the larynx.
-    Speaker_CordDimensions cord;
-    Speaker_CordSpring lowerCord;
-    Speaker_CordSpring upperCord;
-    Speaker_GlottalShunt shunt;
-    // Above the larynx.
-    Speaker_Velum velum;
-    Speaker_Palate palate;
-    Speaker_Tip tip;
-    double neutralBodyDistance;
-    Speaker_Alveoli alveoli;
-    Speaker_TeethCavity teethCavity;
-    Speaker_LowerTeeth lowerTeeth;
-    Speaker_UpperTeeth upperTeeth;
-    Speaker_Lip lowerLip;
-    Speaker_Lip upperLip;
-    // In the nasal cavity.
-    Speaker_Nose nose;
+    double art[kArt_muscle_MAX]={0}; // Activations of muscles
     
     // ***** SIMULATION VARIABLES ***** //
     double fsamp;
     double oversamp;
     long numberOfSamples;
     long sample;
-    
-    Delta delta; // Delta-tube model and vocal articulation
-    int M; // number of tubes
-    double art[kArt_muscle_MAX]={0}; // Activations of muscles
     
     double Dt,
     rho0,
@@ -77,8 +54,7 @@ public:
     
     double tension,
     rrad,
-    onebygrad,
-    totalVolume;
+    onebygrad;
     
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
@@ -104,11 +80,11 @@ public:
     double getMuscle(int muscle) const {return art[muscle];}
     int Speak();
     int SaveSound(std::string filepath);
+    double getVolume();
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
-    //void UpdateSegment(int m);
     double ComputeSound();
     int InitDataLogger(std::string filepath,double log_freq);
     void Log();

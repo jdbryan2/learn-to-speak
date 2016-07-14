@@ -11,7 +11,7 @@
 		C35B595F1C937BAE00BAC233 /* Artword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C35B595D1C937BAE00BAC233 /* Artword.cpp */; };
 		C36B902F1C8CE93600B37B7B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B902E1C8CE93600B37B7B /* main.cpp */; };
 		C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C36B90671C8DCC4300B37B7B /* Speaker.cpp */; };
-		C3EB287B1D1C230D0000AB02 /* support_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3EB28791D1C230D0000AB02 /* support_functions.cpp */; };
+		C3DD13FB1D38081200E14DA6 /* VocalTract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3DD13F91D38081200E14DA6 /* VocalTract.cpp */; };
 		C3F641DF1C94CDBE0060F202 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641DD1C94CDBE0060F202 /* libportaudio.a */; };
 		C3F641E11C94CEB90060F202 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E01C94CEB90060F202 /* CoreAudio.framework */; };
 		C3F641E31C94CEC40060F202 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E21C94CEC40060F202 /* AudioToolbox.framework */; };
@@ -44,8 +44,8 @@
 		C36B90671C8DCC4300B37B7B /* Speaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker.cpp; sourceTree = "<group>"; };
 		C36B90681C8DCC4300B37B7B /* Speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Speaker.h; sourceTree = "<group>"; };
 		C36B90741C91DBC500B37B7B /* Articulation_enums.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Articulation_enums.h; sourceTree = "<group>"; };
-		C3EB28791D1C230D0000AB02 /* support_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = support_functions.cpp; sourceTree = "<group>"; };
-		C3EB287A1D1C230D0000AB02 /* support_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = support_functions.h; sourceTree = "<group>"; };
+		C3DD13F91D38081200E14DA6 /* VocalTract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VocalTract.cpp; sourceTree = "<group>"; };
+		C3DD13FA1D38081200E14DA6 /* VocalTract.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VocalTract.h; sourceTree = "<group>"; };
 		C3EB287C1D1C288C0000AB02 /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
 		C3F641DD1C94CDBE0060F202 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = external_libs/portaudio/libportaudio.a; sourceTree = "<group>"; };
 		C3F641DE1C94CDBE0060F202 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = external_libs/portaudio/portaudio.h; sourceTree = "<group>"; };
@@ -99,8 +99,6 @@
 			isa = PBXGroup;
 			children = (
 				C3EB287C1D1C288C0000AB02 /* Delta.h */,
-				C3EB28791D1C230D0000AB02 /* support_functions.cpp */,
-				C3EB287A1D1C230D0000AB02 /* support_functions.h */,
 				C35B595C1C937BAE00BAC233 /* Artword_def.h */,
 				C35B595D1C937BAE00BAC233 /* Artword.cpp */,
 				C35B595E1C937BAE00BAC233 /* Artword.h */,
@@ -111,6 +109,8 @@
 				C36B902E1C8CE93600B37B7B /* main.cpp */,
 				C35541821C9AE7AD004D585F /* Sound.h */,
 				C35541831C9AE7C9004D585F /* Sound.cpp */,
+				C3DD13F91D38081200E14DA6 /* VocalTract.cpp */,
+				C3DD13FA1D38081200E14DA6 /* VocalTract.h */,
 			);
 			path = "vt-model";
 			sourceTree = "<group>";
@@ -192,7 +192,7 @@
 				C35541841C9AE7C9004D585F /* Sound.cpp in Sources */,
 				C36B90691C8DCC4300B37B7B /* Speaker.cpp in Sources */,
 				C35B595F1C937BAE00BAC233 /* Artword.cpp in Sources */,
-				C3EB287B1D1C230D0000AB02 /* support_functions.cpp in Sources */,
+				C3DD13FB1D38081200E14DA6 /* VocalTract.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
