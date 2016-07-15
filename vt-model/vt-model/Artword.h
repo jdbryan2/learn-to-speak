@@ -31,8 +31,7 @@ public:
     void setTarget(int feature, double tim, double value);
     double getTarget(int feature, double tim);
     void removeTarget(int feature, int iTarget);
-    void intoArt(double *art, double tim);
-    //void Artword_draw (Artword me, Graphics graphics, int feature, int garnish);
+    void intoArt(double art[kArt_muscle_MAX], double tim);
 };
 
 /* End of file Artword.h */

@@ -59,14 +59,15 @@ protected:
     
     // ***** PARAMETERS FOR MESHING VOCAL TRACT ***** //
     // TODO: Move some of these into functions and make static variables.
-    double xe [30] = {0.0}, ye [30] = {0.0}, xi [30] = {0.0}, yi [30] = {0.0},
-    xmm [30] = {0.0}, ymm [30] = {0.0};
-    int closed [40] = {0};
+    double xe [ART_SPEAKER_MESHCOUNT+1] = {0.0},  ye [ART_SPEAKER_MESHCOUNT+1] = {0.0},
+           xi [ART_SPEAKER_MESHCOUNT+1] = {0.0},  yi [ART_SPEAKER_MESHCOUNT+1] = {0.0},
+           xmm [ART_SPEAKER_MESHCOUNT+2] = {0.0}, ymm [ART_SPEAKER_MESHCOUNT+2] = {0.0};
+    int closed [ART_SPEAKER_MESHCOUNT+1] = {0};
     
-    double xm [40] = {0.0}, ym [40] = {0.0};
+    double xm [ART_SPEAKER_MESHCOUNT+1] = {0.0}, ym [ART_SPEAKER_MESHCOUNT+1] = {0.0};
     
-    double intX [1 + 16] = {0.0}, intY [1 + 16] = {0.0}, extX [1 + 11] = {0.0},
-    extY [1 + 11] = {0.0};
+    double intX [1 + 16] = {0.0}, intY [1 + 16] = {0.0},
+           extX [1 + 11] = {0.0}, extY [1 + 11] = {0.0};
     
     double bodyX = 0.0, bodyY = 0.0, bodyRadius= 0.0;
     

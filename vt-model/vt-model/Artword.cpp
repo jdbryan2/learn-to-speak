@@ -23,16 +23,6 @@
 #include <iostream> // for printing debug, may be removed once bugs are squashed
 using namespace std;
 
-/*
-	Postconditions:
- my data [feature]. numberOfTargets == 2;
- my data [feature]. times [1] == 0.0;
- my data [feature]. times [2] == self -> totalTime;
- my data [feature]. targets [1] == 0.0;
- my data [feature]. targets [2] == 0.0;
- rest unchanged;
- */
-
 Artword::Artword(double totalTime) {
 	this->totalTime = totalTime;
     for (int i = 0; i < kArt_muscle_MAX; i ++) {
@@ -44,14 +34,12 @@ Artword::Artword(double totalTime) {
     }
 }
 
-// TODO: Wow this was bad!!!! I tried to rework some of it, but it needs revisited.
 void Artword::setTarget (int feature, double time, double target) {
     assert (feature >= 0);
     assert (feature < kArt_muscle_MAX);
     ArtwordData* f = &(data[feature]);
     assert (f->numberOfTargets >= 2);
     vector<art_target>::iterator it = f->targets.begin();
-    // TODO: Not sure this is the desired behavior. May want to revisit.
     // If the desired target time is <0 or Greater than totalTime
     // don't throw an error, just change the time to 0 or totalTime respectively
     if (time < 0.0) {
@@ -101,28 +89,6 @@ double Artword::getTarget (int feature, double time) {
     }
 }
 
-/*
-	Function:
- remove one target from the target list of "feature".
- If "iTarget" is the first or the last target in the list,
- only set the target to zero (begin and end targets remain).
-	Preconditions:
- self != nullptr;
- feature in enum Art_MUSCLE;
- iTarget >= 1;
- iTarget <= self -> data [feature]. numberOfTargets;
-	Postconditions:
- if (iTarget == 1)
- self -> data [feature]. targets [1] == 0.0;
- else if (iTarget == self -> data [feature]. numberOfTargets)
- self -> data [feature]. targets [iTarget] == 0.0;
- else
- self -> data [feature]. numberOfTargets == old self -> data [feature]. numberOfTargets - 1;
- for (i == iTarget..self -> data [feature]. numberOfTargets)
- self -> data [feature]. times [i] == old self -> data [feature]. times [i + 1];
- self -> data [feature]. targets [i] == old self -> data [feature]. targets [i + 1];
- */
-
 
 // Note that iTarget is not an index. It is the i'th target so index = iTarget-1;
 void Artword::removeTarget (int feature, int iTarget) {
@@ -136,44 +102,10 @@ void Artword::removeTarget (int feature, int iTarget) {
 	}
 }
 
-/*
-	Function:
- Linear interpolation between targets, into an existing Art.
-	Preconditions:
- me != nullptr;
- art != nullptr;
- */
-void Artword::intoArt (double *art, double time) {
+void Artword::intoArt (double art[kArt_muscle_MAX], double time) {
 	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
 		art [feature] = getTarget (feature, time);
 	}
 }
-
-/*
-// TODO: Implement something to do graphics for drawing the artword.
-void Artword_draw (Artword me, Graphics g, int feature, int garnish) {
-	long numberOfTargets = my data [feature]. numberOfTargets;
-	if (numberOfTargets > 0) {
-		autoNUMvector <double> x (1, numberOfTargets);
-		autoNUMvector <double> y (1, numberOfTargets);
-		Graphics_setInner (g);
-		Graphics_setWindow (g, 0, my totalTime, -1.0, 1.0);
-		for (int i = 1; i <= numberOfTargets; i ++) {
-			x [i] = my data [feature]. times [i];
-			y [i] = my data [feature]. targets [i];
-		}
-		Graphics_polyline (g, numberOfTargets, & x [1], & y [1]);         
-		Graphics_unsetInner (g);
-	}
-
-	if (garnish) {
-		Graphics_drawInnerBox (g);
-		Graphics_marksBottom (g, 2, true, true, false);
-		Graphics_marksLeft (g, 3, true, true, true);
-		Graphics_textTop (g, false, kArt_muscle_getText (feature));
-		Graphics_textBottom (g, true, U"Time (s)");
-	}
-}
-*/
 
 /* End of file Artword.cpp */

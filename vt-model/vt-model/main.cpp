@@ -6,7 +6,8 @@
 //  Copyright © 2016 Team Jacob. All rights reserved.
 //
 
-#define NDEBUG 1 //disable assertions in the code
+// #define NDEBUG 1 //disable assertions in the code
+// TODO: Create include file and add assert.h. needs to be in only one spot.
 
 #include <iostream>
 #include "Speaker.h"
@@ -42,7 +43,8 @@ int main()
     while (female.NotDone())
     {
         // adjust articulators using controller
-        // Artword class is being used for this currently
+        // Artword class is being used for this currently.
+        // Could use feedback instead
         apa.intoArt(female.art, female.NowSeconds());
 
         // generate the next acoustic sample
