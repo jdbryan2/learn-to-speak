@@ -846,13 +846,13 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
     {
         exit(1);
     }
-    *log_stream << "Desired Sampling Frequency :";
+    *log_stream << "Desired Sampling Frequency :\n";
     *log_stream << logfreq;
     *log_stream << "\n";
-    *log_stream << "Actual Sampling Frequency :";
+    *log_stream << "Actual Sampling Frequency :\n";
     *log_stream << logfreq;
     *log_stream << "\n";
-    *log_stream << "Number of Samples :" ;
+    *log_stream << "Number of Samples :\n" ;
     *log_stream << numberOfLogSamples;
     *log_stream << "\n\n";
     for(int ind=0; ind<numberOfTubes; ind++)

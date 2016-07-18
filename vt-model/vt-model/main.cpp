@@ -25,7 +25,13 @@ int main()
     apa.setTarget(kArt_muscle_LUNGS,0,0.2);
     apa.setTarget(kArt_muscle_LUNGS,0.1,0);
     apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
-    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    //apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    //apa.setTarget(kArt_muscle_UPPER_TONGUE, 0.25, 0.2);
+    //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.0, 0.7);
+    //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.5, 0.7);
+    //apa.setTarget(kArt_muscle_VOCALIS, 0.0, 0.7);
+    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7);
+
 
     int oversamp = 70;
     // speaker type, number of glotal masses, fsamp, oversamp

@@ -109,10 +109,10 @@ int Sound::save(std::string filepath) {
     {
         exit(1);
     }
-    out1 << "Sampling Frequency :" ;
+    out1 << "Sampling Frequency :\n" ;
     out1 << samplingFrequency;
     out1 << "\n";
-    out1 << "Duration :" ;
+    out1 << "Duration :\n" ;
     out1 << duration;
     out1 << "\n\n";
     

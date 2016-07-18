@@ -21,3 +21,5 @@ xcuserdata/
 # VT log files
 ################
 *.log
+*.mat
+*.fig
