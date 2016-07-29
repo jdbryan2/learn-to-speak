@@ -1,7 +1,7 @@
 % Pre-process data into spectral features
 % Generate Signal to test spectrogram on
 clear
-load('recorded1.mat')
+load('test1/recorded8.mat')
 win_time = 20/1000;
 nfft = fs*win_time; % To get x ms long window
 %noverlap = nfft-round(nfft/3);
@@ -13,4 +13,4 @@ fignum = 1;
 [mag_spect, f, t] = my_spectrogram(S.data,win,noverlap,nfft,fs,fignum);
 
 %% Save recording
-save recorded1_spect.mat
+save('test1/recorded1_spect.mat')

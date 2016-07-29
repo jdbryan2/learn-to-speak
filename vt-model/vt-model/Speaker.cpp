@@ -404,7 +404,6 @@ void Speaker::InitializeTube()
     #endif
 }
 
-// TODO: MOVE THIS FUNCTION INTO DELTA.CPP
 void Speaker::UpdateTube()
 {
 	double f = relativeSize * 1e-3;
@@ -469,7 +468,6 @@ void Speaker::UpdateTube()
 		t -> s3 = t -> s1 / (0.9e-3 * 0.9e-3);
 	}
 }
-
 
 void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
 {
