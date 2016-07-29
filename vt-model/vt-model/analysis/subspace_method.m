@@ -1,46 +1,29 @@
 % Subspace Method
-%% Separate data into past and future
+%% Load log files and combine data into one array
 clear
-load('recorded1_spect.mat')
-freq = f;
-dt = t(2)-t(1);
-
-% Randomly select N samples of length L from data
-%N = 10000;
-f = round(.3/dt);
-p = round(.3/dt);
-L = f+p;
-[num_f,num_samp] = size(mag_spect);
-%Remove any zeros and replace with small value to not mess up svd
-zs = mag_spect==0;
-mag_spect(zs) = 1e-10;
-logmag = log10(mag_spect.^2);
-f_ind = 1:5:num_f;
-freqs = freq(f_ind);
-n_freqs = length(freqs);
-length_fact = length(t)-L;
-Xp_ = zeros(length(f_ind)*p,length_fact);
-Xf_ = zeros(length(f_ind)*f,length_fact);
-for n=1:length_fact
-    xp = logmag(f_ind,n:n+p-1);
-    xf = logmag(f_ind,n+p:n+p+f-1);
-    Xp_(:,n) = xp(:);
-    Xf_(:,n) = xf(:);
+testname = 'test1';
+logs = dir([testname, '/logs/datalog*.log']);
+num_logs = length(logs);
+for i=1:num_logs
+    [VT_log, VT_lab, samp_freq, samp_len, des_samp_freq] = ...
+        import_datalog(testname,logs.name(i));
+    % Flip matrix to make more similar to how the spectrogram was processed
+    % in earlier code.
+    vt = VT_log';
+    VT = vt(:);
 end
-Xpm = mean(Xp_')';
-Xfm = mean(Xf_')';
-Xp = Xp_-Xpm*ones(1,length_fact);
-Xf = Xf_-Xfm*ones(1,length_fact);
-% Xp = zeros(length(freqs)*p,N);
-% Xf = zeros(length(freqs)*f,N);
-% for n=1:N
-%     start_p = ceil(rand(1)*(num_samp-L));
-%     xp = logmag(freqs,start_p:start_p+p-1);
-%     xf = logmag(freqs,start_p+p:start_p+p+f-1);
-%     Xp(:,n) = xp(:);
-%     Xf(:,n) = xf(:);
-% end
-
+num_vars = length(VT_lab);
+f = round(samp_len/2);
+p = samp_len-f;
+%L = f+p;
+%Remove any zeros and replace with small value to not mess up svd
+zs = VT==0;
+VT(zs) = 1e-10;
+% Remove mean from data
+Xpm = mean(VT(1:p,:)')';
+Xfm = mean(VT(p+1:end,:)')';
+Xp = Xp_-Xpm*ones(1,samp_len);
+Xf = Xf_-Xfm*ones(1,samp_len);
 %% Perform Least Squares Regression
 k = 8;
 %F = Xf*(Xp'*(Xp*Xp')^-1);
@@ -62,26 +45,30 @@ mn = ceil(sqrt(k));
 leg = [];
 figure(4); clf;
 for i=1:k
-    Ps{i} = reshape(K(i,:),[n_freqs,p]);
-    Fs{i} = reshape(O(:,i),[n_freqs,f]);    
+    Ps{i} = reshape(K(i,:),[num_vars,p]);
+    Fs{i} = reshape(O(:,i),[num_vars,f]);    
     figure(2)
     subplot(mn,mn,i)
-    surf((1:p)*dt,freqs,Ps{i},'EdgeColor','none');
+    surf((1:p)*dt,1:num_vars,Ps{i},'EdgeColor','none');
     axis xy; axis tight; colormap(hot); view(0,90);
     xlabel('Time (s)')
-    ylabel('Frequency (Hz)')
+    ylabel('VT variables')
     title(['Primitive ', num2str(i), ' Input Mapping'])
     set(gca,'FontSize',12)
+    set(gca,'YTick',1:num_vars)
+    set(gca,'YTickLabel',VT_lab)
     colorbar
     
     figure(3)
     subplot(mn,mn,i)
-    surf((p+1:p+f)*dt,freqs,Fs{i},'EdgeColor','none');
+    surf((p+1:p+f)*dt,1:num_vars,Fs{i},'EdgeColor','none');
     axis xy; axis tight; colormap(hot); view(0,90);
     xlabel('Time (s)')
-    ylabel('Frequency (Hz)')
+    ylabel('VT variables')
     title(['Primitive ', num2str(i), ' Output Mapping'])
     set(gca,'FontSize',12)
+    set(gca,'YTick',1:num_vars)
+    set(gca,'YTickLabel',VT_lab)
     colorbar
     
     figure(4)
@@ -92,11 +79,11 @@ for i=1:k
     hold off
 end
 
-figure(1)
-surf(t,freq,logmag,'EdgeColor','none');
-axis xy; axis tight; colormap(hot); view(0,90);
-xlabel('Time (s)')
-ylabel('Frequency (Hz)')
-title('Log Magnitude Squared Spectrogram')
-set(gca,'FontSize',12)
-colorbar
+% figure(1)
+% surf(t,freq,logmag,'EdgeColor','none');
+% axis xy; axis tight; colormap(hot); view(0,90);
+% xlabel('Time (s)')
+% ylabel('Frequency (Hz)')
+% title('Log Magnitude Squared Spectrogram')
+% set(gca,'FontSize',12)
+% colorbar
