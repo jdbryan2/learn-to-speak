@@ -19,12 +19,21 @@ Ytubes = A.data(:,tub_ind+1);
 Ytlab = A.colheaders(tub_ind+1);
 Ztubes = A.data(:,tub_ind+2);
 Ztlab = A.colheaders(tub_ind+2);
+XYZtubes = A.data(:,1:num_tubes*3);
+XYZlab = A.colheaders(:,1:num_tubes*3);
 arts = A.data(:,num_tubes*3+1:end-1);
 artlab = A.colheaders(num_tubes*3+1:end-1);
 sound = A.data(:,end);
 soundlab = A.colheaders(end);
 A_rearr = [arts Xtubes Ytubes Ztubes sound];
 Alab = [artlab Xtlab Ytlab Ztlab soundlab];
+%A_rearr = [arts XYZtubes sound];
+%Alab = [artlab XYZlab soundlab];
+%nums = 6;
+%A_rearr = [arts(:,1:nums) Xtubes(:,1:nums/3) Ytubes(:,1:nums/3) Ztubes(:,1:nums/3) sound];
+%Alab = [artlab(:,1:nums) Xtlab(:,1:nums/3) Ytlab(:,1:nums/3) Ztlab(:,1:nums/3) soundlab];
+%A_rearr = [arts(:,1:nums) XYZtubes(:,1:nums) sound];
+%Alab = [artlab(:,1:nums) XYZlab(:,1:nums) soundlab];
 
 % [m,n] = size(A_rearr);
 % changes = zeros(1,n);
@@ -52,4 +61,4 @@ Alab = [artlab Xtlab Ytlab Ztlab soundlab];
 % up = round(8000/samp_freq);
 % soundsc(interp(sound,up),samp_freq*up)
 
-save([testname,'/', filename(1:end-3), '.mat'],'A_rearr','Alab','samp_freq','num_samp','des_samp_freq');
+%save([testname,'/', filename(1:end-3), 'mat'],'A_rearr','Alab','samp_freq','num_samp','des_samp_freq');

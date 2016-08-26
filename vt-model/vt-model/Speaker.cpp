@@ -727,6 +727,7 @@ void Speaker::IterateSim()
         if (n == ((long)oversamp+ 1) / 2) {
             result->z[sample] = ComputeSound();
         }
+        // TODO: Should think about whether or not we should be logging before or after the parameter update.
         // Outupt some data to log file
         if (log_data) {
             Log();

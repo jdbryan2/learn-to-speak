@@ -80,9 +80,9 @@ int main()
     
     
     
-    int input1 =  0;// set to zero to test the speed of simulation.
-    int input2 =  0;// set to zero to test the speed of simulation.
-    while (true)
+    //int input1 =  0;// set to zero to test the speed of simulation.
+    //int input2 =  0;// set to zero to test the speed of simulation.
+    for (int trial=1; trial <= 100; trial++)
     {
         Artword rand_smooth(utterance_length);
         //rand_smooth.setTarget(kArt_muscle_LUNGS,0,0.2);
@@ -113,10 +113,10 @@ int main()
         rand_smooth.intoArt(female.art, 0.0);
 
         // initialize the simulation and tell it how many seconds to buffer
-        female.InitSim(0.5, prefix + "datalog" + to_string(8)+ ".log",800.0);
+        female.InitSim(0.5, prefix + "datalog" + to_string(trial)+ ".log",50.0);
 
-        cout << "Simulating...\n";
-        cout << "Oversample rate = " << oversamp << endl;
+        cout << "Simulating. Trial " << trial << "\n";
+        
         while (female.NotDone())
         {
             // adjust articulators using controller
@@ -128,7 +128,7 @@ int main()
             female.IterateSim();
         }
         cout << "Done!\n";
-        for(int i =0; i< 10; i++)
+        /*for(int i =0; i< 10; i++)
         {
             cout << female.result->z[100*i] << ", ";
         }
@@ -145,15 +145,16 @@ int main()
             } else {
                 break;
             }
-        }
-        female.SaveSound(prefix + "recorded" + to_string(8) + ".log");
-        std::cin.clear();
+        } */
+        female.Speak();
+        female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
+        /*std::cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Press (1) to generate a new sound or any key to quit.\n";
         cin >> input1;
         if(input1 != 1) {
             break;
-        }
+        } */
     }
     return 0;
 }

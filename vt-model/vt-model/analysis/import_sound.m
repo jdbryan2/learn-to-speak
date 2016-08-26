@@ -1,6 +1,6 @@
 function [Snd, fs, duration] = import_sound(testname,filename)
 %import_sound
-%filename = 'test1/logs/recorded8.log';
+%filename = 'test1/logs/sound8.log';
 delimiterIn = '\t';
 headerlinesIn = 4;
 S = importdata([testname, '/logs/', filename],delimiterIn,headerlinesIn);
