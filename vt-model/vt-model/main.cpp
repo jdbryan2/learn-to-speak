@@ -19,7 +19,7 @@ using namespace std;
 
 int main()
 {
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test1/logs/");
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test3Area/logs/");
     /*Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -82,7 +82,7 @@ int main()
     
     //int input1 =  0;// set to zero to test the speed of simulation.
     //int input2 =  0;// set to zero to test the speed of simulation.
-    for (int trial=1; trial <= 100; trial++)
+    for (int trial=1; trial <= 30; trial++)
     {
         Artword rand_smooth(utterance_length);
         //rand_smooth.setTarget(kArt_muscle_LUNGS,0,0.2);

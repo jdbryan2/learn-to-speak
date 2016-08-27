@@ -797,12 +797,18 @@ void Speaker::Log()
     {
         for(int ind=0; ind<numberOfTubes; ind++)
         {
+            //For logging area
+            *log_stream << tube[ind].A;
+            *log_stream << "\t";
+            
+            /* For logging Dx, Dy, Dz
             *log_stream << tube[ind].Dxnew;
             *log_stream << "\t";
             *log_stream << tube[ind].Dynew;
             *log_stream << "\t";
             *log_stream << tube[ind].Dz;
             *log_stream << "\t";
+             */
         }
         for(int ind=0; ind<kArt_muscle_MAX; ind++)
         {
@@ -856,12 +862,18 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
     *log_stream << "\n\n";
     for(int ind=0; ind<numberOfTubes; ind++)
     {
+        // Logging VT Area
+        *log_stream << "A";
+        *log_stream << ind;
+        *log_stream << "\t";
+        /* For logging Dx Dy Dz
         *log_stream << ind;
         *log_stream << "X\t";
         *log_stream << ind;
         *log_stream << "Y\t";
         *log_stream << ind;
         *log_stream << "Z\t";
+         */
     }
     for(int ind=0; ind<kArt_muscle_MAX; ind++)
     {

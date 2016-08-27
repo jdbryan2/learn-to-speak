@@ -1,7 +1,7 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = 'test2';
+testname = 'test3Area';
 logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
@@ -18,11 +18,56 @@ dt = 1/samp_freq;
 f = round(samp_len/2);
 p = samp_len-f;
 %L = f+p;
+
+% Scale areas to be simialar to arts in units in variance
+% num_tubes = 89;
+% num_art = 29;
+% tub_ind = [];
+% art_ind = [];
+% for ind = 0:samp_len-1
+%     z = ind*(num_tubes+num_art);
+%     tub_ind = [tub_ind, z+1:z+num_tubes];
+%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+% end
+% tubes = VT(tub_ind,:);
+% arts = VT(art_ind,:);
+% % tub_std = std(tubes(:));
+% % art_std = std(arts(:));
+% % VT(tub_ind,:) = VT(tub_ind,:)/tub_std;
+% % VT(art_ind,:) = VT(art_ind,:)/art_std;
+% % Instead of variance use range
+% tub_rng = range(tubes(:));
+% art_rng = range(arts(:));
+% VT(tub_ind,:) = VT(tub_ind,:)/tub_rng;
+% VT(art_ind,:) = VT(art_ind,:)/art_rng;
+% 
+% % Remove mean from data
+% Xpm = mean(VT(1:p*num_vars,:)')';
+% Xfm = mean(VT(p*num_vars+1:end,:)')';
+% Xp = VT(1:p*num_vars,:)-Xpm*ones(1,num_logs);
+% Xf = VT(p*num_vars+1:end,:)-Xfm*ones(1,num_logs);
+
 % Remove mean from data
-Xpm = mean(VT(1:p*num_vars,:)')';
-Xfm = mean(VT(p*num_vars+1:end,:)')';
-Xp = VT(1:p*num_vars,:)-Xpm*ones(1,num_logs);
-Xf = VT(p*num_vars+1:end,:)-Xfm*ones(1,num_logs);
+VTs = VT-mean(VT,2)*ones(1,num_logs);
+% Scale areas to be simialar to arts in units in variance
+num_tubes = 89;
+num_art = 29;
+tub_ind = [];
+art_ind = [];
+for ind = 0:samp_len-1
+    z = ind*(num_tubes+num_art);
+    tub_ind = [tub_ind, z+1:z+num_tubes];
+    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+end
+tubes = VTs(tub_ind,:);
+arts = VTs(art_ind,:);
+tub_std = std(tubes(:));
+art_std = std(arts(:));
+VTs(tub_ind,:) = VTs(tub_ind,:)/tub_std;
+VTs(art_ind,:) = VTs(art_ind,:)/art_std;
+Xp = VTs(1:p*num_vars,:);
+Xf = VTs(p*num_vars+1:end,:);
+
 %Remove any zeros and replace with small value to not mess up svd
 zs = Xp ==0;
 Xp(zs) = 1e-10;
@@ -36,8 +81,8 @@ k = 8;
 F = Xf*pinv(Xp);
 Qp_ = cov(Xp')';
 Qf_ = cov(Xf')';
-%Qp_ = eye(size(Qp_));
-%Qf_ = eye(size(Qf_));
+Qp_ = eye(size(Qp_));
+Qf_ = eye(size(Qf_));
 % Take real part of scale factor
 F_sc = real(Qf_^(-.5))*F*real(Qp_^(.5));
 [U,S,V] = svd(F_sc);
