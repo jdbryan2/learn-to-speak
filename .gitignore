@@ -12,6 +12,9 @@ vt-model/vt-model/build/vocal_tract
 ################
 *.swp
 
+# Other temp files
+*~
+
 # OSX thumbnails
 *.DS_STORE
 
