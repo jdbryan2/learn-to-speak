@@ -10,6 +10,7 @@
 // TODO: Create include file and add assert.h. needs to be in only one spot.
 
 #include <iostream>
+#include <string>
 #include "Speaker.h"
 #include "Artword.h"
 

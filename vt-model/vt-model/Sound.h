@@ -10,6 +10,7 @@
 #define Sound_h
 
 #include "portaudio.h"
+#include <string>
 #include <vector>
 
 #define MAX_DURATION 5
