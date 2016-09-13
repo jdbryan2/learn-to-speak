@@ -148,7 +148,9 @@ int main()
             }
         } */
         female.Speak();
-        female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
+        // SaveSound() this loop to break when run on linux machine...
+        //female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
+
         /*std::cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Press (1) to generate a new sound or any key to quit.\n";
