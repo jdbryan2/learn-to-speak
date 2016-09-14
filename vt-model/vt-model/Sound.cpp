@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <iterator>
 
 int Sound::buffer_offset = 0;
 float Sound::amplitude = 0;

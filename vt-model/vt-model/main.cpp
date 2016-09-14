@@ -10,6 +10,7 @@
 // TODO: Create include file and add assert.h. needs to be in only one spot.
 
 #include <iostream>
+#include <string>
 #include "Speaker.h"
 #include "Artword.h"
 
@@ -177,6 +178,8 @@ void random_stim() {
         }
         cout << "Done!\n";
         female.Speak();
+        // TODO: Figure out why  SaveSound() breaks on linux
+        // Comment out to run on Linux
         female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
     }
 }

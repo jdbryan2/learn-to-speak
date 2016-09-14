@@ -1,6 +1,6 @@
 
 
-cmake_minimum_required(VERSION 2.0) #this line is required, I just put some version < current version...
+cmake_minimum_required(VERSION 2.6) #this line is required, I just put some version < current version...
 
 if(COMMAND cmake_policy)
 cmake_policy(SET CMP0003 NEW)
@@ -30,7 +30,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
 #ADD_LIBRARY(portaudio STATIC IMPORTED)
 #SET_TARGET_PROPERTIES(portaudio PROPERTIES IMPORTED_LOCATION /home/jacob/Projects/learn-to-speak/vt-model/external_libs/portaudio/libportaudio.a)
 
-ADD_EXECUTABLE(vocal_tract main.cpp Speaker.cpp Artword.cpp Sound.cpp support_functions.cpp )
+ADD_EXECUTABLE(vocal_tract main.cpp Speaker.cpp Artword.cpp Sound.cpp VocalTract.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vocal_tract ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
