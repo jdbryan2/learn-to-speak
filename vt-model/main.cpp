@@ -21,24 +21,92 @@ using namespace std;
 int main()
 {
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test3Area/logs/");
-    /*Artword apa(0.5);
-    apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
-    apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
-    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
-    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
-    apa.setTarget(kArt_muscle_LUNGS,0,0.2);
-    apa.setTarget(kArt_muscle_LUNGS,0.1,0);
-    apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
-    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    Artword articulation(0.5);
+
+    // apa
+     /*
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    articulation.setTarget(kArt_muscle_LUNGS,0,0.4);
+    articulation.setTarget(kArt_muscle_LUNGS,0.1,0);
+    articulation.setTarget(kArt_muscle_MASSETER,0.25,0.7);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+     */
+
+    // sigh
+    /*
+    articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
+    articulation.setTarget(kArt_muscle_LUNGS, 0.1, 0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    */
+
+    // ejctive
+    /*
+    articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
+    articulation.setTarget(kArt_muscle_LUNGS, 0.1, 0);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+
+    articulation.setTarget(kArt_muscle_MASSETER,0.0,-0.3);
+    articulation.setTarget(kArt_muscle_MASSETER,0.5,-0.3);
+    articulation.setTarget(kArt_muscle_HYOGLOSSUS,0.0,0.5);
+    articulation.setTarget(kArt_muscle_HYOGLOSSUS,0.5,0.5);
+
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.1,0.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.15,1.0);
+
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.0,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.17,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.2,1.0);
+
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.0,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.22,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.27,1.0);
+
+    
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.29,1.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.32,0.0);
+
+
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.35,1.0);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.38,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.35,1.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.38,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.5,0.0);
+    */
+
+    // bilabial click (functional phonology pg 140)
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.9);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.5,0.9);
+
+    articulation.setTarget(kArt_muscle_MASSETER,0.0,0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.2,0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.3,-0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.5,-0.25);
+
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.0,0.75);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.2,0.75);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.3,0.0);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.5,0.0);
+
+
     //apa.setTarget(kArt_muscle_UPPER_TONGUE, 0.25, 0.2);
     //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.0, 0.7);
     //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.5, 0.7);
     //apa.setTarget(kArt_muscle_VOCALIS, 0.0, 0.7);
-    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7); */
+    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7); 
     
-    std::default_random_engine generator;
-    std::normal_distribution<double> hold_time(0.2,0.25);
-    std::uniform_real_distribution<double> activation(0.0,1.0);
+    //std::default_random_engine generator;
+    //std::normal_distribution<double> hold_time(0.2,0.25);
+    //std::uniform_real_distribution<double> activation(0.0,1.0);
     double utterance_length = 0.5;
     //Artword rand_smooth(utterance_length);
     double sample_freq = 8000;
@@ -85,7 +153,7 @@ int main()
     //int input2 =  0;// set to zero to test the speed of simulation.
     for (int trial=1; trial <= 30; trial++)
     {
-        Artword rand_smooth(utterance_length);
+        /*Artword rand_smooth(utterance_length);
         //rand_smooth.setTarget(kArt_muscle_LUNGS,0,0.2);
         //rand_smooth.setTarget(kArt_muscle_LUNGS,0.1,0);
         double hold_times [kArt_muscle_MAX] = {.25};
@@ -104,14 +172,15 @@ int main()
                      }
                      hold_times[art] -= 1/sample_freq;
                  }
-        }
+        }*/
 
         // speaker type, number of glotal masses, fsamp, oversamp
         Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
 
         // pass the articulator positions into the speaker BEFORE initializing the simulation
         // otherwise, we just get a strong discontinuity after the first instant
-        rand_smooth.intoArt(female.art, 0.0);
+        //rand_smooth.intoArt(female.art, 0.0);
+        articulation.intoArt(female.art, 0.0);
 
         // initialize the simulation and tell it how many seconds to buffer
         female.InitSim(0.5, prefix + "datalog" + to_string(trial)+ ".log",50.0);
@@ -123,7 +192,8 @@ int main()
             // adjust articulators using controller
             // Artword class is being used for this currently.
             // Could use feedback instead
-            rand_smooth.intoArt(female.art, female.NowSeconds());
+            //rand_smooth.intoArt(female.art, female.NowSeconds());
+            articulation.intoArt(female.art, female.NowSeconds());
 
             // generate the next acoustic sample
             female.IterateSim();
