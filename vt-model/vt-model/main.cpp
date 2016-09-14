@@ -17,10 +17,8 @@
 
 using namespace std;
 
-int main()
-{
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test3Area/logs/");
-    /*Artword apa(0.5);
+void apa () {
+    Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
     apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
@@ -33,8 +31,62 @@ int main()
     //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.0, 0.7);
     //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.5, 0.7);
     //apa.setTarget(kArt_muscle_VOCALIS, 0.0, 0.7);
-    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7); */
+    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7);
     
+    double utterance_length = 0.5;
+    double sample_freq = 8000;
+    int oversamp = 70;
+    int number_of_glottal_masses = 2;
+    
+    int input2 =  0;// set to zero to test the speed of simulation.
+    
+    // speaker type, number of glotal masses, fsamp, oversamp
+    Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
+    
+    // pass the articulator positions into the speaker BEFORE initializing the simulation
+    // otherwise, we just get a strong discontinuity after the first instant
+    apa.intoArt(female.art, 0.0);
+    
+    // initialize the simulation and tell it how many seconds to buffer
+    female.InitSim(utterance_length);
+    
+    cout << "Simulating. " << "\n";
+    
+    while (female.NotDone())
+    {
+        // adjust articulators using controller
+        // Artword class is being used for this currently.
+        // Could use feedback instead
+        apa.intoArt(female.art, female.NowSeconds());
+        
+        // generate the next acoustic sample
+        female.IterateSim();
+    }
+    cout << "Done!\n";
+    for(int i =0; i< 10; i++)
+    {
+        cout << female.result->z[100*i] << ", ";
+    }
+    cout << endl;
+    
+    // simple interface for playing back the sound that was generated
+    input2 =  0;// set to zero to test the speed of simulation.
+    while (true)
+    {
+        cout << "Press (1) to play the sound or any key to quit.\n";
+        std::cin.clear();
+        cin >> input2;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        if(input2 == 1) {
+            female.Speak();
+        } else {
+            break;
+        }
+    }
+}
+
+void random_stim() {
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test3Area/logs/");
     std::default_random_engine generator;
     std::normal_distribution<double> hold_time(0.2,0.25);
     std::uniform_real_distribution<double> activation(0.0,1.0);
@@ -78,10 +130,6 @@ int main()
         kArt_muscle_LATERAL_PTERYGOID,
         kArt_muscle_BUCCINATOR};
     
-    
-    
-    //int input1 =  0;// set to zero to test the speed of simulation.
-    //int input2 =  0;// set to zero to test the speed of simulation.
     for (int trial=1; trial <= 30; trial++)
     {
         Artword rand_smooth(utterance_length);
@@ -94,27 +142,27 @@ int main()
         {
             //for (int art = kArt_muscle_MIN; art < kArt_muscle_MAX; art++)
             for (int i = 0; i < NUM_ART; i++)
-                 {
-                     art = arts[i];
-                     if (hold_times[art] <= 0.0 || (time+1/sample_freq) >= utterance_length) {
-                         rand_smooth.setTarget(art, time, activation(generator));
-                         hold_times[art] = hold_time(generator);
-                         continue;
-                     }
-                     hold_times[art] -= 1/sample_freq;
-                 }
+            {
+                art = arts[i];
+                if (hold_times[art] <= 0.0 || (time+1/sample_freq) >= utterance_length) {
+                    rand_smooth.setTarget(art, time, activation(generator));
+                    hold_times[art] = hold_time(generator);
+                    continue;
+                }
+                hold_times[art] -= 1/sample_freq;
+            }
         }
-
+        
         // speaker type, number of glotal masses, fsamp, oversamp
         Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-
+        
         // pass the articulator positions into the speaker BEFORE initializing the simulation
         // otherwise, we just get a strong discontinuity after the first instant
         rand_smooth.intoArt(female.art, 0.0);
-
+        
         // initialize the simulation and tell it how many seconds to buffer
         female.InitSim(0.5, prefix + "datalog" + to_string(trial)+ ".log",50.0);
-
+        
         cout << "Simulating. Trial " << trial << "\n";
         
         while (female.NotDone())
@@ -123,38 +171,19 @@ int main()
             // Artword class is being used for this currently.
             // Could use feedback instead
             rand_smooth.intoArt(female.art, female.NowSeconds());
-
+            
             // generate the next acoustic sample
             female.IterateSim();
         }
         cout << "Done!\n";
-        /*for(int i =0; i< 10; i++)
-        {
-            cout << female.result->z[100*i] << ", ";
-        }
-        cout << endl;
-
-        // simple interface for playing back the sound that was generated
-        input2 =  0;// set to zero to test the speed of simulation.
-        while (true)
-        {
-            cout << "Press (1) to play the sound or any key to quit.\n";
-            cin >> input2;
-            if(input2 == 1) {
-                female.Speak();
-            } else {
-                break;
-            }
-        } */
         female.Speak();
         female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
-        /*std::cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cout << "Press (1) to generate a new sound or any key to quit.\n";
-        cin >> input1;
-        if(input1 != 1) {
-            break;
-        } */
     }
+}
+
+
+int main()
+{
+    apa ();
     return 0;
 }
