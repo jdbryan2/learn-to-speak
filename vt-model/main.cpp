@@ -88,7 +88,7 @@ void apa () {
 }
 
 void random_stim() {
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test3Area/logs/");
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
     std::default_random_engine generator;
     std::normal_distribution<double> hold_time(0.2,0.25);
     std::uniform_real_distribution<double> activation(0.0,1.0);
@@ -187,7 +187,7 @@ void random_stim() {
 
 void test_gsl_matrix () {
     int i, j;
-    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test4mat/matrix1.txt","w");
+    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test4mat/matrix1.log","w");
     gsl_matrix * m = gsl_matrix_alloc (10, 3);
     
     for (i = 0; i < 10; i++)

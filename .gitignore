@@ -1,12 +1,12 @@
 # Compiled sources
 ###################
 *.o
-vt-model/vt-model/build/CMakeFiles/
+vt-model/build/CMakeFiles/
 #vt-model/vt-model/build/vocal_tract # executable
-vt-model/vt-model/build/CMakeCache.txt
-vt-model/vt-model/build/Makefile
-vt-model/vt-model/build/vocal_tract
-
+vt-model/build/CMakeCache.txt
+vt-model/build/Makefile
+vt-model/build/vocal_tract 
+vt-model/build/*
 
 # vim swap files
 ################
