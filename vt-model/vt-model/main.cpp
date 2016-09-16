@@ -13,6 +13,7 @@
 #include <string>
 #include "Speaker.h"
 #include "Artword.h"
+#include <gsl/gsl_matrix.h>
 
 #define NUM_ART 29
 
@@ -184,9 +185,29 @@ void random_stim() {
     }
 }
 
+void test_gsl_matrix () {
+    int i, j;
+    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/vt-model/vt-model/analysis/test4mat/matrix1.txt","w");
+    gsl_matrix * m = gsl_matrix_alloc (10, 3);
+    
+    for (i = 0; i < 10; i++)
+        for (j = 0; j < 3; j++)
+            gsl_matrix_set (m, i, j, 0.23 + 100*i + j);
+    
+    gsl_matrix_fprintf(f_stream, m, "%f");
+    
+    for (i = 0; i < 100; i++)  /* OUT OF RANGE ERROR */
+        for (j = 0; j < 3; j++)
+            printf ("m(%d,%d) = %g\n", i, j,
+                    gsl_matrix_get (m, i, j));
+    
+    gsl_matrix_free (m);
+}
+
 
 int main()
 {
     apa ();
+    test_gsl_matrix();
     return 0;
 }
