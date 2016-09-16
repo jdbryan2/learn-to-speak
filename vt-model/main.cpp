@@ -19,7 +19,7 @@
 
 using namespace std;
 
-void apa () {
+Artword apa () {
     Artword apa(0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
     apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -29,13 +29,78 @@ void apa () {
     apa.setTarget(kArt_muscle_LUNGS,0.1,0);
     apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
     apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
-    //apa.setTarget(kArt_muscle_UPPER_TONGUE, 0.25, 0.2);
-    //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.0, 0.7);
-    //apa.setTarget(kArt_muscle_CRICOTHYROID, 0.5, 0.7);
-    //apa.setTarget(kArt_muscle_VOCALIS, 0.0, 0.7);
-    //apa.setTarget(kArt_muscle_VOCALIS, 0.5, 0.7);
-    
-    double utterance_length = 0.5;
+    return apa;
+}
+
+
+Artword sigh () {
+    Artword articulation(0.5);
+    articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
+    articulation.setTarget(kArt_muscle_LUNGS, 0.1, 0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    return articulation;
+}
+
+Artword ejective () {
+    Artword articulation(0.5);
+    articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
+    articulation.setTarget(kArt_muscle_LUNGS, 0.1, 0);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+
+    articulation.setTarget(kArt_muscle_MASSETER,0.0,-0.3);
+    articulation.setTarget(kArt_muscle_MASSETER,0.5,-0.3);
+    articulation.setTarget(kArt_muscle_HYOGLOSSUS,0.0,0.5);
+    articulation.setTarget(kArt_muscle_HYOGLOSSUS,0.5,0.5);
+
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.1,0.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.15,1.0);
+
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.0,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.17,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.2,1.0);
+
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.0,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.22,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.27,1.0);
+
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.29,1.0);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.32,0.0);
+
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.35,1.0);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.38,0.5);
+    articulation.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.35,1.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.38,0.0);
+    articulation.setTarget(kArt_muscle_STYLOHYOID,0.5,0.0);
+    return articulation;
+}
+
+// bilabial click (functional phonology pg 140)
+Artword click () {
+    Artword articulation(0.5);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.9);
+    articulation.setTarget(kArt_muscle_STYLOGLOSSUS,0.5,0.9);
+
+    articulation.setTarget(kArt_muscle_MASSETER,0.0,0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.2,0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.3,-0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.5,-0.25);
+
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.0,0.75);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.2,0.75);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.3,0.0);
+    articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.5,0.0);
+    return articulation;
+}
+
+void sim_artword( Artword articulation, double utterance_length)
+    {
     double sample_freq = 8000;
     int oversamp = 70;
     int number_of_glottal_masses = 2;
@@ -47,7 +112,7 @@ void apa () {
     
     // pass the articulator positions into the speaker BEFORE initializing the simulation
     // otherwise, we just get a strong discontinuity after the first instant
-    apa.intoArt(female.art, 0.0);
+    articulation.intoArt(female.art, 0.0);
     
     // initialize the simulation and tell it how many seconds to buffer
     female.InitSim(utterance_length);
@@ -59,7 +124,7 @@ void apa () {
         // adjust articulators using controller
         // Artword class is being used for this currently.
         // Could use feedback instead
-        apa.intoArt(female.art, female.NowSeconds());
+        articulation.intoArt(female.art, female.NowSeconds());
         
         // generate the next acoustic sample
         female.IterateSim();
@@ -196,10 +261,11 @@ void test_gsl_matrix () {
     
     gsl_matrix_fprintf(f_stream, m, "%f");
     
-    for (i = 0; i < 100; i++)  /* OUT OF RANGE ERROR */
+    /*for (i = 0; i < 100; i++)  // OUT OF RANGE ERROR
         for (j = 0; j < 3; j++)
             printf ("m(%d,%d) = %g\n", i, j,
                     gsl_matrix_get (m, i, j));
+    */
     
     gsl_matrix_free (m);
 }
@@ -207,7 +273,7 @@ void test_gsl_matrix () {
 
 int main()
 {
-    apa ();
+    sim_artword(click(), 0.5);
     test_gsl_matrix();
     return 0;
 }
