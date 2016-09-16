@@ -728,6 +728,8 @@ void Speaker::IterateSim()
             result->z[sample] = ComputeSound();
         }
         // TODO: Should think about whether or not we should be logging before or after the parameter update.
+        // TODO: ALso may need to rethink logging inside of the oversample loop, because we can only control
+        //       outside of the sample loop.
         // Outupt some data to log file
         if (log_data) {
             Log();

@@ -12,6 +12,7 @@
 		C37EDAFA1D8C5CFC000980A8 /* VocalTract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */; };
 		C37EDAFC1D8C5D0F000980A8 /* Speaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAFB1D8C5D0F000980A8 /* Speaker.cpp */; };
 		C37EDAFE1D8C5D27000980A8 /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAFD1D8C5D27000980A8 /* Sound.cpp */; };
+		C3AAA7CE1D8DADF200CAA757 /* RandomStim.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3AAA7CC1D8DADF200CAA757 /* RandomStim.cpp */; };
 		C3F641DF1C94CDBE0060F202 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641DD1C94CDBE0060F202 /* libportaudio.a */; };
 		C3F641E11C94CEB90060F202 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E01C94CEB90060F202 /* CoreAudio.framework */; };
 		C3F641E31C94CEC40060F202 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3F641E21C94CEC40060F202 /* AudioToolbox.framework */; };
@@ -45,6 +46,9 @@
 		C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VocalTract.cpp; sourceTree = SOURCE_ROOT; };
 		C37EDAFB1D8C5D0F000980A8 /* Speaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Speaker.cpp; sourceTree = SOURCE_ROOT; };
 		C37EDAFD1D8C5D27000980A8 /* Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Sound.cpp; sourceTree = SOURCE_ROOT; };
+		C3AAA7CA1D8DACF300CAA757 /* Control.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Control.h; sourceTree = SOURCE_ROOT; };
+		C3AAA7CC1D8DADF200CAA757 /* RandomStim.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RandomStim.cpp; sourceTree = SOURCE_ROOT; };
+		C3AAA7CD1D8DADF200CAA757 /* RandomStim.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RandomStim.h; sourceTree = SOURCE_ROOT; };
 		C3DD13FA1D38081200E14DA6 /* VocalTract.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VocalTract.h; sourceTree = "<group>"; };
 		C3EB287C1D1C288C0000AB02 /* Delta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Delta.h; sourceTree = "<group>"; };
 		C3F641DD1C94CDBE0060F202 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libportaudio.a; path = external_libs/portaudio/libportaudio.a; sourceTree = "<group>"; };
@@ -111,6 +115,9 @@
 				C36B90681C8DCC4300B37B7B /* Speaker.h */,
 				C35541821C9AE7AD004D585F /* Sound.h */,
 				C3DD13FA1D38081200E14DA6 /* VocalTract.h */,
+				C3AAA7CA1D8DACF300CAA757 /* Control.h */,
+				C3AAA7CC1D8DADF200CAA757 /* RandomStim.cpp */,
+				C3AAA7CD1D8DADF200CAA757 /* RandomStim.h */,
 			);
 			path = "vt-model";
 			sourceTree = "<group>";
@@ -191,6 +198,7 @@
 				C37EDAFA1D8C5CFC000980A8 /* VocalTract.cpp in Sources */,
 				C37EDAF81D8C5CDD000980A8 /* Artword.cpp in Sources */,
 				C37EDAF61D8C5CB8000980A8 /* main.cpp in Sources */,
+				C3AAA7CE1D8DADF200CAA757 /* RandomStim.cpp in Sources */,
 				C37EDAFC1D8C5D0F000980A8 /* Speaker.cpp in Sources */,
 				C37EDAFE1D8C5D27000980A8 /* Sound.cpp in Sources */,
 			);

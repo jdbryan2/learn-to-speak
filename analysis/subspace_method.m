@@ -48,7 +48,8 @@ p = samp_len-f;
 % Xf = VT(p*num_vars+1:end,:)-Xfm*ones(1,num_logs);
 
 % Remove mean from data
-VTs = VT-mean(VT,2)*ones(1,num_logs);
+VT_mean = mean(VT,2);
+VTs = VT-VT_mean*ones(1,num_logs);
 % Scale areas to be simialar to arts in units in variance
 num_tubes = 89;
 num_art = 29;
@@ -141,6 +142,40 @@ for i=1:k
     legend(leg)
     hold off
 end
+
+% Save K, O, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
+% compatible with GSL matrix files (vectorization of the matrix transpose)
+kt = K';
+fid=fopen([testname,'/K_mat.prim'],'wt');
+fprintf(fid,'%d\n',kt);
+fclose(fid);
+
+ot = O';
+fid=fopen([testname,'/O_mat.prim'],'wt');
+fprintf(fid,'%d\n',ot);
+fclose(fid);
+
+fid=fopen([testname,'/mean.prim'],'wt');
+fprintf(fid,'%d\n',VT_mean);
+fclose(fid);
+
+fid=fopen([testname,'/area_std.prim'],'wt');
+fprintf(fid,'%d\n',tub_std);
+fclose(fid);
+
+fid=fopen([testname,'/art_std.prim'],'wt');
+fprintf(fid,'%d\n',art_std);
+fclose(fid);
+
+fp = [f,p];
+fid=fopen([testname,'/f_p.prim'],'wt');
+fprintf(fid,'%d\n',fp);
+fclose(fid);
+
+fp = [f,p];
+fid=fopen([testname,'/samp_freq.prim'],'wt');
+fprintf(fid,'%d\n',samp_freq);
+fclose(fid);
 
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');

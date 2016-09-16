@@ -13,6 +13,7 @@
 #include <string>
 #include "Speaker.h"
 #include "Artword.h"
+#include "RandomStim.h"
 #include <gsl/gsl_matrix.h>
 
 #define NUM_ART 29
@@ -152,80 +153,26 @@ void sim_artword( Artword articulation, double utterance_length)
     }
 }
 
-void random_stim() {
+void random_stim_trials() {
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
-    std::default_random_engine generator;
-    std::normal_distribution<double> hold_time(0.2,0.25);
-    std::uniform_real_distribution<double> activation(0.0,1.0);
+    std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
+    std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     double utterance_length = 0.5;
-    //Artword rand_smooth(utterance_length);
     double sample_freq = 8000;
+    RandomStim rs(utterance_length, sample_freq, hold_time_param, activation_param);
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     
-    // Articulators that we want to randomly stimulate
-    //int arts[NUM_ART] = {kArt_muscle_INTERARYTENOID,kArt_muscle_LEVATOR_PALATINI,kArt_muscle_MASSETER,kArt_muscle_ORBICULARIS_ORIS};
-    
-    int arts[NUM_ART] = {
-        kArt_muscle_LUNGS,
-        kArt_muscle_INTERARYTENOID,
-        kArt_muscle_CRICOTHYROID,
-        kArt_muscle_VOCALIS,
-        kArt_muscle_THYROARYTENOID,
-        kArt_muscle_POSTERIOR_CRICOARYTENOID,
-        kArt_muscle_LATERAL_CRICOARYTENOID,
-        kArt_muscle_STYLOHYOID,
-        kArt_muscle_STERNOHYOID,
-        kArt_muscle_THYROPHARYNGEUS,
-        kArt_muscle_LOWER_CONSTRICTOR,
-        kArt_muscle_MIDDLE_CONSTRICTOR,
-        kArt_muscle_UPPER_CONSTRICTOR,
-        kArt_muscle_SPHINCTER,
-        kArt_muscle_HYOGLOSSUS,
-        kArt_muscle_STYLOGLOSSUS,
-        kArt_muscle_GENIOGLOSSUS,
-        kArt_muscle_UPPER_TONGUE,
-        kArt_muscle_LOWER_TONGUE,
-        kArt_muscle_TRANSVERSE_TONGUE,
-        kArt_muscle_VERTICAL_TONGUE,
-        kArt_muscle_RISORIUS,
-        kArt_muscle_ORBICULARIS_ORIS,
-        kArt_muscle_LEVATOR_PALATINI,
-        kArt_muscle_TENSOR_PALATINI,
-        kArt_muscle_MASSETER,
-        kArt_muscle_MYLOHYOID,
-        kArt_muscle_LATERAL_PTERYGOID,
-        kArt_muscle_BUCCINATOR};
-    
     for (int trial=1; trial <= 30; trial++)
     {
-        Artword rand_smooth(utterance_length);
-        //rand_smooth.setTarget(kArt_muscle_LUNGS,0,0.2);
-        //rand_smooth.setTarget(kArt_muscle_LUNGS,0.1,0);
-        double hold_times [kArt_muscle_MAX] = {.25};
-        int art = 0;
-        
-        for (double time = 0.0; time <= utterance_length; time = time + 1/sample_freq)
-        {
-            //for (int art = kArt_muscle_MIN; art < kArt_muscle_MAX; art++)
-            for (int i = 0; i < NUM_ART; i++)
-            {
-                art = arts[i];
-                if (hold_times[art] <= 0.0 || (time+1/sample_freq) >= utterance_length) {
-                    rand_smooth.setTarget(art, time, activation(generator));
-                    hold_times[art] = hold_time(generator);
-                    continue;
-                }
-                hold_times[art] -= 1/sample_freq;
-            }
-        }
-        
         // speaker type, number of glotal masses, fsamp, oversamp
+        // TODO: Move outside of trial loop. Make sure everything is reset properly
         Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
         
+        rs.NewArtword();
         // pass the articulator positions into the speaker BEFORE initializing the simulation
         // otherwise, we just get a strong discontinuity after the first instant
-        rand_smooth.intoArt(female.art, 0.0);
+        rs.InitArts(& female);
         
         // initialize the simulation and tell it how many seconds to buffer
         female.InitSim(0.5, prefix + "datalog" + to_string(trial)+ ".log",50.0);
@@ -234,24 +181,29 @@ void random_stim() {
         
         while (female.NotDone())
         {
-            // adjust articulators using controller
-            // Artword class is being used for this currently.
-            // Could use feedback instead
-            rand_smooth.intoArt(female.art, female.NowSeconds());
-            
+            rs.doControl(&female);
             // generate the next acoustic sample
             female.IterateSim();
         }
         cout << "Done!\n";
         female.Speak();
-        // TODO: Figure out why  SaveSound() breaks on linux
-        // Comment out to run on Linux
         female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
     }
 }
 
 void test_gsl_matrix () {
     int i, j;
+    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/mm_mat.txt","r");
+    gsl_matrix * m = gsl_matrix_alloc(3,4);
+    gsl_matrix_fscanf(f_stream, m);
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 4; j++)
+            printf ("m(%d,%d) = %g\n", i, j,
+                    gsl_matrix_get (m, i, j));
+    
+    
+    
+    /*int i, j;
     FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test4mat/matrix1.log","w");
     gsl_matrix * m = gsl_matrix_alloc (10, 3);
     
@@ -259,7 +211,7 @@ void test_gsl_matrix () {
         for (j = 0; j < 3; j++)
             gsl_matrix_set (m, i, j, 0.23 + 100*i + j);
     
-    gsl_matrix_fprintf(f_stream, m, "%f");
+    gsl_matrix_fprintf(f_stream, m, "%f"); */
     
     /*for (i = 0; i < 100; i++)  // OUT OF RANGE ERROR
         for (j = 0; j < 3; j++)
@@ -273,7 +225,8 @@ void test_gsl_matrix () {
 
 int main()
 {
-    sim_artword(click(), 0.5);
-    test_gsl_matrix();
+    random_stim_trials();
+    //sim_artword(click(), 0.5);
+    //test_gsl_matrix();
     return 0;
 }
