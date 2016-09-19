@@ -33,7 +33,7 @@
 #define EQUAL_TUBE_WIDTHS  0
 #define CONSTANT_TUBE_LENGTHS  0 // was set to 1
 #define NO_MOVING_WALLS  0
-#define NO_TURBULENCE  0
+#define NO_TURBULENCE  0 // NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
 #define NO_RADIATION_DAMPING  0
 #define NO_BERNOULLI_EFFECT  0
 #define MASS_LEAPFROG  0
@@ -56,8 +56,8 @@ Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double sampl
 void Speaker::InitializeTube()
 {
     // Map speaker parameters into delta tube
-    // TODO: Determine wheter it is necessary to call this each time we run a new articulation with the same speaker
-    // *******************************MIGHT ONLY NEED CALLED ONCE TODO: DETERMINE IF IT RESETS ANY VALUES************** //
+    // It is only necessary to call this once for each speaker.
+    // It does not need to be called for a new articulation with the same speaker
     double f = relativeSize * 1e-3;   // we shall use millimetres and grams
     int itube;
     assert(cord.numberOfMasses == 1 || cord.numberOfMasses == 2 || cord.numberOfMasses == 10);
@@ -243,7 +243,7 @@ void Speaker::InitializeTube()
     // Vocal tract from neutral articulation.
     {
         // TODO: Add virtual art to vt class
-        double art_0[kArt_muscle_MAX]={0.0}; // all values are defaulted to zero
+        Articulation art_0 = {0.0}; // all values are defaulted to zero
         // TODO: Don't like having to call this and then the MeshSum () it is confusing.
         MeshUpper(art_0);
     }
@@ -383,7 +383,6 @@ void Speaker::InitializeTube()
         assert(! t->right1 || t->right1->left1 == t || t->right1->left2 == t);
         assert(! t->right2 || t->right2->left1 == t);
     }
-    // *******************************MIGHT ONLY NEED CALLED ONCE TODO: DETERMINE IF IT RESETS ANY VALUES************** //
     Dt = 1.0 / fsamp / oversamp,
     rho0 = 1.14,
     c = 353.0,
@@ -469,20 +468,16 @@ void Speaker::UpdateTube()
 	}
 }
 
-void Speaker::InitSim(double totalTime, std::string filepath, double log_freq)
+void Speaker::InitSim(double totalTime, Articulation initialArt)
 {
 	try {
-        InitializeTube();
+        // TODO: Make Articulation a class and use either a copy funciton or overload =
+        memcpy(art, initialArt, sizeof(Articulation));
         if(!result->IsInitialized()) {
             result->Initialize(1, totalTime, fsamp);
         }
         else {
             result->ResetArray(totalTime);
-        }
-        // Test if the user wants to log data or not
-        if (!filepath.empty()) {
-            assert(log_freq>0);
-            InitDataLogger( filepath, log_freq);
         }
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;

@@ -13,6 +13,8 @@
 #include <string>
 #include "Speaker.h"
 #include "Artword.h"
+#include "Control.h"
+#include "ArtwordControl.h"
 #include "RandomStim.h"
 #include <gsl/gsl_matrix.h>
 
@@ -100,94 +102,67 @@ Artword click () {
     return articulation;
 }
 
-void sim_artword( Artword articulation, double utterance_length)
-    {
-    double sample_freq = 8000;
-    int oversamp = 70;
-    int number_of_glottal_masses = 2;
-    
-    int input2 =  0;// set to zero to test the speed of simulation.
-    
-    // speaker type, number of glotal masses, fsamp, oversamp
-    Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    
+void simulate(Speaker* speaker, Control* controller) {
     // pass the articulator positions into the speaker BEFORE initializing the simulation
     // otherwise, we just get a strong discontinuity after the first instant
-    articulation.intoArt(female.art, 0.0);
+    Articulation art;
+    controller->InitialArt(art);
     
     // initialize the simulation and tell it how many seconds to buffer
-    female.InitSim(utterance_length);
+    speaker->InitSim(controller->utterance_length, art);
     
-    cout << "Simulating. " << "\n";
+    cout << "Simulating...\n";
     
-    while (female.NotDone())
+    while (speaker->NotDone())
     {
-        // adjust articulators using controller
-        // Artword class is being used for this currently.
-        // Could use feedback instead
-        articulation.intoArt(female.art, female.NowSeconds());
-        
+        controller->doControl(speaker);
         // generate the next acoustic sample
-        female.IterateSim();
+        speaker->IterateSim();
     }
     cout << "Done!\n";
+}
+
+void sim_artword(Speaker* speaker, Artword* artword)
+    {
+    ArtwordControl awcontrol(artword);
+    simulate(speaker, &awcontrol);
     for(int i =0; i< 10; i++)
     {
-        cout << female.result->z[100*i] << ", ";
+        cout << speaker->result->z[100*i] << ", ";
     }
     cout << endl;
     
     // simple interface for playing back the sound that was generated
-    input2 =  0;// set to zero to test the speed of simulation.
+    int input =  0;// set to zero to test the speed of simulation.
     while (true)
     {
         cout << "Press (1) to play the sound or any key to quit.\n";
         std::cin.clear();
-        cin >> input2;
+        cin >> input;
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        if(input2 == 1) {
-            female.Speak();
+        if(input == 1) {
+            speaker->Speak();
         } else {
             break;
         }
     }
 }
 
-void random_stim_trials() {
+void random_stim_trials(Speaker* speaker,double utterance_length, double log_freq) {
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
     std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
-    double utterance_length = 0.5;
-    double sample_freq = 8000;
-    RandomStim rs(utterance_length, sample_freq, hold_time_param, activation_param);
-    int oversamp = 70;
-    int number_of_glottal_masses = 2;
-    
+    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
     for (int trial=1; trial <= 30; trial++)
     {
-        // speaker type, number of glotal masses, fsamp, oversamp
-        // TODO: Move outside of trial loop. Make sure everything is reset properly
-        Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-        
+        // Generate a new random artword
         rs.NewArtword();
-        // pass the articulator positions into the speaker BEFORE initializing the simulation
-        // otherwise, we just get a strong discontinuity after the first instant
-        rs.InitArts(& female);
-        
-        // initialize the simulation and tell it how many seconds to buffer
-        female.InitSim(0.5, prefix + "datalog" + to_string(trial)+ ".log",50.0);
-        
-        cout << "Simulating. Trial " << trial << "\n";
-        
-        while (female.NotDone())
-        {
-            rs.doControl(&female);
-            // generate the next acoustic sample
-            female.IterateSim();
-        }
-        cout << "Done!\n";
-        female.Speak();
-        female.SaveSound(prefix + "sound" + to_string(trial) + ".log");
+        // Initialize the data logger
+        speaker->InitDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_freq);
+        cout << "Trial " << trial << "\n";
+        simulate(speaker, &rs);
+        speaker->Speak();
+        speaker->SaveSound(prefix + "sound" + to_string(trial) + ".log");
     }
 }
 
@@ -225,8 +200,17 @@ void test_gsl_matrix () {
 
 int main()
 {
-    random_stim_trials();
-    //sim_artword(click(), 0.5);
+    double sample_freq = 8000;
+    int oversamp = 70;
+    int number_of_glottal_masses = 2;
+    Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
+    
+    // double utterance_length = 0.5;
+    // double log_freq = 50;
+    //random_stim_trials(&female,utterance_length,log_freq);
+    
+    Artword artword = apa();
+    sim_artword(&female, &artword);
     //test_gsl_matrix();
     return 0;
 }

@@ -33,8 +33,9 @@ public:
     void setTarget(int feature, double tim, double value);
     double getTarget(int feature, double tim);
     void removeTarget(int feature, int iTarget);
-    void intoArt(double art[kArt_muscle_MAX], double tim);
+    void intoArt(Articulation art, double tim);
     void resetTargets();
+    void Copy(Artword* newArtword);
 };
 
 /* End of file Artword.h */

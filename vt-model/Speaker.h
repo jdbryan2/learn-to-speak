@@ -32,7 +32,7 @@
 class Speaker : private VocalTract, private Delta {
 public:
     
-    double art[kArt_muscle_MAX]={0}; // Activations of muscles
+    Articulation art ={0}; // Activations of muscles
     
     // ***** SIMULATION VARIABLES ***** //
     double fsamp;
@@ -71,7 +71,8 @@ public:
 
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
     ~Speaker() { delete result;}
-    void InitSim(double totalTime, std::string filepath = std::string(),double log_freq = 0);
+    void InitSim(double totalTime, Articulation initialArt);
+    int InitDataLogger(std::string filepath,double log_freq);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
@@ -86,7 +87,6 @@ private:
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
     double ComputeSound();
-    int InitDataLogger(std::string filepath,double log_freq);
     void Log();
 };
 

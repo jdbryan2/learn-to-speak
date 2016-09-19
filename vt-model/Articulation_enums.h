@@ -64,5 +64,8 @@ enum kArt_muscle {
     kArt_muscle_MAX = kArt_muscle_BUCCINATOR+1 // +1 so that this can be used to initialize arrays properly
 };
 
+// TODO: Probably need to make this into its own class. And add a copy function to overload =
+typedef double Articulation[kArt_muscle_MAX];
+
 /* End of file Articulation.enums */
 # endif

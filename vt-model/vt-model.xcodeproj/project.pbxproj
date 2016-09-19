@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C3024B921D90779D00B70D1B /* ArtwordControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3024B901D90779D00B70D1B /* ArtwordControl.cpp */; };
 		C37EDAF61D8C5CB8000980A8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF41D8C5C9F000980A8 /* main.cpp */; };
 		C37EDAF81D8C5CDD000980A8 /* Artword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF71D8C5CDD000980A8 /* Artword.cpp */; };
 		C37EDAFA1D8C5CFC000980A8 /* VocalTract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */; };
@@ -34,6 +35,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C3024B901D90779D00B70D1B /* ArtwordControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ArtwordControl.cpp; sourceTree = SOURCE_ROOT; };
+		C3024B911D90779D00B70D1B /* ArtwordControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArtwordControl.h; sourceTree = SOURCE_ROOT; };
 		C35541821C9AE7AD004D585F /* Sound.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sound.h; sourceTree = "<group>"; };
 		C35B595C1C937BAE00BAC233 /* Artword_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword_def.h; sourceTree = "<group>"; };
 		C35B595E1C937BAE00BAC233 /* Artword.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword.h; sourceTree = "<group>"; };
@@ -102,22 +105,24 @@
 		C36B902D1C8CE93600B37B7B /* vt-model */ = {
 			isa = PBXGroup;
 			children = (
-				C37EDAFD1D8C5D27000980A8 /* Sound.cpp */,
-				C37EDAFB1D8C5D0F000980A8 /* Speaker.cpp */,
-				C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */,
-				C37EDAF71D8C5CDD000980A8 /* Artword.cpp */,
 				C37EDAF41D8C5C9F000980A8 /* main.cpp */,
+				C37EDAFD1D8C5D27000980A8 /* Sound.cpp */,
+				C35541821C9AE7AD004D585F /* Sound.h */,
+				C37EDAFB1D8C5D0F000980A8 /* Speaker.cpp */,
+				C36B90681C8DCC4300B37B7B /* Speaker.h */,
+				C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */,
+				C3DD13FA1D38081200E14DA6 /* VocalTract.h */,
+				C37EDAF71D8C5CDD000980A8 /* Artword.cpp */,
+				C35B595E1C937BAE00BAC233 /* Artword.h */,
 				C3EB287C1D1C288C0000AB02 /* Delta.h */,
 				C35B595C1C937BAE00BAC233 /* Artword_def.h */,
-				C35B595E1C937BAE00BAC233 /* Artword.h */,
 				C36B90741C91DBC500B37B7B /* Articulation_enums.h */,
 				C36B90661C8DCC4300B37B7B /* Speaker_def.h */,
-				C36B90681C8DCC4300B37B7B /* Speaker.h */,
-				C35541821C9AE7AD004D585F /* Sound.h */,
-				C3DD13FA1D38081200E14DA6 /* VocalTract.h */,
 				C3AAA7CA1D8DACF300CAA757 /* Control.h */,
 				C3AAA7CC1D8DADF200CAA757 /* RandomStim.cpp */,
 				C3AAA7CD1D8DADF200CAA757 /* RandomStim.h */,
+				C3024B901D90779D00B70D1B /* ArtwordControl.cpp */,
+				C3024B911D90779D00B70D1B /* ArtwordControl.h */,
 			);
 			path = "vt-model";
 			sourceTree = "<group>";
@@ -199,6 +204,7 @@
 				C37EDAF81D8C5CDD000980A8 /* Artword.cpp in Sources */,
 				C37EDAF61D8C5CB8000980A8 /* main.cpp in Sources */,
 				C3AAA7CE1D8DADF200CAA757 /* RandomStim.cpp in Sources */,
+				C3024B921D90779D00B70D1B /* ArtwordControl.cpp in Sources */,
 				C37EDAFC1D8C5D0F000980A8 /* Speaker.cpp in Sources */,
 				C37EDAFE1D8C5D27000980A8 /* Sound.cpp in Sources */,
 			);
