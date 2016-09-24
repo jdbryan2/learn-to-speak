@@ -28,10 +28,11 @@
 #include <random>
 #include <fstream>
 
+typedef double AreaFcn[MAX_NUMBER_OF_TUBES];
+
 
 class Speaker : private VocalTract, private Delta {
 public:
-    
     Articulation art ={0}; // Activations of muscles
     
     // ***** SIMULATION VARIABLES ***** //
@@ -39,6 +40,7 @@ public:
     double oversamp;
     long numberOfSamples;
     long sample;
+    Sound *result;
     
     double Dt,
     rho0,
@@ -67,12 +69,12 @@ public:
     int numberOfOversampLogSamples;
     int logCounter;
     long logSample;
-    Sound *result;
-
+    
+public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
     ~Speaker() { delete result;}
     void InitSim(double totalTime, Articulation initialArt);
-    int InitDataLogger(std::string filepath,double log_freq);
+    int ConfigDataLogger(std::string filepath,double log_freq);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
@@ -82,11 +84,13 @@ public:
     int Speak();
     int SaveSound(std::string filepath);
     double getVolume();
+    void getAreaFcn(AreaFcn AreaFcn_);
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
     double ComputeSound();
+    void InitDataLogger();
     void Log();
 };
 

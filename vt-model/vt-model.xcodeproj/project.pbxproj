@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C3024B921D90779D00B70D1B /* ArtwordControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3024B901D90779D00B70D1B /* ArtwordControl.cpp */; };
+		C3024B951D92E9ED00B70D1B /* BasePrimControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C3024B931D92E9ED00B70D1B /* BasePrimControl.cpp */; };
 		C37EDAF61D8C5CB8000980A8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF41D8C5C9F000980A8 /* main.cpp */; };
 		C37EDAF81D8C5CDD000980A8 /* Artword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF71D8C5CDD000980A8 /* Artword.cpp */; };
 		C37EDAFA1D8C5CFC000980A8 /* VocalTract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C37EDAF91D8C5CFC000980A8 /* VocalTract.cpp */; };
@@ -37,6 +38,8 @@
 /* Begin PBXFileReference section */
 		C3024B901D90779D00B70D1B /* ArtwordControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ArtwordControl.cpp; sourceTree = SOURCE_ROOT; };
 		C3024B911D90779D00B70D1B /* ArtwordControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArtwordControl.h; sourceTree = SOURCE_ROOT; };
+		C3024B931D92E9ED00B70D1B /* BasePrimControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasePrimControl.cpp; sourceTree = SOURCE_ROOT; };
+		C3024B941D92E9ED00B70D1B /* BasePrimControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasePrimControl.h; sourceTree = SOURCE_ROOT; };
 		C35541821C9AE7AD004D585F /* Sound.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sound.h; sourceTree = "<group>"; };
 		C35B595C1C937BAE00BAC233 /* Artword_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword_def.h; sourceTree = "<group>"; };
 		C35B595E1C937BAE00BAC233 /* Artword.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Artword.h; sourceTree = "<group>"; };
@@ -123,6 +126,8 @@
 				C3AAA7CD1D8DADF200CAA757 /* RandomStim.h */,
 				C3024B901D90779D00B70D1B /* ArtwordControl.cpp */,
 				C3024B911D90779D00B70D1B /* ArtwordControl.h */,
+				C3024B931D92E9ED00B70D1B /* BasePrimControl.cpp */,
+				C3024B941D92E9ED00B70D1B /* BasePrimControl.h */,
 			);
 			path = "vt-model";
 			sourceTree = "<group>";
@@ -200,6 +205,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3024B951D92E9ED00B70D1B /* BasePrimControl.cpp in Sources */,
 				C37EDAFA1D8C5CFC000980A8 /* VocalTract.cpp in Sources */,
 				C37EDAF81D8C5CDD000980A8 /* Artword.cpp in Sources */,
 				C37EDAF61D8C5CB8000980A8 /* main.cpp in Sources */,

@@ -16,6 +16,7 @@
 #include "Control.h"
 #include "ArtwordControl.h"
 #include "RandomStim.h"
+#include "BasePrimControl.h"
 #include <gsl/gsl_matrix.h>
 
 #define NUM_ART 29
@@ -153,12 +154,12 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_fre
     std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 30; trial++)
+    for (int trial=1; trial <= 5; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger
-        speaker->InitDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_freq);
+        speaker->ConfigDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_freq);
         cout << "Trial " << trial << "\n";
         simulate(speaker, &rs);
         speaker->Speak();
@@ -198,6 +199,17 @@ void test_gsl_matrix () {
 }
 
 
+void prim_control(Speaker* speaker,double utterance_length, double log_freq) {
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/");
+    Articulation art = {};
+    BasePrimControl prim(utterance_length,art,prefix);
+    // Initialize the data logger
+    speaker->ConfigDataLogger(prefix + "primlog/datalog" + to_string(1)+ ".log",log_freq);
+    simulate(speaker, &prim);
+    speaker->Speak();
+    speaker->SaveSound(prefix + "sound" + to_string(1) + ".log");
+}
+
 int main()
 {
     double sample_freq = 8000;
@@ -205,12 +217,12 @@ int main()
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     
-    // double utterance_length = 0.5;
-    // double log_freq = 50;
+    double utterance_length = 4;
+    double log_freq = 50;
     //random_stim_trials(&female,utterance_length,log_freq);
-    
-    Artword artword = apa();
-    sim_artword(&female, &artword);
+    prim_control(&female, utterance_length, log_freq);
+    //Artword artword = apa();
+    //sim_artword(&female, &artword);
     //test_gsl_matrix();
     return 0;
 }

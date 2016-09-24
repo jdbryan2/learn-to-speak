@@ -155,7 +155,7 @@ fid=fopen([testname,'/O_mat.prim'],'wt');
 fprintf(fid,'%d\n',ot);
 fclose(fid);
 
-fid=fopen([testname,'/mean.prim'],'wt');
+fid=fopen([testname,'/mean_mat.prim'],'wt');
 fprintf(fid,'%d\n',VT_mean);
 fclose(fid);
 
@@ -168,13 +168,16 @@ fprintf(fid,'%d\n',art_std);
 fclose(fid);
 
 fp = [f,p];
-fid=fopen([testname,'/f_p.prim'],'wt');
+fid=fopen([testname,'/f_p_mat.prim'],'wt');
 fprintf(fid,'%d\n',fp);
 fclose(fid);
 
-fp = [f,p];
 fid=fopen([testname,'/samp_freq.prim'],'wt');
 fprintf(fid,'%d\n',samp_freq);
+fclose(fid);
+
+fid=fopen([testname,'/num_prim.prim'],'wt');
+fprintf(fid,'%d\n',k);
 fclose(fid);
 
 % figure(1)

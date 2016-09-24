@@ -481,6 +481,10 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
         }
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;
+        
+        // Set up log counters and write headers
+        if(log_data == true)
+            InitDataLogger();
 
         UpdateTube();
 
@@ -788,6 +792,13 @@ double Speaker::getVolume() {
     return totalVolume;
 }
 
+void Speaker::getAreaFcn(AreaFcn AreaFcn_) {
+    for(int ind=0; ind<numberOfTubes; ind++)
+    {
+        AreaFcn_[ind] = tube[ind].A;
+    }
+}
+
 void Speaker::Log()
 {
     if(logCounter == numberOfOversampLogSamples)
@@ -827,7 +838,7 @@ void Speaker::Log()
     ++logCounter;
 }
 
-int Speaker::InitDataLogger(std::string filepath, double log_freq)
+int Speaker::ConfigDataLogger(std::string filepath, double log_freq)
 {
     log_data = true;
     if( log_stream == nullptr) {
@@ -839,15 +850,21 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
         log_stream->open(filepath);
     }
     logfreq = log_freq;
+    if(!log_stream)
+    {
+        exit(1);
+    }
+    return 0;
+}
+
+void Speaker::InitDataLogger()
+{
     numberOfOversampLogSamples = floor((oversamp*fsamp)/logfreq);
     //TODO: Clean this all up. logfreq is not actual frequency of logging, because we are rounding.
     numberOfLogSamples = result->duration*(oversamp*fsamp/(numberOfOversampLogSamples+1)); //TODO: This could be wrong
     logCounter = numberOfOversampLogSamples; // Setup logger to take first sample
     logSample = 0;
-    if(!log_stream)
-    {
-        exit(1);
-    }
+
     *log_stream << "Desired Sampling Frequency :\n";
     *log_stream << logfreq;
     *log_stream << "\n";
@@ -879,7 +896,6 @@ int Speaker::InitDataLogger(std::string filepath, double log_freq)
         *log_stream << "\t";
     }
     *log_stream << "Sound\n";
-    return 0;
 }
 
 
