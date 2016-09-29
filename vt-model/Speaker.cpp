@@ -42,11 +42,11 @@
 
 using namespace std;
 
-Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq):
+Speaker::Speaker(string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier):
     VocalTract(kindOfSpeaker,numberOfVocalCordMasses),
     Delta(),
     fsamp(samplefreq),
-    oversamp(oversamplefreq),
+    oversamp(oversample_multiplier),
     distribution(1.0, NOISE_FACTOR)
 {
     InitializeTube();
@@ -481,10 +481,6 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
         }
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;
-        
-        // Set up log counters and write headers
-        if(log_data == true)
-            InitDataLogger();
 
         UpdateTube();
 
@@ -509,6 +505,10 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
 			totalVolume += t->V;
 		}
 		printf("Starting volume: %f liters.\n", totalVolume * 1000);
+        // Set up log counters and write headers
+        if(log_data == true) {
+            InitDataLogger();
+        }
 
 	} catch (int e) {
         std::cout << "Articulatory synthesizer not initialized.\n";
@@ -726,13 +726,6 @@ void Speaker::IterateSim()
         if (n == ((long)oversamp+ 1) / 2) {
             result->z[sample] = ComputeSound();
         }
-        // TODO: Should think about whether or not we should be logging before or after the parameter update.
-        // TODO: ALso may need to rethink logging inside of the oversample loop, because we can only control
-        //       outside of the sample loop.
-        // Outupt some data to log file
-        if (log_data) {
-            Log();
-        }
 
         // Increment tube parameters for next iteration
         for (int m = 0; m < numberOfTubes; m ++) {
@@ -760,6 +753,10 @@ void Speaker::IterateSim()
         }
 
     } // End oversample loop
+    // Outupt some data to log file
+    if (log_data) {
+        Log();
+    }
     ++sample;
     if (!NotDone()) {
         printf("Ending volume: %f liters.\n", getVolume() * 1000);
@@ -801,7 +798,7 @@ void Speaker::getAreaFcn(AreaFcn AreaFcn_) {
 
 void Speaker::Log()
 {
-    if(logCounter == numberOfOversampLogSamples)
+    if(logCounter +1 == log_period)
     {
         for(int ind=0; ind<numberOfTubes; ind++)
         {
@@ -825,31 +822,38 @@ void Speaker::Log()
         }
         *log_stream << ComputeSound();
         *log_stream << "\n";
-        if (logSample+1==numberOfLogSamples)
+        
+        ++logSample;
+        if (logSample==numberOfLogSamples)
         {
             // TODO: Think about if we need to do anything here or not
             log_stream->flush();
             log_data = false;
         }
-        ++logSample;
         logCounter = 0;
         return;
     }
     ++logCounter;
 }
 
-int Speaker::ConfigDataLogger(std::string filepath, double log_freq)
+int Speaker::ConfigDataLogger(std::string filepath, int _log_period)
 {
     log_data = true;
     if( log_stream == nullptr) {
         log_stream = new std::ofstream(filepath);
+        // Ensure that all of the digits are written out. I think this ensures we have the correct precision.
+        // Using 32 digits of precision to get the best accuracy I can without using binary or hex values in the log files
+        //log_stream->precision(std::numeric_limits<double>::digits10); // Is 15 digits
+        // TODO: Use hex or binary log files
+        log_stream->precision(32);
+        log_stream->setf(ios::scientific);
     }
     else {
         log_stream->close();
         log_stream->clear();
         log_stream->open(filepath);
     }
-    logfreq = log_freq;
+    log_period = _log_period;
     if(!log_stream)
     {
         exit(1);
@@ -859,17 +863,12 @@ int Speaker::ConfigDataLogger(std::string filepath, double log_freq)
 
 void Speaker::InitDataLogger()
 {
-    numberOfOversampLogSamples = floor((oversamp*fsamp)/logfreq);
-    //TODO: Clean this all up. logfreq is not actual frequency of logging, because we are rounding.
-    numberOfLogSamples = result->duration*(oversamp*fsamp/(numberOfOversampLogSamples+1)); //TODO: This could be wrong
-    logCounter = numberOfOversampLogSamples; // Setup logger to take first sample
-    logSample = 0;
+    // Take an sample at time 0 and then every log_period steps after.
+    // This means that we will not take a sample at the end of the sequence unless it is divisible by the log_period
+    numberOfLogSamples = floor(result->duration*(fsamp/log_period))+1;
 
-    *log_stream << "Desired Sampling Frequency :\n";
-    *log_stream << logfreq;
-    *log_stream << "\n";
-    *log_stream << "Actual Sampling Frequency :\n";
-    *log_stream << logfreq;
+    *log_stream << "Sampling Frequency :\n";
+    *log_stream << fsamp/log_period;
     *log_stream << "\n";
     *log_stream << "Number of Samples :\n" ;
     *log_stream << numberOfLogSamples;
@@ -896,6 +895,12 @@ void Speaker::InitDataLogger()
         *log_stream << "\t";
     }
     *log_stream << "Sound\n";
+    
+    // Setup logger to take initial sample
+    logCounter = log_period-1;
+    logSample = 0;
+    // Log initial sample of data
+    Log();
 }
 
 

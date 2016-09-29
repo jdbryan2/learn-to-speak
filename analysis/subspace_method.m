@@ -6,8 +6,8 @@ logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
 for i=1:num_logs
-    [VT_log, VT_lab, samp_freq, samp_len, des_samp_freq] = ...
-        import_datalog(testname,logs(i).name);
+    [VT_log, VT_lab, samp_freq, samp_len] = ...
+        import_datalog([testname,'/logs/',logs(i).name]);
     % Flip matrix to make more similar to how the spectrogram was processed
     % in earlier code.
     vt = VT_log(:,1:end-1)'; %remove sound
@@ -145,26 +145,30 @@ end
 
 % Save K, O, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
 % compatible with GSL matrix files (vectorization of the matrix transpose)
+% precision comes from default : digits
+% Using 32 digits of precision to get the best accuracy I can without 
+% using binary or hex values in the log files
+% TODO: Use hex or binary log files
 kt = K';
 fid=fopen([testname,'/K_mat.prim'],'wt');
-fprintf(fid,'%d\n',kt);
+fprintf(fid,'%.32e\n',kt);
 fclose(fid);
 
 ot = O';
 fid=fopen([testname,'/O_mat.prim'],'wt');
-fprintf(fid,'%d\n',ot);
+fprintf(fid,'%.32e\n',ot);
 fclose(fid);
 
 fid=fopen([testname,'/mean_mat.prim'],'wt');
-fprintf(fid,'%d\n',VT_mean);
+fprintf(fid,'%.32e\n',VT_mean);
 fclose(fid);
 
 fid=fopen([testname,'/area_std.prim'],'wt');
-fprintf(fid,'%d\n',tub_std);
+fprintf(fid,'%.32e\n',tub_std);
 fclose(fid);
 
 fid=fopen([testname,'/art_std.prim'],'wt');
-fprintf(fid,'%d\n',art_std);
+fprintf(fid,'%.32e\n',art_std);
 fclose(fid);
 
 fp = [f,p];
@@ -173,12 +177,14 @@ fprintf(fid,'%d\n',fp);
 fclose(fid);
 
 fid=fopen([testname,'/samp_freq.prim'],'wt');
-fprintf(fid,'%d\n',samp_freq);
+fprintf(fid,'%.32e\n',samp_freq);
 fclose(fid);
 
 fid=fopen([testname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
+
+save('prims.mat','K','O','VT_mean','tub_std','art_std','f','p','samp_freq','k');
 
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');

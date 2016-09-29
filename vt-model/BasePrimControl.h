@@ -16,7 +16,7 @@
 
 class BasePrimControl : public Control {
 public:
-    BasePrimControl(double utterance_length_, Articulation initial_art_, std::string prim_file_prefix);
+    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art_, std::string prim_file_prefix);
     ~BasePrimControl();
     void doControl(Speaker * speaker);
     void InitialArt(Articulation art);
@@ -45,7 +45,7 @@ private:
     // Other Variables
     Articulation last_art;
     bool isInitialized = false;
-    
+    int control_period;
 };
 
 #endif /* BasePrimControl_h */

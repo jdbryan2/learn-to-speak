@@ -149,17 +149,17 @@ void sim_artword(Speaker* speaker, Artword* artword)
     }
 }
 
-void random_stim_trials(Speaker* speaker,double utterance_length, double log_freq) {
+void random_stim_trials(Speaker* speaker,double utterance_length, double log_period) {
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
     std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 5; trial++)
+    for (int trial=1; trial <= 50; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger
-        speaker->ConfigDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_freq);
+        speaker->ConfigDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_period);
         cout << "Trial " << trial << "\n";
         simulate(speaker, &rs);
         speaker->Speak();
@@ -167,47 +167,17 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_fre
     }
 }
 
-void test_gsl_matrix () {
-    int i, j;
-    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/mm_mat.txt","r");
-    gsl_matrix * m = gsl_matrix_alloc(3,4);
-    gsl_matrix_fscanf(f_stream, m);
-    for (i = 0; i < 3; i++)
-        for (j = 0; j < 4; j++)
-            printf ("m(%d,%d) = %g\n", i, j,
-                    gsl_matrix_get (m, i, j));
-    
-    
-    
-    /*int i, j;
-    FILE* f_stream = fopen("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test4mat/matrix1.log","w");
-    gsl_matrix * m = gsl_matrix_alloc (10, 3);
-    
-    for (i = 0; i < 10; i++)
-        for (j = 0; j < 3; j++)
-            gsl_matrix_set (m, i, j, 0.23 + 100*i + j);
-    
-    gsl_matrix_fprintf(f_stream, m, "%f"); */
-    
-    /*for (i = 0; i < 100; i++)  // OUT OF RANGE ERROR
-        for (j = 0; j < 3; j++)
-            printf ("m(%d,%d) = %g\n", i, j,
-                    gsl_matrix_get (m, i, j));
-    */
-    
-    gsl_matrix_free (m);
-}
-
-
-void prim_control(Speaker* speaker,double utterance_length, double log_freq) {
+void prim_control(Speaker* speaker,double utterance_length, double log_period) {
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/");
+    Artword artw = apa();
     Articulation art = {};
-    BasePrimControl prim(utterance_length,art,prefix);
+    artw.intoArt(art, 0.0);
+    BasePrimControl prim(utterance_length,log_period,art,prefix);
     // Initialize the data logger
-    speaker->ConfigDataLogger(prefix + "primlog/datalog" + to_string(1)+ ".log",log_freq);
+    speaker->ConfigDataLogger(prefix + "prim_logs/primlog" + to_string(1)+ ".log",log_period);
     simulate(speaker, &prim);
     speaker->Speak();
-    speaker->SaveSound(prefix + "sound" + to_string(1) + ".log");
+    speaker->SaveSound(prefix + "prim_logs/sound" + to_string(1) + ".log");
 }
 
 int main()
@@ -217,12 +187,12 @@ int main()
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     
-    double utterance_length = 4;
+    double utterance_length = 6;
     double log_freq = 50;
-    //random_stim_trials(&female,utterance_length,log_freq);
-    prim_control(&female, utterance_length, log_freq);
+    int log_period = floor(sample_freq/log_freq);
+    //random_stim_trials(&female,utterance_length,log_period);
+    prim_control(&female, utterance_length, log_period);
     //Artword artword = apa();
     //sim_artword(&female, &artword);
-    //test_gsl_matrix();
     return 0;
 }

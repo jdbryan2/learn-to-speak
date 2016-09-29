@@ -64,17 +64,16 @@ public:
     // ***** DATA LOGGING VARIABLES ***** //
     bool log_data = false;
     std::ofstream * log_stream = nullptr;
-    double logfreq;
+    int log_period;
     long numberOfLogSamples;
-    int numberOfOversampLogSamples;
     int logCounter;
     long logSample;
     
 public:
-    Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
+    Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
     ~Speaker() { delete result;}
     void InitSim(double totalTime, Articulation initialArt);
-    int ConfigDataLogger(std::string filepath,double log_freq);
+    int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}

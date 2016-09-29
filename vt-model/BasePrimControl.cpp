@@ -73,13 +73,6 @@ int BasePrimControl::LoadPrims() {
     gsl_matrix_fscanf(f_stream_mat, O);
     fclose(f_stream_mat);
     
-    /*for (int i = 0; i < mean_len; i++) {
-        for (int j = 0; j < 1; j++){
-            printf ("%g  ",gsl_matrix_get (feat_mean, i, j));
-        }
-        printf("\n\n");
-    }*/
-    
     Yp = gsl_vector_alloc(f_p[1]*NUM_FEAT);
     Yp_unscaled = gsl_vector_alloc(f_p[1]*NUM_FEAT);
     Yf = gsl_vector_alloc(f_p[0]*NUM_FEAT);
@@ -89,8 +82,9 @@ int BasePrimControl::LoadPrims() {
     return 0;
 }
 
-BasePrimControl::BasePrimControl(double utterance_length_, Articulation initial_art_, std::string prim_file_prefix):
-                Control(utterance_length_)
+BasePrimControl::BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art_, std::string prim_file_prefix):
+                Control(utterance_length_),
+                control_period(_control_period)
 {
     file_prefix = prim_file_prefix;
     LoadPrims();
@@ -114,104 +108,109 @@ BasePrimControl::~BasePrimControl() {
 
 void BasePrimControl::doControl(Speaker * speaker)
 {
-    AreaFcn AreaFcn;
-    speaker->getAreaFcn(AreaFcn);
-    // Create feature vector of last area function and articulator activations
-    gsl_vector *  feat = gsl_vector_alloc(NUM_FEAT);
-    for (int i=0; i<NUM_FEAT; i++) {
-        if (i<MAX_NUMBER_OF_TUBES) {
-            gsl_vector_set(feat, i, AreaFcn[i]);
-        }else {
-            gsl_vector_set(feat, i, last_art[i-MAX_NUMBER_OF_TUBES]);
-        }
-    }
-    // Setup Yp_unscaled to have a f_p[1] long constant history of initial_art and the initial VT area
-    if (!isInitialized) {
-        int ind;
-        for( int i=0; i<f_p[1]; i++)
-        {
-            ind = i*(NUM_FEAT);
-            // TODO check that the second parameter is an offset as expected from the docs.
-            gsl_vector_view Yp_u_i = gsl_vector_subvector(Yp_unscaled, ind, NUM_FEAT);
-            gsl_vector_memcpy(&Yp_u_i.vector, feat);
-        }
-    }
-    
-    // Shift forward each feat sample by one in the vetor Yp_unscaled
-    for( int i=0; i<=f_p[1]-2; i++)
+    // This statement sets the rate at which
+    if( speaker->Now() % control_period == 0)
     {
-        // TODO check that the second parameter is an offset as expected from the docs.
-        gsl_vector_view Yp_u_old = gsl_vector_subvector(Yp_unscaled, (i+1)*(NUM_FEAT), NUM_FEAT);
-        gsl_vector_view Yp_u_older = gsl_vector_subvector(Yp_unscaled, i*(NUM_FEAT), NUM_FEAT);
-        gsl_vector_memcpy(&Yp_u_older.vector, &Yp_u_old.vector);
-    }
-    // Store most recent feat vector in Yp
-    gsl_vector_view Yp_u_recent = gsl_vector_subvector(Yp_unscaled, (f_p[1]-1)*(NUM_FEAT), NUM_FEAT);
-    gsl_vector_memcpy(&Yp_u_recent.vector, feat);
-    
-    // Remove mean from Yp
-    gsl_vector_const_view past_mean = gsl_vector_const_subvector(feat_mean, 0, f_p[1]*NUM_FEAT);
-    gsl_vector_memcpy(Yp, Yp_unscaled);
-    gsl_blas_daxpy(-1.0, &past_mean.vector, Yp);
-    
-    // Scale the Area and Articulatory features by their respective standard deviations
-    double inv_area_std = 1/area_std;
-    double inv_art_std = 1/art_std;
-    for (int i=0; i<f_p[1]; i++) {
-        int ind = i*(NUM_FEAT);
-        gsl_vector_view Yp_area_i = gsl_vector_subvector(Yp, ind, MAX_NUMBER_OF_TUBES);
-        gsl_vector_view Yp_art_i = gsl_vector_subvector(Yp, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
-        gsl_blas_dscal(inv_area_std, &Yp_area_i.vector);
-        gsl_blas_dscal(inv_art_std, &Yp_art_i.vector);
-    }
-    
-    // Now actually use the primitives to find the future values
-    gsl_blas_dgemv(CblasNoTrans, 1, K, Yp, 0, x);
-    // TESTING: Disable all but one of the primitives.
-    for (int i=0; i<num_prim; i++) {
-        if (i==2)
-            continue;
-        if (i==0)
-            gsl_vector_set(x, i, 100.0);
-        gsl_vector_set(x, i, 0.0);
-    }
-    gsl_blas_dgemv(CblasNoTrans, 1, O, x, 0, Yf);
-    
-    // Now rescale Yf
-    for (int i=0; i<f_p[0]; i++) {
-        int ind = i*(NUM_FEAT);
-        gsl_vector_view Yf_area_i = gsl_vector_subvector(Yf, ind, MAX_NUMBER_OF_TUBES);
-        gsl_vector_view Yf_art_i = gsl_vector_subvector(Yf, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
-        gsl_blas_dscal(area_std, &Yf_area_i.vector);
-        gsl_blas_dscal(art_std, &Yf_art_i.vector);
-    }
-    
-    // Add back in the mean to Yf
-    gsl_vector_const_view future_mean = gsl_vector_const_subvector(feat_mean, f_p[1]*NUM_FEAT, f_p[0]*NUM_FEAT);
-    gsl_vector_memcpy(Yf_unscaled, Yf);
-    gsl_blas_daxpy(1.0, &future_mean.vector, Yf_unscaled);
-    
-    // Set last_art to the new command for the next timestep
-    for (int i=0; i<kArt_muscle_MAX; i++) {
-        int ind = i+MAX_NUMBER_OF_TUBES;
-        last_art[i] = gsl_vector_get(Yf_unscaled, ind);
-        // Ensure that art is betwen 0 and 1
-        if (last_art[i]>1) {
-            printf("Art%d Command Out of Range: %g\n",i,last_art[i]);
-            last_art[i] = 1;
+        AreaFcn AreaFcn;
+        speaker->getAreaFcn(AreaFcn);
+        // Create feature vector of last area function and articulator activations
+        gsl_vector *  feat = gsl_vector_alloc(NUM_FEAT);
+        for (int i=0; i<NUM_FEAT; i++) {
+            if (i<MAX_NUMBER_OF_TUBES) {
+                gsl_vector_set(feat, i, AreaFcn[i]);
+            }else {
+                gsl_vector_set(feat, i, last_art[i-MAX_NUMBER_OF_TUBES]);
+            }
         }
-        else if (last_art[i]<0) {
-            printf("Art%d Command Out of Range: %g\n",i,last_art[i]);
-            last_art[i] = 0;
+        // Setup Yp_unscaled to have a f_p[1] long constant history of initial_art and the initial VT area
+        if (!isInitialized) {
+            int ind;
+            for( int i=0; i<f_p[1]; i++)
+            {
+                ind = i*(NUM_FEAT);
+                // TODO check that the second parameter is an offset as expected from the docs.
+                gsl_vector_view Yp_u_i = gsl_vector_subvector(Yp_unscaled, ind, NUM_FEAT);
+                gsl_vector_memcpy(&Yp_u_i.vector, feat);
+            }
+            isInitialized = true;
         }
+        else
+        {
+            // Shift backward each feat sample by one in the vetor Yp_unscaled
+            for( int i=0; i<=f_p[1]-2; i++)
+            {
+                // TODO check that the second parameter is an offset as expected from the docs.
+                gsl_vector_view Yp_u_old = gsl_vector_subvector(Yp_unscaled, (i+1)*(NUM_FEAT), NUM_FEAT);
+                gsl_vector_view Yp_u_older = gsl_vector_subvector(Yp_unscaled, i*(NUM_FEAT), NUM_FEAT);
+                gsl_vector_memcpy(&Yp_u_older.vector, &Yp_u_old.vector);
+            }
+            // Store most recent feat vector in Yp
+            gsl_vector_view Yp_u_recent = gsl_vector_subvector(Yp_unscaled, (f_p[1]-1)*(NUM_FEAT), NUM_FEAT);
+            gsl_vector_memcpy(&Yp_u_recent.vector, feat);
+        }
+
+        // Remove mean from Yp
+        gsl_vector_const_view past_mean = gsl_vector_const_subvector(feat_mean, 0, f_p[1]*NUM_FEAT);
+        gsl_vector_memcpy(Yp, Yp_unscaled);
+        gsl_blas_daxpy(-1.0, &past_mean.vector, Yp);
+
+        // Scale the Area and Articulatory features by their respective standard deviations
+        double inv_area_std = 1/area_std;
+        double inv_art_std = 1/art_std;
+        for (int i=0; i<f_p[1]; i++) {
+            int ind = i*(NUM_FEAT);
+            gsl_vector_view Yp_area_i = gsl_vector_subvector(Yp, ind, MAX_NUMBER_OF_TUBES);
+            gsl_vector_view Yp_art_i = gsl_vector_subvector(Yp, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
+            gsl_blas_dscal(inv_area_std, &Yp_area_i.vector);
+            gsl_blas_dscal(inv_art_std, &Yp_art_i.vector);
+        }
+
+        // Now actually use the primitives to find the future values
+        gsl_blas_dgemv(CblasNoTrans, 1, K, Yp, 0, x);
+        // TESTING: Disable all but one of the primitives.
+         /*for (int i=0; i<num_prim; i++) {
+            if (i==0)
+                continue;//   gsl_vector_set(x, i, 1);
+            gsl_vector_set(x, i, 0.0);
+        }*/
+        gsl_blas_dgemv(CblasNoTrans, 1, O, x, 0, Yf);
+
+        // Now rescale Yf
+        for (int i=0; i<f_p[0]; i++) {
+            int ind = i*(NUM_FEAT);
+            gsl_vector_view Yf_area_i = gsl_vector_subvector(Yf, ind, MAX_NUMBER_OF_TUBES);
+            gsl_vector_view Yf_art_i = gsl_vector_subvector(Yf, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
+            gsl_blas_dscal(area_std, &Yf_area_i.vector);
+            gsl_blas_dscal(art_std, &Yf_art_i.vector);
+        }
+
+        // Add back in the mean to Yf
+        gsl_vector_const_view future_mean = gsl_vector_const_subvector(feat_mean, f_p[1]*NUM_FEAT, f_p[0]*NUM_FEAT);
+        gsl_vector_memcpy(Yf_unscaled, Yf);
+        gsl_blas_daxpy(1.0, &future_mean.vector, Yf_unscaled);
+
+        // Set last_art to the new command for the next timestep
+        for (int i=0; i<kArt_muscle_MAX; i++) {
+            int ind = i+MAX_NUMBER_OF_TUBES;
+            last_art[i] = gsl_vector_get(Yf_unscaled, ind);
+            // Ensure that art is betwen 0 and 1
+            if (last_art[i]>1) {
+                printf("Art%d Command Out of Range: %g\n",i,last_art[i]);
+                last_art[i] = 1;
+            }
+            else if (last_art[i]<0) {
+                printf("Art%d Command Out of Range: %g\n",i,last_art[i]);
+                last_art[i] = 0;
+            }
+        }
+
+        // Set speaker's articulation
+        for (int i = 0; i<kArt_muscle_MAX; i++) {
+            speaker->art[i] = last_art[i];
+        }
+
+        gsl_vector_free(feat);
     }
-    
-    // Set speaker's articulation
-    for (int i = 0; i<kArt_muscle_MAX; i++) {
-        speaker->art[i] = last_art[i];
-    }
-    
-    gsl_vector_free(feat);
 }
 
 void BasePrimControl::InitialArt(double *art) {
