@@ -50,7 +50,7 @@ using namespace yarp::sig;
 using namespace yarp::dev;
 
 
-YARP_DECLARE_DEVICES(icubmod)
+//YARP_DECLARE_DEVICES(icubmod)
 
 class StatusChecker : public PortReader {
 
@@ -158,8 +158,6 @@ public:
 
 		name=rf.check("name",Value("VocalTract")).asString().c_str();
 
-
-
 		//get robot name and trajectory times. use diff default traj times for icub and sim
         // TODO: These if/else statements should not really matter on current iCub
 		robot = rf.check("robot",Value("nobot")).asString().c_str();
@@ -206,7 +204,8 @@ public:
 
 	}
 
-	virtual bool   updateModule() {
+	virtual bool   updateModule()
+    {
 
 	}
 
@@ -216,245 +215,26 @@ public:
 
 		// get both input images
 
-		ImageOf<PixelRgb> *pImgL=portImgL->read(false);
-		ImageOf<PixelRgb> *pImgR=portImgR->read(false);
-		ImageOf<PixelRgb> *tImg;
+        yarp::sig::Vector *actuation=actuationIn->read(false);
 
-		ImageOf<PixelFloat> *pImgBRL;
-		ImageOf<PixelFloat> *pImgBRR;
-		ImageOf<PixelFloat> *oImg;
+        //yarp::sig::Vector *areaFunction;
+        //Sound *acousticSignal
 
 		//if we have both images
-		if (pImgL && pImgR)
+		if (actuation)
 		{
+            // setup variables 
+            yarp::sig:Vector &areaFunction = areaOut->prepare();
+            Sound &acousticSignal = acousticOut->prepare();
 
-			//set up processing
-			yarp::sig::Vector loc;
-			pImgBRL = new ImageOf<PixelFloat>;
-			pImgBRR = new ImageOf<PixelFloat>;
-			pImgBRL->resize(*pImgL);
-			pImgBRR->resize(*pImgR);
-			Mat * T, * X;
-			vector<vector<Point> > contours;
-			vector<Vec4i> hierarchy;
-			int biggestBlob;
+            // call simulator
+            // and get it's outputs
 
-
-			ImageOf<PixelRgb> &imgOut= portImgD->prepare();
-
-
-			//pull out the individual color channels
-			PixelRgb pxl;
-			float lum, rn, bn, gn, val;
-			for (int lr = 0; lr < 2; lr++) {
-
-				if (!lr) {
-					tImg = pImgL;
-					oImg = pImgBRL;
-				}
-				else {
-					tImg = pImgR;
-					oImg = pImgBRR;
-				}
-
-				for (int x = 0; x < tImg->width(); x++) {
-					for (int y = 0; y < tImg->height(); y++) {
-
-						//normalize brightness (above a given threshold)
-						pxl = tImg->pixel(x,y);
-						lum = (float)(pxl.r+pxl.g+pxl.b);
-						rn = 255.0F * pxl.r/lum;
-						gn = 255.0F * pxl.g/lum;
-						bn = 255.0F * pxl.b/lum;
-
-						//get the selected color
-						switch (color) {
-						case 0:
-							val = (rn - (gn+bn)/2);
-							break;
-						case 1:
-							val = (gn - (rn+bn)/2);
-							break;
-						case 2:
-							val = (bn - (rn+gn)/2);
-							break;
-						case 3:
-							val = (rn+gn)/2.0 - bn;
-							break;
-						}
-						if (val > 255.0) {
-							val = 255.0;
-						}
-						if (val < 0.0) {
-							val = 0.0;
-						}
-						oImg->pixel(x,y) = val;
-
-					}
-				}
-
-				//threshold to find blue blobs
-				T = new Mat(oImg->height(), oImg->width(), CV_32F, (void *)oImg->getRawImage());
-				threshold(*T, *T, thresh, 255.0, CV_THRESH_BINARY);
-
-				imgOut.copy(*oImg);
-
-				X = new Mat(oImg->height(), oImg->width(), CV_8UC1);
-				T->convertTo(*X,CV_8UC1);
-				findContours(*X, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
-
-				//find largest blob and its moment
-				double maxSize = 0.0;
-				biggestBlob = -1;
-				double xloc, yloc;
-;
-				for (int i = 0; i < contours.size(); i++) {
-					//do a heuristic check so that only 'compact' blobs are grabbed
-					if (abs(contourArea(Mat(contours[i])))/arcLength(Mat(contours[i]), true) > maxSize &&
-							abs(contourArea(Mat(contours[i])))/arcLength(Mat(contours[i]), true) > 2.0) {
-						maxSize = abs(contourArea(Mat(contours[i])))/arcLength(Mat(contours[i]), true);
-						biggestBlob = i;
-					}
-				}
-				if (biggestBlob >= 0) {
-
-					//if a valid object was found, add its location
-					Moments m = moments(Mat(contours[biggestBlob]));
-					xloc = m.m10/m.m00;
-					yloc = m.m01/m.m00;
-					loc.push_back(xloc);
-					loc.push_back(yloc);
-
-				}
-
-				delete T;
-				delete X;
-
-			}
-
-			// load all the audio
-			//earPort->read();
-			energy_left = 0.0;
-			energy_right = 0.0;
-			int inc = 0;
-			if (buf_left.size() > 0 && buf_right.size()> 0) {
-				buf_left.lock();
-				buf_right.lock();
-
-				while (buf_left.size() > 0 && buf_right.size() > 0 ) {
-					//double temp;
-					//temp = buf_left.front();
-					energy_left += buf_left.front()*buf_left.front()*100000000;				
-					energy_right += buf_right.front()*buf_right.front()*100000000;
-					buf_left.pop_front();
-					buf_right.pop_front();
-					inc++;
-				}
-				while (buf_left.size() > 0) {buf_left.pop_front();}
-				while (buf_right.size() > 0) {buf_right.pop_front();}
-
-				buf_left.unlock();
-				buf_right.unlock();
-				//M->pushData(signal,inc);
-		
-				//energy_left = 1;
-				printf("energy: %f,\t%f,\t%i\n", energy_left, energy_right, inc);
-				
-				if (energy_left > 20 || energy_right > 20) {
-					yarp::sig::Vector &cPos = portPos->prepare();
-
-					igaze->getFixationPoint(cPos);
-
-					igaze->getAngles(cPos);
-
-					//printf("fixed azelr: %f,\t%f,\t%f\n", cPos[0], cPos[1], cPos[2]);
-					
-					yarp::sig::Vector nPos(3);
-					if(energy_left > energy_right) {
-						nPos[0] = -5.0;
-					} else {
-						nPos[0] = +5.0;
-					}
-					nPos[1] = 0.0;
-					nPos[2] = 0.0;
-					if (energy_left < 40 || energy_right < 40) {
-						printf("fixed azelr: %f,\t%f,\t%f\n", nPos[0], nPos[1], nPos[2]);
-						igaze->lookAtRelAngles(nPos);
-					}
-					
-				}
-
-			}			
-			
-
-
-			//if a blob in both images was detected, go to it
-			if (loc.size() == 4) {
-
-				double du, dv;
-
-				//check to see if within acceptable tolerance
-				du = (loc[0] - 160 + loc[2] -160)/2.0;
-				dv = (loc[1] - 120 + loc[3] -120)/2.0;
-				printf("left/right average divergence: %f\n", sqrt(du*du+dv*dv));
-				if (sqrt(du*du+dv*dv) < tol) {
-				/////////////////////////////////////////////////////////////////////////////////
-				//stop tracking command
-				/////////////////////////////////////////////////////////////////////////////////
-					if (!stopped) {
-						
-						igaze->stopControl();
-						stopped = true;
-
-						//generate a trigger signal indicating that the blob has been focused
-						yarp::sig::Vector &cPos = portPos->prepare();
-						if (mode) {
-							igaze->getFixationPoint(cPos);
-							if (verbose) {
-								printf("fixated xyz: %f,\t%f,\t%f\n", cPos[0], cPos[1], cPos[2]);
-							}
-						} else {
-							igaze->getAngles(cPos);
-							if (verbose) {
-								printf("fixed azelr: %f,\t%f,\t%f\n", cPos[0], cPos[1], cPos[2]);
-							}
-						}
-						Bottle tStamp;
-						tStamp.clear();
-						tStamp.add(Time::now());
-						portPos->setEnvelope(tStamp);
-						portPos->write();
-
-					}
-
-					
-
-
-
-				} else {
-
-					if (!stopped || (sqrt(du*du+dv*dv) > hval*tol)) {
-						//continue tracking the object
-						yarp::sig::Vector pxl, pxr;
-						pxl.push_back(loc[0]);
-						pxl.push_back(loc[1]);
-						pxr.push_back(loc[2]);
-						pxr.push_back(loc[3]);
-						igaze->lookAtStereoPixels(pxl,pxr);
-						stopped = false;
-					}
-
-				}
-				draw::addCrossHair(imgOut, PixelRgb(0, 255, 0), loc[0], loc[1], 10);
-				draw::addCrossHair(imgOut, PixelRgb(0, 255, 0), loc[2], loc[3], 10);
-
-			}
 
 			//send out, cleanup
-			portImgD->write();
+			areaFunction->write();
+			acousticSignal->write();
 
-			delete pImgBRL;
-			delete pImgBRR;
 
 		}
 	}
@@ -462,42 +242,36 @@ public:
 	virtual void threadRelease()
 	{
 
-		clientGazeCtrl.close();
 
-		portImgL->interrupt();
-		portImgR->interrupt();
-		portImgD->interrupt();
-		portPos->interrupt();
+		acousticOut->interrupt();
+		areaOut->interrupt();
+		actuationIn->interrupt();
 
-		portImgL->close();
-		portImgR->close();
-		portImgD->close();
-		portPos->close();
-
-		earPort->close();
-
-		delete portImgL;
-		delete portImgR;
-		delete portImgD;
-		delete portPos;
+		acousticOut->close();
+		areaOut->close();
+		actuationIn->close();
+        
+		delete acousticOut;
+		delete areaOut;
+		delete actuationIn;
 
 	}
 
 };
 
-class strBallLocModule: public RFModule
+class VocalTractModule: public RFModule
 {
 protected:
-	strBallLocThread *thr;
+	VocalTractThread *thr;
 
 public:
-	strBallLocModule() { }
+	 VocalTractModule() { }
 
 	virtual bool configure(ResourceFinder &rf)
 	{
 		Time::turboBoost();
 
-		thr=new strBallLocThread(rf);
+		thr=new VocalTractThread(rf);
 		if (!thr->start())
 		{
 			delete thr;
@@ -534,7 +308,7 @@ int main(int argc, char *argv[])
 
 	rf.configure("ICUB_ROOT",argc,argv);
 
-	strBallLocModule mod;
+	VocalTractModule mod;
 
 	return mod.runModule(rf);
 }
