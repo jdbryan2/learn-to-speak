@@ -28,17 +28,19 @@
 #include <random>
 #include <fstream>
 
+typedef double AreaFcn[MAX_NUMBER_OF_TUBES];
+
 
 class Speaker : private VocalTract, private Delta {
 public:
-    
-    double art[kArt_muscle_MAX]={0}; // Activations of muscles
+    Articulation art ={0}; // Activations of muscles
     
     // ***** SIMULATION VARIABLES ***** //
     double fsamp;
     double oversamp;
     long numberOfSamples;
     long sample;
+    Sound *result;
     
     double Dt,
     rho0,
@@ -62,16 +64,16 @@ public:
     // ***** DATA LOGGING VARIABLES ***** //
     bool log_data = false;
     std::ofstream * log_stream = nullptr;
-    double logfreq;
+    int log_period;
     long numberOfLogSamples;
-    int numberOfOversampLogSamples;
     int logCounter;
     long logSample;
-    Sound *result;
-
-    Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversamplefreq);
+    
+public:
+    Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
     ~Speaker() { delete result;}
-    void InitSim(double totalTime, std::string filepath = std::string(),double log_freq = 0);
+    void InitSim(double totalTime, Articulation initialArt);
+    int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
@@ -81,12 +83,13 @@ public:
     int Speak();
     int SaveSound(std::string filepath);
     double getVolume();
+    void getAreaFcn(AreaFcn AreaFcn_);
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
     double ComputeSound();
-    int InitDataLogger(std::string filepath,double log_freq);
+    void InitDataLogger();
     void Log();
 };
 

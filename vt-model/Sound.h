@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#define MAX_DURATION 5
+#define MAX_DURATION 10 // was 5
 #define MAX_BUFFER_LEN 256
 #define SOUND_VOLUME 0.4
 

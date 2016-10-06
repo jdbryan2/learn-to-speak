@@ -28,9 +28,9 @@ public:
 protected:
     double MeshSumX(int i);
     double MeshSumY(int i);
-    void MeshUpper (double art[kArt_muscle_MAX]);
+    void MeshUpper (Articulation art);
 private:
-    void ArticulateUpper (double art[kArt_muscle_MAX]);
+    void ArticulateUpper (Articulation art);
     double toLine (double x, double y, int i);
     int inside (double x, double y);
     static double arcLength (double from, double to);

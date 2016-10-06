@@ -23,14 +23,18 @@
 #include <iostream> // for printing debug, may be removed once bugs are squashed
 using namespace std;
 
-Artword::Artword(double totalTime) {
-	this->totalTime = totalTime;
+Artword::Artword(double _totalTime) {
+    Init(_totalTime);
+}
+
+void Artword::Init(double _totalTime) {
+    this->totalTime = _totalTime;
     for (int i = 0; i < kArt_muscle_MAX; i ++) {
         ArtwordData* f = &(data[i]);
+        f->targets.clear();
         f->numberOfTargets = 2;
         f->targets.push_back(art_target{0.0,0.0});
         f->targets.push_back(art_target{totalTime,0.0});
-        //f->_iTarget = 1;
     }
 }
 
@@ -102,10 +106,26 @@ void Artword::removeTarget (int feature, int iTarget) {
 	}
 }
 
-void Artword::intoArt (double art[kArt_muscle_MAX], double time) {
+void Artword::intoArt (Articulation art, double time) {
 	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
 		art [feature] = getTarget (feature, time);
 	}
+}
+
+void Artword::resetTargets() {
+    Init(totalTime);
+}
+
+void Artword::Copy(Artword* newArtword) {
+    newArtword->totalTime = this->totalTime;
+    for (int i = 0; i < kArt_muscle_MAX; i ++) {
+        ArtwordData* f_this = &(this->data[i]);
+        ArtwordData* f_new = &(newArtword->data[i]);
+        f_new->targets.clear();
+        for (int j = 0; j < f_this->numberOfTargets; j++) {
+            f_new->targets.push_back(f_this->targets[j]);
+        }
+    }
 }
 
 /* End of file Artword.cpp */

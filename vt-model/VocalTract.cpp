@@ -125,7 +125,7 @@ VocalTract::VocalTract(string kindOfSpeaker, int numberOfVocalCordMasses)
 //       This is fucking weird but if the model works, then I don't think it's worth the
 //       trouble to fix.
 //
-void VocalTract::ArticulateUpper (double art[kArt_muscle_MAX])
+void VocalTract::ArticulateUpper (Articulation art)
 {
     double f = this->relativeSize * 1e-3;
     struct { double x, y, da; } jaw;
@@ -293,7 +293,7 @@ void VocalTract::ArticulateUpper (double art[kArt_muscle_MAX])
 // TODO: These arrays (xmm,ymm,xi,yi,xe,ye,dx,dy)are being indexed starting @ 1.
 //       This is very confusing, but it would be time consuming to switch it over.
 //       We should change this at some point.
-void VocalTract::MeshUpper (double art[kArt_muscle_MAX])
+void VocalTract::MeshUpper (Articulation art)
 {
     double f = relativeSize * 1e-3;
     double d_angle = 0.0;
