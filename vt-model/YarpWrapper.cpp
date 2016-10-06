@@ -12,23 +12,14 @@
 #include <iostream>
 #include "Speaker.h"
 #include "Artword.h"
+#include "Control.h"
+#include "ArtwordControl.h"
 
 
 #include <yarp/os/all.h>
-
-#include <yarp/sig/Vector.h>
-#include <yarp/sig/Image.h>
-#include <yarp/sig/ImageFile.h>
-#include <yarp/sig/ImageDraw.h>
-
-#include <yarp/dev/Drivers.h>
-#include <yarp/dev/ControlBoardInterfaces.h>
-#include <yarp/dev/GazeControl.h>
-#include <yarp/dev/PolyDriver.h>
-
-#include <yarp/sig/Sound.h>
-
 #include <yarp/math/Math.h>
+#include <yarp/sig/Vector.h>
+#include <yarp/sig/Sound.h>
 
 #include <string>
 #include <time.h>
@@ -36,22 +27,22 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include <deque>
+#include <deque> // unsure if necessary
 
 #define TIMEOUT 5.0 
 #define NUM_ART 29
 
 //namespaces
 using namespace std;
-using namespace cv;
 using namespace yarp;
 using namespace yarp::os;
-using namespace yarp::sig;
-using namespace yarp::dev;
+//using namespace yarp::sig; // namespace for yarp::sig::Sound will cause cause conflicts with vt definition of Sound
+//using namespace yarp::dev;
 
 
 //YARP_DECLARE_DEVICES(icubmod)
 
+// unsure if necessary
 class StatusChecker : public PortReader {
 
 protected:
@@ -93,7 +84,8 @@ public:
 
 };
 
-class VADPort : public BufferedPort<Sound> {
+/*
+class VADPort : public BufferedPort<yarp::sig::Sound> {
 
 protected:
 
@@ -110,7 +102,7 @@ public:
 	VADPort(DataBuffer &buf1, DataBuffer &buf2, int decimate) : buffer1(buf1),buffer2(buf2), N(decimate) { }
 
 	//callback for incoming position data
-	virtual void onRead(Sound& s) {
+	virtual void onRead(yarp::sig::Sound& s) {
 
 		int blockSize = s.getSamples();
 		Stamp tStamp;	int status;
@@ -128,6 +120,7 @@ public:
 	}
 
 };
+*/
 
 
 class VocalTractThread : public RateThread
@@ -138,18 +131,23 @@ protected:
 	string name;
 
 
-	BufferedPort<Sound> *acousticOut;
+	BufferedPort<yarp::sig::Sound> *acousticOut;
 	BufferedPort<yarp::sig::Vector>  *areaOut;
-	BufferedPort<yarp::sig::Vector>  *actuation;
+	BufferedPort<yarp::sig::Vector>  *actuationIn;
 
 	int status;
 	Port   * statPort;
 	StatusChecker * checker;
 	Port   * outPort;
 
+    Speaker * speaker;
+    ArtwordControl * controller;
+    Artword * apa;
+    
+
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(50), rf(_rf)
+	VocalTractThread(ResourceFinder &_rf) : RateThread(5), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
@@ -160,23 +158,10 @@ public:
 
 		//get robot name and trajectory times. use diff default traj times for icub and sim
         // TODO: These if/else statements should not really matter on current iCub
-		robot = rf.check("robot",Value("nobot")).asString().c_str();
-		if (robot == "icubSim") {
-			neckTT = rf.check("nt",Value(0.6)).asDouble();
-			eyeTT = rf.check("et",Value(0.1)).asDouble();
-		}
-		else if (robot == "icub") {
-			neckTT = rf.check("nt",Value(1.0)).asDouble();
-			eyeTT = rf.check("et",Value(0.5)).asDouble();
-		}
-		else {
-			printf("No robot name specified, using real iCub default trajectory times\n");
-			neckTT = rf.check("nt",Value(1.0)).asDouble();
-			eyeTT = rf.check("et",Value(0.5)).asDouble();
-		}
+		//robot = rf.check("robot",Value("nobot")).asString().c_str();
 
 		//open up ports
-		acousticOut=new BufferedPort<Sound>;
+		acousticOut=new BufferedPort<yarp::sig::Sound>;
 		string acousticName="/"+name+"/acoustic";
 		acousticOut->open(acousticName.c_str());
 
@@ -187,15 +172,42 @@ public:
 		actuationIn=new BufferedPort<yarp::sig::Vector>;
 		string actuationName="/"+name+"/actuator/in";
 		actuationIn->open(actuationName.c_str());
-        actuationIn->useCallBack();
+        actuationIn->useCallback();
 
-		stopped = false;
+		//stopped = false;
 
+
+        // set up vocal tract simulator
+        ////////////////////////////////////////////////////
+        double sample_freq = 8000;
+        int oversamp = 70;
+        int number_of_glottal_masses = 2;
+        speaker  = new Speaker("Female",number_of_glottal_masses, sample_freq, oversamp);
+
+        apa = new Artword(0.5);
+        apa->setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+        apa->setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+        apa->setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+        apa->setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+        apa->setTarget(kArt_muscle_LUNGS,0,0.2);
+        apa->setTarget(kArt_muscle_LUNGS,0.1,0);
+        apa->setTarget(kArt_muscle_MASSETER,0.25,0.7);
+        apa->setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+
+        controller = new ArtwordControl(apa);
+
+        Articulation art;
+        controller->InitialArt(art);
+        speaker->InitSim(controller->utterance_length, art);
+
+
+        ////////////////////////////////////////////////////
+        
 
 		//set up status checking port
 		statPort = new Port;
 		checker = new StatusChecker(&status);
-		string statName = sendPort + "/status";
+		string statName = "/"+ name + "/status";
 		statPort->open(statName.c_str());
 		statPort->setReader(*checker);
 
@@ -221,27 +233,33 @@ public:
         //Sound *acousticSignal
 
 		//if we have both images
-		if (actuation)
+		//if (actuation)
+        if (speaker->NotDone()) // this should actually loop some fixed number of blocks based on the update size
 		{
+            controller->doControl(speaker);
+            speaker->IterateSim();
+            cout << '.';
             // setup variables 
-            yarp::sig:Vector &areaFunction = areaOut->prepare();
-            Sound &acousticSignal = acousticOut->prepare();
+            //yarp::sig:Vector &areaFunction = areaOut->prepare();
+            //Sound &acousticSignal = acousticOut->prepare();
 
             // call simulator
             // and get it's outputs
+            
 
 
 			//send out, cleanup
-			areaFunction->write();
-			acousticSignal->write();
+			//areaFunction->write();
+			//acousticSignal->write();
 
 
-		}
+		} else {
+            speaker->Speak();
+        }
 	}
 
 	virtual void threadRelease()
 	{
-
 
 		acousticOut->interrupt();
 		areaOut->interrupt();
@@ -254,6 +272,10 @@ public:
 		delete acousticOut;
 		delete areaOut;
 		delete actuationIn;
+
+        delete apa;
+        delete controller;
+        delete speaker;
 
 	}
 
@@ -297,7 +319,7 @@ public:
 int main(int argc, char *argv[])
 {
 
-	YARP_REGISTER_DEVICES(icubmod)
+//	YARP_REGISTER_DEVICES(icubmod)
 
 	Network yarp;
 

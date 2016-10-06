@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <cstring>
 
 // ***** Constants for modifying acoustic simulation
 #define DYMIN  0.00001

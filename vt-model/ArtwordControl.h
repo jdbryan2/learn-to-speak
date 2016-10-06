@@ -17,6 +17,7 @@ class ArtwordControl : public Control {
 public:
     ArtwordControl(double utterance_length_);
     ArtwordControl(Artword* artword_);
+    ~ArtwordControl() { }
     void doControl(Speaker* speaker);
     void InitialArt(Articulation art);
 public:
