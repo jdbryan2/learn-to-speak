@@ -184,7 +184,7 @@ public:
         int number_of_glottal_masses = 2;
         speaker  = new Speaker("Female",number_of_glottal_masses, sample_freq, oversamp);
 
-        apa = new Artword(0.5);
+        apa = new Artword(0.7);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
         apa->setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
@@ -193,6 +193,9 @@ public:
         apa->setTarget(kArt_muscle_LUNGS,0.1,0);
         apa->setTarget(kArt_muscle_MASSETER,0.25,0.7);
         apa->setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+        apa->setTarget(kArt_muscle_LUNGS, 0.5, 0);
+        apa->setTarget(kArt_muscle_LUNGS, 0.7, 0.2);
+
 
         controller = new ArtwordControl(apa);
 
@@ -232,10 +235,11 @@ public:
         //yarp::sig::Vector *areaFunction;
         //Sound *acousticSignal
 
-		//if we have both images
-		//if (actuation)
-        if (speaker->NotDone()) // this should actually loop some fixed number of blocks based on the update size
+		//if we have the actuator
+		if (actuation != NULL)
+        //if (speaker->NotDone()) // this should actually loop some fixed number of blocks based on the update size
 		{
+
             // setup output variables 
             yarp::sig::Vector &areaFunction = areaOut->prepare();
             yarp::sig::Vector &acousticSignal = acousticOut->prepare();
@@ -244,10 +248,17 @@ public:
             // this should run some number of times? maybe...
             {
                 // run next step of control inputs
-                controller->doControl(speaker);
+                //controller->doControl(speaker);
+                cout << actuation->data() << std::endl;
+                for(int k = 0; k<kArt_muscle_MAX; k++){
+                    //speaker->art[k] = actuation[k];
+                }
 
                 // iterate simulator
                 speaker->IterateSim();
+
+                // loop back to start if we hit the of the buffer
+                speaker->LoopBack();
             }
 
 
@@ -273,7 +284,7 @@ public:
 
 
 		} else {
-            speaker->Speak();
+           // speaker->Speak();
         }
 	}
 

@@ -147,7 +147,7 @@ protected:
 
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(10), rf(_rf)
+	VocalTractThread(ResourceFinder &_rf) : RateThread(100), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
@@ -172,8 +172,9 @@ public:
         ////////////////////////////////////////////////////
 
         sample = 0;
+        fsamp = 8000;
         
-        apa = new Artword(0.5);
+        apa = new Artword(0.7);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
         apa->setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
@@ -182,6 +183,8 @@ public:
         apa->setTarget(kArt_muscle_LUNGS,0.1,0);
         apa->setTarget(kArt_muscle_MASSETER,0.25,0.7);
         apa->setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+        apa->setTarget(kArt_muscle_LUNGS, 0.5, 0);
+        apa->setTarget(kArt_muscle_LUNGS, 0.7, 0.2);
 
         ////////////////////////////////////////////////////
         
@@ -220,36 +223,30 @@ public:
             yarp::sig::Vector &actuator = actuationOut->prepare();
             actuator.resize(kArt_muscle_MAX);
 
+            cout << double(sample)/fsamp << std::endl;
             for(int k = 0; k<kArt_muscle_MAX; k++){
-                actuator(k) = apa.getTarget(k, (sample)/fsamp);
+                actuator(k) = apa->getTarget(k, double(sample)/fsamp);
+            }
+            sample++;
+            if( (sample)/fsamp > 0.7) {
+                sample= 0;
             }
 			//send out, cleanup
-			acousticOut->write();
+			actuationOut->write();
 
-
-		} else {
-            speaker->Speak();
         }
 	}
 
 	virtual void threadRelease()
 	{
 
-		acousticOut->interrupt();
-		areaOut->interrupt();
-		actuationIn->interrupt();
+		actuationOut->interrupt();
 
-		acousticOut->close();
-		areaOut->close();
-		actuationIn->close();
+		actuationOut->close();
         
-		delete acousticOut;
-		delete areaOut;
-		delete actuationIn;
+		delete actuationOut;
 
         delete apa;
-        delete controller;
-        delete speaker;
 
 	}
 

@@ -31,7 +31,9 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
 #SET_TARGET_PROPERTIES(portaudio PROPERTIES IMPORTED_LOCATION /home/jacob/Projects/learn-to-speak/vt-model/external_libs/portaudio/libportaudio.a)
 
 ADD_EXECUTABLE(vocal_tract YarpWrapper.cpp Speaker.cpp Artword.cpp Sound.cpp VocalTract.cpp ArtwordControl.cpp)
+ADD_EXECUTABLE(tract_driver YarpDriver.cpp Speaker.cpp Artword.cpp Sound.cpp VocalTract.cpp ArtwordControl.cpp) # don't need all these cpp files linked in
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vocal_tract ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+TARGET_LINK_LIBRARIES(tract_driver ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
 #TARGET_LINK_LIBRARIES(vocal_tract /home/jacob/Projects/learn-to-speak/vt-model/external_libs/portaudio/libportaudio.a)

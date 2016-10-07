@@ -86,6 +86,7 @@ public:
     void getAreaFcn(AreaFcn AreaFcn_);
 
     float getLastSample() {return result->z[sample-1];}
+    void LoopBack() { if(!NotDone()) { sample = 0; }}
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
