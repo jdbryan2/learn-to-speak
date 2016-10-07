@@ -130,10 +130,7 @@ protected:
 	ResourceFinder &rf;
 	string name;
 
-
-	BufferedPort<yarp::sig::Vector> *acousticOut;
-	BufferedPort<yarp::sig::Vector>  *areaOut;
-	BufferedPort<yarp::sig::Vector>  *actuationIn;
+	BufferedPort<yarp::sig::Vector>  *actuationOut;
 
 	int status;
 	Port   * statPort;
@@ -143,6 +140,9 @@ protected:
     Speaker * speaker;
     ArtwordControl * controller;
     Artword * apa;
+
+    double fsamp;
+    long sample;
     
 
 public:
@@ -154,36 +154,25 @@ public:
 	{
 
 
-		name=rf.check("name",Value("VocalTract")).asString().c_str();
+		name=rf.check("name",Value("vtDriver")).asString().c_str();
 
 		//get robot name and trajectory times. use diff default traj times for icub and sim
         // TODO: These if/else statements should not really matter on current iCub
 		//robot = rf.check("robot",Value("nobot")).asString().c_str();
 
 		//open up ports
-		acousticOut=new BufferedPort<yarp::sig::Vector>;
-		string acousticName="/"+name+"/acoustic";
-		acousticOut->open(acousticName.c_str());
-
-		areaOut=new BufferedPort<yarp::sig::Vector>;
-		string areaName="/"+name+"/area";
-		areaOut->open(areaName.c_str());
-
-		actuationIn=new BufferedPort<yarp::sig::Vector>;
-		string actuationName="/"+name+"/actuator/in";
-		actuationIn->open(actuationName.c_str());
-        actuationIn->useCallback();
+		actuationOut=new BufferedPort<yarp::sig::Vector>;
+		string actuationName="/"+name+"/actuator/out";
+		actuationOut->open(actuationName.c_str());
 
 		//stopped = false;
 
 
         // set up vocal tract simulator
         ////////////////////////////////////////////////////
-        double sample_freq = 8000;
-        int oversamp = 70;
-        int number_of_glottal_masses = 2;
-        speaker  = new Speaker("Female",number_of_glottal_masses, sample_freq, oversamp);
 
+        sample = 0;
+        
         apa = new Artword(0.5);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
         apa->setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
@@ -193,13 +182,6 @@ public:
         apa->setTarget(kArt_muscle_LUNGS,0.1,0);
         apa->setTarget(kArt_muscle_MASSETER,0.25,0.7);
         apa->setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
-
-        controller = new ArtwordControl(apa);
-
-        Articulation art;
-        controller->InitialArt(art);
-        speaker->InitSim(controller->utterance_length, art);
-
 
         ////////////////////////////////////////////////////
         
@@ -227,48 +209,21 @@ public:
 
 		// get both input images
 
-        yarp::sig::Vector *actuation=actuationIn->read(false);
 
         //yarp::sig::Vector *areaFunction;
         //Sound *acousticSignal
 
 		//if we have both images
 		//if (actuation)
-        if (speaker->NotDone()) // this should actually loop some fixed number of blocks based on the update size
 		{
             // setup output variables 
-            yarp::sig::Vector &areaFunction = areaOut->prepare();
-            yarp::sig::Vector &acousticSignal = acousticOut->prepare();
+            yarp::sig::Vector &actuator = actuationOut->prepare();
+            actuator.resize(kArt_muscle_MAX);
 
-
-            // this should run some number of times? maybe...
-            {
-                // run next step of control inputs
-                controller->doControl(speaker);
-
-                // iterate simulator
-                speaker->IterateSim();
+            for(int k = 0; k<kArt_muscle_MAX; k++){
+                actuator(k) = apa.getTarget(k, (sample)/fsamp);
             }
-
-
-            // resize acousticSignal and put in samples
-            acousticSignal.resize(1); // (samples, channels) # of samples should correspond to loop above
-            //cout << speaker->getLastSample()<< std::endl;
-            acousticSignal(0) = speaker->getLastSample();
-
-            // load area function 
-            double temp[89];
-            speaker->getAreaFcn(temp);
-
-            // and pass into output variable
-            areaFunction.resize(89);
-            for(int k=0;  k<89; k++){
-                areaFunction(k) = temp[k];
-            }
-            areaFunction.resize(95);
-
 			//send out, cleanup
-			areaOut->write();
 			acousticOut->write();
 
 

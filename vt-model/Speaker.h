@@ -84,6 +84,8 @@ public:
     int SaveSound(std::string filepath);
     double getVolume();
     void getAreaFcn(AreaFcn AreaFcn_);
+
+    float getLastSample() {return result->z[sample-1];}
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
