@@ -84,40 +84,6 @@ public:
 
 };
 
-/*
-class VADPort : public BufferedPort<yarp::sig::Vector> {
-
-protected:
-
-	//data
-	DataBuffer &buffer;		//buffer shared with main thread
-
-
-public:
-
-	VADPort(DataBuffer &buf) : buffer(buf) { }
-
-	//callback for incoming position data
-	virtual void onRead(yarp::sig::Vector& s) {
-
-		int blockSize = s.getSamples();
-		Stamp tStamp;	int status;
-
-		//lock the data buffer for the whole transfer
-		buffer1.lock();
-		buffer2.lock();
-		for (int i = 0; i < blockSize/N; i++) {
-			buffer1.push_back((double)s.getSafe(i*N,1)/(double)INT_MAX);
-			buffer2.push_back((double)s.getSafe(i*N,0)/(double)INT_MAX);
-		}
-		buffer1.unlock();
-		buffer2.unlock();
-
-	}
-
-};
-*/
-
 
 class VocalTractThread : public RateThread
 {
@@ -143,34 +109,32 @@ protected:
 
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(5), rf(_rf)
+    // rate of this thread should be at least as fast as the driver
+    // ideally the driver will run slightly slower so that the input 
+    // doesn't get flooded
+	VocalTractThread(ResourceFinder &_rf) : RateThread(1), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
 	{
 
 
-		name=rf.check("name",Value("VocalTract")).asString().c_str();
-
-		//get robot name and trajectory times. use diff default traj times for icub and sim
-        // TODO: These if/else statements should not really matter on current iCub
-		//robot = rf.check("robot",Value("nobot")).asString().c_str();
+		name=rf.check("name",Value("vtSim")).asString().c_str();
 
 		//open up ports
 		acousticOut=new BufferedPort<yarp::sig::Vector>;
-		string acousticName="/"+name+"/acoustic";
+		string acousticName="/"+name+"/acoustic:o";
 		acousticOut->open(acousticName.c_str());
 
 		areaOut=new BufferedPort<yarp::sig::Vector>;
-		string areaName="/"+name+"/area";
+		string areaName="/"+name+"/area:o";
 		areaOut->open(areaName.c_str());
 
 		actuationIn=new BufferedPort<yarp::sig::Vector>;
-		string actuationName="/"+name+"/actuator/in";
+		string actuationName="/"+name+"/actuator:i";
 		actuationIn->open(actuationName.c_str());
-        //actuationIn->useCallback();
+        //actuationIn->useCallback(); // unnecessary since we don't define one
 
-		//stopped = false;
 
 
         // set up vocal tract simulator
@@ -228,9 +192,6 @@ public:
 
         yarp::sig::Vector *actuation=actuationIn->read(false);
 
-        //cout << actuation << std::endl;
-        //yarp::sig::Vector *areaFunction;
-        //Sound *acousticSignal
 
 		//if we have the actuator
 		if (actuation != NULL)
@@ -245,11 +206,10 @@ public:
             // this should run some number of times? maybe...
             {
                 // run next step of control inputs
-                //controller->doControl(speaker);
                 cout << actuation->data() << std::endl;
                 for(int k = 0; k<kArt_muscle_MAX; k++){
                     speaker->art[k] = (*actuation)[k];
-                    cout << (*actuation)[k] << std::endl;
+                    //cout << (*actuation)[k] << std::endl; // debug
                 }
 
                 // iterate simulator

@@ -84,44 +84,6 @@ public:
 
 };
 
-/*
-class VADPort : public BufferedPort<yarp::sig::Sound> {
-
-protected:
-
-	//data
-	DataBuffer &buffer1;		//buffer shared with main thread
-	DataBuffer &buffer2;
-
-	//params
-	int N;					//decimation factor
-
-
-public:
-
-	VADPort(DataBuffer &buf1, DataBuffer &buf2, int decimate) : buffer1(buf1),buffer2(buf2), N(decimate) { }
-
-	//callback for incoming position data
-	virtual void onRead(yarp::sig::Sound& s) {
-
-		int blockSize = s.getSamples();
-		Stamp tStamp;	int status;
-
-		//lock the data buffer for the whole transfer
-		buffer1.lock();
-		buffer2.lock();
-		for (int i = 0; i < blockSize/N; i++) {
-			buffer1.push_back((double)s.getSafe(i*N,1)/(double)INT_MAX);
-			buffer2.push_back((double)s.getSafe(i*N,0)/(double)INT_MAX);
-		}
-		buffer1.unlock();
-		buffer2.unlock();
-
-	}
-
-};
-*/
-
 
 class VocalTractThread : public RateThread
 {
@@ -131,6 +93,9 @@ protected:
 	string name;
 
 	BufferedPort<yarp::sig::Vector>  *actuationOut;
+    BufferedPort<yarp::os::Bottle> *commandIn;
+
+    int last_command;
 
 	int status;
 	Port   * statPort;
@@ -147,7 +112,7 @@ protected:
 
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(10), rf(_rf)
+	VocalTractThread(ResourceFinder &_rf) : RateThread(1), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
@@ -156,21 +121,22 @@ public:
 
 		name=rf.check("name",Value("vtDriver")).asString().c_str();
 
-		//get robot name and trajectory times. use diff default traj times for icub and sim
-        // TODO: These if/else statements should not really matter on current iCub
-		//robot = rf.check("robot",Value("nobot")).asString().c_str();
-
 		//open up ports
 		actuationOut=new BufferedPort<yarp::sig::Vector>;
-		string actuationName="/"+name+"/actuator/out";
+		string actuationName="/"+name+"/actuator:o";
 		actuationOut->open(actuationName.c_str());
 
+        // for writing commands the controller (i.e. start and stop)
+		commandIn=new BufferedPort<yarp::os::Bottle>;
+		string commandName="/"+name+"/commands:i";
+		commandIn->open(commandName.c_str());
+
 		//stopped = false;
+        last_command = 0;
 
 
         // set up vocal tract simulator
         ////////////////////////////////////////////////////
-
         sample = 0;
         fsamp = 8000;
         
@@ -210,14 +176,17 @@ public:
 	virtual void run()
 	{
 
-		// get both input images
 
 
-        //yarp::sig::Vector *areaFunction;
-        //Sound *acousticSignal
+        // load in commands for starting and stopping
+        yarp::os::Bottle *command= commandIn->read(false);
+        if(command!=NULL) {
+            last_command = command->pop().asInt();
+        }
 
-		//if we have both images
-		//if (actuation)
+
+		//if last command wasn't stop
+		if (last_command != 0)
 		{
             // setup output variables 
             yarp::sig::Vector &actuator = actuationOut->prepare();
