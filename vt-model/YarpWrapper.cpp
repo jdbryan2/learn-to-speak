@@ -85,24 +85,20 @@ public:
 };
 
 /*
-class VADPort : public BufferedPort<yarp::sig::Sound> {
+class VADPort : public BufferedPort<yarp::sig::Vector> {
 
 protected:
 
 	//data
-	DataBuffer &buffer1;		//buffer shared with main thread
-	DataBuffer &buffer2;
-
-	//params
-	int N;					//decimation factor
+	DataBuffer &buffer;		//buffer shared with main thread
 
 
 public:
 
-	VADPort(DataBuffer &buf1, DataBuffer &buf2, int decimate) : buffer1(buf1),buffer2(buf2), N(decimate) { }
+	VADPort(DataBuffer &buf) : buffer(buf) { }
 
 	//callback for incoming position data
-	virtual void onRead(yarp::sig::Sound& s) {
+	virtual void onRead(yarp::sig::Vector& s) {
 
 		int blockSize = s.getSamples();
 		Stamp tStamp;	int status;
@@ -147,7 +143,7 @@ protected:
 
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(10), rf(_rf)
+	VocalTractThread(ResourceFinder &_rf) : RateThread(5), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
@@ -172,7 +168,7 @@ public:
 		actuationIn=new BufferedPort<yarp::sig::Vector>;
 		string actuationName="/"+name+"/actuator/in";
 		actuationIn->open(actuationName.c_str());
-        actuationIn->useCallback();
+        //actuationIn->useCallback();
 
 		//stopped = false;
 
@@ -232,6 +228,7 @@ public:
 
         yarp::sig::Vector *actuation=actuationIn->read(false);
 
+        //cout << actuation << std::endl;
         //yarp::sig::Vector *areaFunction;
         //Sound *acousticSignal
 
@@ -251,7 +248,8 @@ public:
                 //controller->doControl(speaker);
                 cout << actuation->data() << std::endl;
                 for(int k = 0; k<kArt_muscle_MAX; k++){
-                    //speaker->art[k] = actuation[k];
+                    speaker->art[k] = (*actuation)[k];
+                    cout << (*actuation)[k] << std::endl;
                 }
 
                 // iterate simulator
@@ -264,7 +262,6 @@ public:
 
             // resize acousticSignal and put in samples
             acousticSignal.resize(1); // (samples, channels) # of samples should correspond to loop above
-            //cout << speaker->getLastSample()<< std::endl;
             acousticSignal(0) = speaker->getLastSample();
 
             // load area function 
