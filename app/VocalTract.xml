@@ -1,0 +1,80 @@
+
+<application>
+
+  <!-- Generic information-->
+  <name>Vocal Tract</name>
+  <description>Simulate the vocal tract and save output to file</description>
+  <version></version>
+
+  <authors>
+      <author email="jdbryan2@illinois.edu"> Jacob Bryan </author>
+  </authors>
+
+  <!-- Required modules. -->
+  <module>
+      <name>vtSim</name>
+      <parameters></parameters>
+      <node>maxwell</node>
+      <display></display>
+      <stdio>maxwell</stdio>
+  </module>
+
+  <module>
+      <name>vtDriver</name>
+      <parameters></parameters>
+      <node>maxwell</node>
+      <display></display>
+      <stdio>maxwell</stdio>
+  </module>
+
+  <module>
+      <name>yarp write</name>
+      <parameters>/switch</parameters>
+      <node>maxwell</node>
+      <display></display>
+      <stdio>maxwell</stdio>
+  </module>
+
+  <module>
+      <name>dataDumper</name>
+      <parameters>--name acoustics</parameters>
+      <node>maxwell</node>
+      <display></display>
+      <stdio>maxwell</stdio>
+  </module>
+
+  <module>
+      <name>dataDumper</name>
+      <parameters>--name area</parameters>
+      <node>maxwell</node>
+      <display></display>
+      <stdio>maxwell</stdio>
+  </module>
+
+  <!-- Required connections -->
+  <connection>
+      <from>/vtDriver/actuator:o</from>
+      <to>/vtSim/actuator:i</to>
+      <protocol></protocol>
+  </connection>
+
+  <connection>
+      <from>/switch</from>
+      <to>/vtDriver/commands:i</to>
+      <protocol></protocol>
+  </connection>
+
+  <connection>
+      <from>/vtSim/acoustic:o</from>
+      <to>/acoustics</to>
+      <protocol></protocol>
+  </connection>
+
+  <connection>
+      <from>/vtSim/area:o</from>
+      <to>/area</to>
+      <protocol></protocol>
+  </connection>
+
+</application>
+
