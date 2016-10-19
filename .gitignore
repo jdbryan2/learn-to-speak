@@ -7,7 +7,10 @@ vt-model/build/CMakeCache.txt
 vt-model/build/Makefile
 vt-model/build/vocal_tract 
 vt-model/build/*
+vt-yarpsim/build/*
 analysis/manifolds/timit/*
+build/*
+bin/*
 
 # vim swap files
 ################
