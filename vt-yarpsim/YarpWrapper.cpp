@@ -93,8 +93,8 @@ protected:
 	string name;
 
 
-	BufferedPort<yarp::sig::Vector> *acousticOut;
-	BufferedPort<yarp::sig::Vector>  *areaOut;
+	BufferedPort<yarp::os::Bottle> *acousticOut;
+	BufferedPort<yarp::os::Bottle>  *areaOut;
 	BufferedPort<yarp::sig::Vector>  *actuationIn;
 
 	int status;
@@ -122,11 +122,11 @@ public:
 		name=rf.check("name",Value("vtSim")).asString().c_str();
 
 		//open up ports
-		acousticOut=new BufferedPort<yarp::sig::Vector>;
+		acousticOut=new BufferedPort<yarp::os::Bottle>;
 		string acousticName="/"+name+"/acoustic:o";
 		acousticOut->open(acousticName.c_str());
 
-		areaOut=new BufferedPort<yarp::sig::Vector>;
+		areaOut=new BufferedPort<yarp::os::Bottle>;
 		string areaName="/"+name+"/area:o";
 		areaOut->open(areaName.c_str());
 
@@ -199,8 +199,8 @@ public:
 		{
 
             // setup output variables 
-            yarp::sig::Vector &areaFunction = areaOut->prepare();
-            yarp::sig::Vector &acousticSignal = acousticOut->prepare();
+            yarp::os::Bottle &areaFunction = areaOut->prepare();
+            yarp::os::Bottle &acousticSignal = acousticOut->prepare();
 
 
             // this should run some number of times? maybe...
@@ -221,19 +221,20 @@ public:
 
 
             // resize acousticSignal and put in samples
-            acousticSignal.resize(1); // (samples, channels) # of samples should correspond to loop above
-            acousticSignal(0) = speaker->getLastSample();
+            //acousticSignal.resize(1); // (samples, channels) # of samples should correspond to loop above
+            //acousticSignal(0) = speaker->getLastSample();
+            acousticSignal.addDouble(speaker->getLastSample());
 
             // load area function 
             double temp[89];
             speaker->getAreaFcn(temp);
 
             // and pass into output variable
-            areaFunction.resize(89);
+            //areaFunction.resize(89);
             for(int k=0;  k<89; k++){
-                areaFunction(k) = temp[k];
+                //areaFunction(k) = temp[k];
+                areaFunction.addDouble(temp[k]);
             }
-            areaFunction.resize(95);
 
 			//send out, cleanup
 			areaOut->write();

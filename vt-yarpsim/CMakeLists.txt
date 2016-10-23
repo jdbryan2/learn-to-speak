@@ -25,12 +25,14 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
 
 
 ADD_EXECUTABLE(vtSim YarpWrapper.cpp)
+ADD_EXECUTABLE(vtSim2 YarpWrapper2.cpp)
 ADD_EXECUTABLE(vtDriver YarpDriver.cpp) # don't need all these cpp files linked in
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vtSim vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+TARGET_LINK_LIBRARIES(vtSim2 vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
 TARGET_LINK_LIBRARIES(vtDriver vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
 
-INSTALL(TARGETS vtSim vtDriver DESTINATION /home/jacob/Projects/learn-to-speak/bin)
+INSTALL(TARGETS vtSim vtSim2 vtDriver DESTINATION /home/jacob/Projects/learn-to-speak/bin)
 #INSTALL(TARGETS vtSim DESTINATION ../bin)
 

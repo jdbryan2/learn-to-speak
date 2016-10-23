@@ -112,7 +112,7 @@ protected:
 
 public:
 
-	VocalTractThread(ResourceFinder &_rf) : RateThread(1), rf(_rf)
+	VocalTractThread(ResourceFinder &_rf) : RateThread(5), rf(_rf)
 	{ }
 
 	virtual bool threadInit()
