@@ -31,3 +31,6 @@ ADD_LIBRARY(vtModel ${VTSIM_FILES})
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+
+ADD_EXECUTABLE(vocal_tract main.cpp)
+TARGET_LINK_LIBRARIES(vocal_tract vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)

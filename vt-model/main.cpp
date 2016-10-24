@@ -150,10 +150,18 @@ void sim_artword(Speaker* speaker, Artword* artword)
 }
 
 void random_stim_trials(Speaker* speaker,double utterance_length, double log_period) {
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
+    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/logs/");
+    std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
+
     std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
-    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
+
+    std::uniform_real_distribution<double>::param_type lungs_exhale_param(0.7,2.0);
+    //std::uniform_real_distribution<double>::param_type lungs_inhale_param(0.1,0.5);
+    std::uniform_real_distribution<double>::param_type lungs_activation_param(0.2,1.0);
+    std::uniform_real_distribution<double>::param_type lungs_deactivation_param(0.0,0.2);
+
+    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param, lungs_exhale_param, lungs_activation_param, lungs_deactivation_param);
     for (int trial=1; trial <= 50; trial++)
     {
         // Generate a new random artword
@@ -183,15 +191,15 @@ void prim_control(Speaker* speaker,double utterance_length, double log_period) {
 int main()
 {
     double sample_freq = 8000;
-    int oversamp = 70;
+    int oversamp = 90;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     
     double utterance_length = 6;
     double log_freq = 50;
     int log_period = floor(sample_freq/log_freq);
-    //random_stim_trials(&female,utterance_length,log_period);
-    prim_control(&female, utterance_length, log_period);
+    random_stim_trials(&female,utterance_length,log_period);
+    //prim_control(&female, utterance_length, log_period);
     //Artword artword = apa();
     //sim_artword(&female, &artword);
     return 0;
