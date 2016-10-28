@@ -40,14 +40,14 @@ struct structDelta_Tube{
     
     /* Dynamic. */
     
-    double Jhalf = 0, Jleft = 0, Jleftnew = 0, Jright = 0, Jrightnew = 0;
-    double Qhalf = 0, Qleft = 0, Qleftnew = 0, Qright = 0, Qrightnew = 0;
+    double Jhalf = 0, Jleft = 0, Jleftnew = 0, Jright = 0, Jrightnew = 0; // mass flow
+    double Qhalf = 0, Qleft = 0, Qleftnew = 0, Qright = 0, Qrightnew = 0; // pressure (Qhalf seems to be the center of the tube?)
     double Dx = 0, Dxnew = 0, dDxdt = 0, dDxdtnew = 0, Dxhalf = 0;
     double Dy = 0, Dynew = 0, dDydt = 0, dDydtnew = 0;
     double Dz = 0;
     double A = 0, Ahalf = 0, Anew = 0, V = 0, Vnew = 0;
     double e = 0, ehalf = 0, eleft = 0, eleftnew = 0, eright = 0, erightnew = 0, ehalfold = 0;
-    double p = 0, phalf = 0, pleft = 0, pleftnew = 0, pright = 0, prightnew = 0;
+    double p = 0, phalf = 0, pleft = 0, pleftnew = 0, pright = 0, prightnew = 0; // p is momentum
     double Kleft = 0, Kleftnew = 0, Kright = 0, Krightnew = 0, Pturbright = 0, Pturbrightnew = 0;
     double B = 0, r = 0, R = 0, DeltaP = 0, v = 0;
 };

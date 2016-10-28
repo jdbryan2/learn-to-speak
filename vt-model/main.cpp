@@ -156,10 +156,10 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
 
-    std::uniform_real_distribution<double>::param_type lungs_exhale_param(0.7,2.0);
+    std::uniform_real_distribution<double>::param_type lungs_exhale_param(2.0,3.0);
     //std::uniform_real_distribution<double>::param_type lungs_inhale_param(0.1,0.5);
-    std::uniform_real_distribution<double>::param_type lungs_activation_param(0.2,1.0);
-    std::uniform_real_distribution<double>::param_type lungs_deactivation_param(0.0,0.2);
+    std::uniform_real_distribution<double>::param_type lungs_activation_param(0.1,0.3);
+    std::uniform_real_distribution<double>::param_type lungs_deactivation_param(0.0,0.1);
 
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param, lungs_exhale_param, lungs_activation_param, lungs_deactivation_param);
     for (int trial=1; trial <= 50; trial++)
@@ -197,7 +197,7 @@ int main()
     
     double utterance_length = 6;
     double log_freq = 50;
-    int log_period = floor(sample_freq/log_freq);
+    int log_period = 1; //floor(sample_freq/log_freq);
     random_stim_trials(&female,utterance_length,log_period);
     //prim_control(&female, utterance_length, log_period);
     //Artword artword = apa();

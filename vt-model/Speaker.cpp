@@ -797,6 +797,12 @@ void Speaker::getAreaFcn(AreaFcn AreaFcn_) {
     }
 }
 
+void Speaker::getPressureFcn(PressureFcn PressureFcn_) {
+    for(int ind=0; ind<numberOfTubes; ind++)
+    {
+        PressureFcn_[ind] = tube[ind].Qhalf;
+    }
+}
 void Speaker::Log()
 {
     if(logCounter +1 == log_period)
@@ -815,6 +821,12 @@ void Speaker::Log()
             *log_stream << tube[ind].Dz;
             *log_stream << "\t";
              */
+        }
+        for(int ind=0; ind<numberOfTubes; ind++)
+        {
+            //For logging area
+            *log_stream << tube[ind].Qhalf;
+            *log_stream << "\t";
         }
         for(int ind=0; ind<kArt_muscle_MAX; ind++)
         {
@@ -889,6 +901,14 @@ void Speaker::InitDataLogger()
         *log_stream << "Z\t";
          */
     }
+
+    for(int ind=0; ind<numberOfTubes; ind++)
+    {
+        *log_stream << "Q";
+        *log_stream << ind;
+        *log_stream << "\t";
+    }
+
     for(int ind=0; ind<kArt_muscle_MAX; ind++)
     {
         *log_stream << "Art ";

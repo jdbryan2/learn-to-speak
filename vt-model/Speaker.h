@@ -29,6 +29,7 @@
 #include <fstream>
 
 typedef double AreaFcn[MAX_NUMBER_OF_TUBES];
+typedef double PressureFcn[MAX_NUMBER_OF_TUBES];
 
 
 class Speaker : private VocalTract, private Delta {
@@ -84,6 +85,7 @@ public:
     int SaveSound(std::string filepath);
     double getVolume();
     void getAreaFcn(AreaFcn AreaFcn_);
+    void getPressureFcn(PressureFcn PressureFcn_);
 
     float getLastSample() {return result->z[sample-1];}
     void LoopBack() { if(!NotDone()) { sample = 0; }}

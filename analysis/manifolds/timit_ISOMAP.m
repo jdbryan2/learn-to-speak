@@ -10,21 +10,39 @@ p = 25;
 
 
 % load TIMIT file(s)
-fname = 'sa1';
-[y,Fs] = audioread(['timit/', fname, '.wav']);
+flist = dir('timit');
+
+% remove '.' and '..' from the list
+for k = 1:2
+    flist(1) = [];
+end
+
+Y = [];
+dead_space = zeros(window_size*20, 1); % deadspace so different speakers don't fall in the same window.
+
+for k = 1:length(flist)
+    if ~isdir(flist(k).name) && (length(flist(k).name) > 2)
+        if flist(k).name(end-2:end) == 'wav'
+            disp(['Loading ', flist(k).name])
+            [y,Fs] = audioread(['timit/', flist(k).name]);
+            Y = [Y; dead_space; y]; % stack vertically
+        end
+    end
+end
+fname = 'full_dir';
 
 % convert window size and overlap to samples
 window_size = window_size*Fs/1000;
 step_size = step_size*Fs/1000;
 
-data = WindowReshape(y, hamming(window_size), step_size);
+data = WindowReshape(Y, hamming(window_size), step_size);
 distance_mat = PairwiseLPC(data, p);
 
 K = 20; % K nearest neighbors
 if true %generate_ISOMAP_LPC
     X = ISOMAP(distance_mat,K);
     if true %save_ISOMAP_LPC
-        save(['LPCISOMAP_',num2str(K),'_', fname, '.mat'],'X','K')
+        save(['LPCISOMAP_',num2str(K),'_', fname, '.mat'],'X', 'Y', 'distance_mat','K')
     end
 elseif false %load_ISOMAP_LPC
     load('X_IsomapLPC_3trials.mat')

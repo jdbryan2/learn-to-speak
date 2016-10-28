@@ -31,9 +31,8 @@ RandomStim::RandomStim(double utterance_length, double sample_freq,
                const std::uniform_real_distribution<double>::param_type lungs_deactivation_param):
     RandomStim(utterance_length, sample_freq, hold_time_param, activation_param)
 {
-
     
-    std::uniform_real_distribution<double>::param_type lungs_inhale_param(0.3, 0.9);
+    std::uniform_real_distribution<double>::param_type lungs_inhale_param(0.3, 0.9); // inhale time
 
     lungs_inhale_time.param(lungs_inhale_param);
     lungs_exhale_time.param(lungs_exhale_param);
