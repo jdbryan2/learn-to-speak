@@ -16,12 +16,13 @@
 
 class BasePrimControl : public Control {
 public:
-    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art_, std::string prim_file_prefix);
+    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix);
     ~BasePrimControl();
     void doControl(Speaker * speaker);
     void InitialArt(Articulation art);
 private:
     int LoadPrims();
+    void StepDFA(const gsl_vector * Yp_unscaled_);
 public:
     std::string file_prefix;
 private:

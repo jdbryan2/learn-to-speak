@@ -105,7 +105,7 @@ for i=1:k
     % could use imagesc instead, but I think label editing is harder
     % http://www.mathworks.com/examples/matlab/community/6386-offsets-and-discarded-data-via-pcolor-and-surf
     
-    surf(((1:p+1)-.5)*dt,(1:num_vars+1)-.5,[[Ps{i}; zeros(1,p)],zeros(num_vars+1,1)],'EdgeColor','none');
+    surf(((0:p))*dt,(1:num_vars+1)-.5,[[Ps{i}; zeros(1,p)],zeros(num_vars+1,1)],'EdgeColor','none');
     % Or use interpolation which doesn't get rid of values
     %surf((1:p)*dt,1:num_vars,Ps{i},'EdgeColor','none');
     %shading interp
@@ -122,7 +122,7 @@ for i=1:k
     subplot(mn,mn,i)
     % Hacky way to make surf not delete 1 row and 1 col at end of data
     % could use imagesc instead, but I think label editing is harder
-    surf(((p+1:p+f+1)-.5)*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
+    surf(((p:p+f))*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
     % Or use interpolation which doesn't get rid of values
     %surf((p+1:p+f)*dt,1:num_vars,Fs{i},'EdgeColor','none');
     %shading interp
@@ -143,7 +143,48 @@ for i=1:k
     hold off
 end
 
-% Save K, O, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
+%% Scale Yf back to correct units
+tube_inds = [];
+art_inds = [];
+for j=0:f-1
+    ind = j*num_vars;
+    tube_inds = [tube_inds,ind+1:ind+num_tubes];
+    ind = j*num_vars+num_tubes;
+    art_inds = [art_inds,ind+1:ind+num_art];
+end
+Xf_unscaled = zeros(f*num_vars,num_logs);
+Xf_unscaled_pred = Xf_unscaled;
+Xf_pred = O*K*Xp;
+
+Xf_mean = VT_mean(p*(num_art+num_tubes)+1:end)*ones(1,num_logs);
+Xf_unscaled(tube_inds,:) = Xf(tube_inds,:)*tub_std;
+Xf_unscaled(art_inds,:) = Xf(art_inds,:)*art_std;
+Xf_unscaled = Xf_unscaled+Xf_mean;
+Xf_unscaled2 = VT(p*(num_art+num_tubes)+1:end,:);
+Xf_unscaled_pred(tube_inds,:) = Xf_pred(tube_inds,:)*tub_std;
+Xf_unscaled_pred(art_inds,:) = Xf_pred(art_inds,:)*art_std;
+Xf_unscaled_pred = Xf_unscaled_pred+Xf_mean;
+%Xf_unscaled(zs) = 0;
+% Limit predictions to max and min articulator activations as the sim does
+% Should technically pull out just art values and test them not look at
+% tubes as well
+Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
+Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
+
+errors = (Xf_unscaled-Xf_unscaled_pred);
+tubes_std = std(reshape(tubes,[num_tubes,(f+p)*num_logs]),0,2);
+tube_error = errors(tube_inds,:);
+tube_error = reshape(tube_error,[num_tubes,f*num_logs])./repmat(tubes_std,[1,num_logs*f]);
+%tube_error = errors(tube_inds,:)/tub_std;
+figure(10); imagesc(tube_error)
+arts_std = std(reshape(arts,[num_art,(f+p)*num_logs]),0,2);
+art_error = errors(art_inds,:);
+art_error = reshape(art_error,[num_art,f*num_logs])./repmat(arts_std,[1,num_logs*f]);
+%art_error = errors(art_inds,:)/art_std;
+figure(11); imagesc(art_error)
+
+
+%% Save K, O, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
 % compatible with GSL matrix files (vectorization of the matrix transpose)
 % precision comes from default : digits
 % Using 32 digits of precision to get the best accuracy I can without 

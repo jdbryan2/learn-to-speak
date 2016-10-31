@@ -30,6 +30,7 @@ end
 error = zeros(samp_len-1,1);
 error2 = error;
 error3 = error;
+X = zeros(k,samp_len-1);
 for i=1:samp_len-1
     % Shift feature sample backward by one in Yp_unscaled
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
@@ -46,6 +47,7 @@ for i=1:samp_len-1
     
     % Use primitives to find next art
     x = K*Yp;
+    X(:,i) = x;
 %     primno = 1;
 %     xno = x(primno);
 %     x = zeros(k,1);
@@ -82,4 +84,42 @@ for i=1:samp_len-1
     error2(i) = sum(abs(art-(O(num_tubes+1:num_vars,1)*art_std+artmean_f)));
     error3(i) = sum(abs(artlog-artmean_f));
 end
+% pull out part of O matrix that corresponds to generating Area predictions
+% in Xf
+O_area = zeros(f*num_tubes,k);
+Yf_area = zeros(f*num_tubes,1);
+for i=0:f-1
+        ind = i*num_vars;
+        O_area(i*num_tubes+1:(i+1)*num_tubes,:) = O(ind+1:ind+num_tubes,:);
+        Yf_area(i*num_tubes+1:(i+1)*num_tubes,1) = Yf(ind+1:ind+num_tubes,1);
+end
+FB = O*pinv(O_area);
+art_fb = zeros(f*num_art,f*num_tubes);
+area_fb = zeros(f*num_tubes);
+for i=0:f-1
+        ind = i*num_vars;
+        art_fb(i*num_art+1:(i+1)*num_art,:) = FB(ind+num_tubes+1:ind+num_vars,:);
+        area_fb(i*num_tubes+1:(i+1)*num_tubes,:) = FB(ind+1:ind+num_tubes,:);
+end
+
 sum(error)
+
+%% Plot things
+figure(5)
+clf
+hold on
+leg = [];
+dt = 1/samp_freq;
+for i=1:k
+    plot((1:samp_len-1)*dt,X(i,:))
+    leg = [leg ; ['Primitive ', num2str(i),'Factors']];
+    legend(leg)
+end
+hold off
+
+figure(6);imagesc(vt(90:end,:))
+figure(7);imagesc(log(vt(1:89,:)))
+[Snd,fs,duration] = import_sound('test3Area/prim_logs/sound1.log');
+figure(11);plot(linspace(0,duration,duration*fs),Snd)
+
+figure(42); art_cmd = reshape(art_fb*Yf_area,[num_art,f]); art_cmd(art_cmd<0) = 0;imagesc(art_cmd);
