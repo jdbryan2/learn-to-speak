@@ -4,12 +4,28 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-load prims.mat
-logname = 'test3Area/prim_logs/primlog1.log';
+testname = 'test3Area';
+load([testname,'/prims.mat']);
+load([testname,'/Aref.mat']);
+doAref = true;
+%doAref = false;
+
+if doAref
+    refctrllog = '/prim_logs/Areflog1.log';
+    refctrlsnd = '/prim_logs/Arefsound1.log';
+    reflog = '/artword_logs/apa.log';
+    refsnd = '/artword_logs/apasound1.log';
+
+    [VT_log, VT_lab, samp_freq2, samp_len_aref] = ...
+    import_datalog([testname,reflog]);
+    vt_ref = VT_log(:,1:end-1)'; %remove sound
+else
+    refctrllog = '/prim_logs/primlog1.log';
+    refctrlsnd = '/prim_logs/sound1.log';
+end
 [VT_log, VT_lab, samp_freq2, samp_len] = ...
-    import_datalog(logname);
+    import_datalog([testname,refctrllog]);
 vt = VT_log(:,1:end-1)'; %remove sound
-VT = vt(:);
 num_vars = length(VT_lab)-1;
 if samp_freq~=samp_freq2
     error('Primitive sample frequency is different from log sample frequency')
@@ -17,6 +33,7 @@ end
 
 num_tubes = 89;
 num_art = 29;
+num_feat = num_tubes+num_art;
 
 %% Now attempt to replicate the primitive controller code
 % First set Yp_unscaled to have a p long constant history of the inital
@@ -30,13 +47,42 @@ end
 error = zeros(samp_len-1,1);
 error2 = error;
 error3 = error;
-X = zeros(k,samp_len-1);
+X_past = zeros(k,samp_len-1);
+X_ref = X_past;
+X = X_past;
 for i=1:samp_len-1
     % Shift feature sample backward by one in Yp_unscaled
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
     Yp_unscaled(end-num_vars+1:end) = vt(:,i);
     % Remove mean from Yp_unscaled
     Yp = Yp_unscaled - VT_mean(1:num_vars*p);
+    % Setup the f future Area function that we are tracking and remove mean
+    % and scale
+    Af_mean = zeros((num_tubes)*f,1);
+    for j=1:f
+        ind = (j-1)*(num_tubes+num_art)+p*(num_tubes+num_art);
+        Af_mean((j-1)*num_tubes+1:j*num_tubes) = VT_mean(ind+1:ind+num_tubes);
+    end
+    
+    if(doAref)
+    Afref = zeros(size(Af_mean));
+    % Start at sample 2 because first sample is not generated through feedback
+    ind_start = i;
+    ind_end = ind_start+f;
+    if ind_end>samp_len_aref
+        if ind_start+1>samp_len_aref
+            Afref = (repmat(Aref(end-num_tubes+1:end),[f,1]) - Af_mean)/tub_std;
+        else
+            ovlap = f-(ind_end-samp_len_aref);
+            ind_end = samp_len_aref;
+            Afref(1:ovlap*num_tubes) = Aref(ind_start*num_tubes+1:ind_end*num_tubes);
+            Afref(ovlap*num_tubes+1:end) = repmat(Aref(end-num_tubes+1:end),[f-ovlap,1]);
+            Afref = (Afref - Af_mean)/tub_std;
+        end
+    else
+        Afref = (Aref(ind_start*num_tubes+1:ind_end*num_tubes) - Af_mean)/tub_std;
+    end
+    end
     % Scale features by their std devs
     for j=0:p-1
         ind = j*num_vars;
@@ -46,8 +92,16 @@ for i=1:samp_len-1
     end
     
     % Use primitives to find next art
-    x = K*Yp;
-    X(:,i) = x;
+    x_past = K*Yp;
+    X_past(:,i) = x_past;
+    if(doAref)
+        x = Oarea_inv*Afref;
+        X_ref(:,i) = x;
+        x = 0.2*(x - x_past);
+        X(:,i) = x;
+    else
+        x = x_past;
+    end
 %     primno = 1;
 %     xno = x(primno);
 %     x = zeros(k,1);
@@ -106,20 +160,38 @@ sum(error)
 
 %% Plot things
 figure(5)
+clrordr = get(gca,'colororder');
 clf
 hold on
 leg = [];
 dt = 1/samp_freq;
+ii = 0;
 for i=1:k
-    plot((1:samp_len-1)*dt,X(i,:))
-    leg = [leg ; ['Primitive ', num2str(i),'Factors']];
+    ii = ii+1;
+    if i>length(clrordr)
+        ii = 1;
+    end
+    plot((1:samp_len-1)*dt,X_past(i,:),'.-','Color',clrordr(ii,:))
+    leg = [leg ; ['Past Primitive ', num2str(i),'Factors']];
+    if(doAref)
+        plot((1:samp_len-1)*dt,X_ref(i,:),'Color',clrordr(ii,:))
+        leg = [leg ; ['Aref Primitive ', num2str(i),'Factors']];
+    end
     legend(leg)
 end
 hold off
 
 figure(6);imagesc(vt(90:end,:))
 figure(7);imagesc(log(vt(1:89,:)))
-[Snd,fs,duration] = import_sound('test3Area/prim_logs/sound1.log');
+[Snd,fs,duration] = import_sound([testname,refctrlsnd]);
 figure(11);plot(linspace(0,duration,duration*fs),Snd)
+
+if doAref
+    pause(duration+1)
+    hold on
+    [Snd_ref,fs,duration] = import_sound([testname,refsnd]);
+    figure(11);plot(linspace(0,duration,duration*fs),Snd_ref)
+    hold off
+end
 
 figure(42); art_cmd = reshape(art_fb*Yf_area,[num_art,f]); art_cmd(art_cmd<0) = 0;imagesc(art_cmd);

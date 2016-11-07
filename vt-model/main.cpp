@@ -123,10 +123,14 @@ void simulate(Speaker* speaker, Control* controller) {
     cout << "Done!\n";
 }
 
-void sim_artword(Speaker* speaker, Artword* artword)
+void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,double log_period)
     {
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/artword_logs/");
     ArtwordControl awcontrol(artword);
+    // Initialize the data logger
+    speaker->ConfigDataLogger(prefix + artword_name + ".log",log_period);
     simulate(speaker, &awcontrol);
+    speaker->SaveSound(prefix + "apasound" + to_string(1) + ".log");
     for(int i =0; i< 10; i++)
     {
         cout << speaker->result->z[100*i] << ", ";
@@ -180,6 +184,30 @@ void prim_control(Speaker* speaker,double utterance_length, double log_period) {
     speaker->SaveSound(prefix + "prim_logs/sound" + to_string(1) + ".log");
 }
 
+void AreaRefControl(Speaker* speaker, double log_freq, double log_period) {
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test3Area/");
+    Artword artw = apa();
+    Articulation art = {};
+    artw.intoArt(art, 0.0);
+    double utterance_length = artw.totalTime;
+    
+    std::ifstream f_stream;
+    FILE* f_stream_mat;
+    std::string filename;
+    filename = prefix + "Aref.alog";
+    f_stream_mat = fopen(filename.c_str(), "r");
+    gsl_vector * Aref = gsl_vector_alloc(MAX_NUMBER_OF_TUBES*(utterance_length*log_freq+1));
+    gsl_vector_fscanf(f_stream_mat, Aref);
+    fclose(f_stream_mat);
+    
+    BasePrimControl prim(utterance_length,log_period,art,prefix,Aref);
+    // Initialize the data logger
+    speaker->ConfigDataLogger(prefix + "prim_logs/Areflog" + to_string(1)+ ".log",log_period);
+    simulate(speaker, &prim);
+    speaker->Speak();
+    speaker->SaveSound(prefix + "prim_logs/Arefsound" + to_string(1) + ".log");
+}
+
 int main()
 {
     double sample_freq = 8000;
@@ -187,12 +215,24 @@ int main()
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     
-    double utterance_length = 6;
-    double log_freq = 50;
-    int log_period = floor(sample_freq/log_freq);
-    //random_stim_trials(&female,utterance_length,log_period);
-    prim_control(&female, utterance_length, log_period);
+    double utterance_length = 2;
+    double desired_log_freq = 50;
+    int log_period = floor(sample_freq/desired_log_freq);
+    double log_freq = sample_freq/log_period;
+    // 1.) Create Artword to track
     //Artword artword = apa();
-    //sim_artword(&female, &artword);
+    //sim_artword(&female, &artword,"apa",log_period);
+    
+    // 2.) Generate Randomly Stimulated data trials
+    //random_stim_trials(&female,utterance_length,log_period);
+    
+    // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
+    
+    // 4.) Perform Primitive Control based on IC only
+    //prim_control(&female, utterance_length, log_period);
+    
+    // 5.) Perform Area Function Tracking of 1.)
+    AreaRefControl(&female, log_freq, log_period);
+    
     return 0;
 }

@@ -93,12 +93,22 @@ Uk = U(:,1:k);
 K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
+
+% pull out part of O matrix that corresponds to generating Area predictions
+% in Xf
+Oarea = zeros(f*num_tubes,k);
+for i=0:f-1
+        ind = i*num_vars;
+        Oarea(i*num_tubes+1:(i+1)*num_tubes,:) = O(ind+1:ind+num_tubes,:);
+end
+Oarea_inv = pinv(Oarea);
+
 mn = ceil(sqrt(k));
 leg = [];
 figure(4); clf;
 for i=1:k
     Ps{i} = reshape(K(i,:),[num_vars,p]);
-    Fs{i} = reshape(O(:,i),[num_vars,f]);    
+    Fs{i} = reshape(O(:,i),[num_vars,f]);
     figure(2)
     subplot(mn,mn,i)
     % Hacky way to make surf not delete 1 row and 1 col at end of data
@@ -184,7 +194,7 @@ art_error = reshape(art_error,[num_art,f*num_logs])./repmat(arts_std,[1,num_logs
 figure(11); imagesc(art_error)
 
 
-%% Save K, O, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
+%% Save K, O, Oarea_inv, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
 % compatible with GSL matrix files (vectorization of the matrix transpose)
 % precision comes from default : digits
 % Using 32 digits of precision to get the best accuracy I can without 
@@ -198,6 +208,11 @@ fclose(fid);
 ot = O';
 fid=fopen([testname,'/O_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',ot);
+fclose(fid);
+
+oait = Oarea_inv';
+fid=fopen([testname,'/Oa_inv_mat.prim'],'wt');
+fprintf(fid,'%.32e\n',oait);
 fclose(fid);
 
 fid=fopen([testname,'/mean_mat.prim'],'wt');
@@ -225,7 +240,7 @@ fid=fopen([testname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
 
-save('prims.mat','K','O','VT_mean','tub_std','art_std','f','p','samp_freq','k');
+save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','tub_std','art_std','f','p','samp_freq','k');
 
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');
@@ -235,3 +250,14 @@ save('prims.mat','K','O','VT_mean','tub_std','art_std','f','p','samp_freq','k');
 % title('Log Magnitude Squared Spectrogram')
 % set(gca,'FontSize',12)
 % colorbar
+%% Load Area function Reference and Export
+[VT_log, VT_lab, samp_freq, samp_len] = ...
+        import_datalog([testname,'/artword_logs/apa.log']);
+VT_log = VT_log(:,1:end-1)'; %remove sound
+VT_log = VT_log(:);
+Aref = VT_log(tub_ind);
+
+fid=fopen([testname,'/Aref.alog'],'wt');
+fprintf(fid,'%.32e\n',Aref);
+fclose(fid);
+save([testname,'/Aref.mat'],'Aref');
