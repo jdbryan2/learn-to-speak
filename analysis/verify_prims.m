@@ -48,8 +48,12 @@ error = zeros(samp_len-1,1);
 error2 = error;
 error3 = error;
 X_past = zeros(k,samp_len-1);
-X_ref = X_past;
+EK = X_past;
 X = X_past;
+% Initialize PID history vectors
+Ek1 = zeros(k,1);
+Ek2 = Ek1;
+Uk1 = Ek1;
 for i=1:samp_len-1
     % Shift feature sample backward by one in Yp_unscaled
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
@@ -95,9 +99,40 @@ for i=1:samp_len-1
     x_past = K*Yp;
     X_past(:,i) = x_past;
     if(doAref)
-        x = Oarea_inv*Afref;
-        X_ref(:,i) = x;
-        x = 0.2*(x - x_past);
+        % PID Gains
+        Kp = 0.2;
+        Ki = 0.5;
+        Kd = -0.001;
+        %Kp = 0.0;
+        %Ki = 0.0;
+        %Kd = 0.1;
+        % Coefficients of discrete controller
+        Ts = 1/samp_freq;
+        if i==1
+            a = Kp;
+            b = 0;
+            c = 0;
+            d = 0;
+        elseif (i==3)
+            a = Kp + Ki*Ts/2 + Kd/Ts;
+            b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
+            c = Kd/Ts;
+            d = 1;
+        end
+        
+        %Compute Error
+        Ek = Oarea_inv*Afref - x_past;
+        EK(:,i) = Ek;
+%         if i==1
+%             x = a*Ek;
+%         elseif i==2
+%             x = Uk1 + a*Ek +b*Ek1;
+%         else
+        x = d*Uk1 + a*Ek + b*Ek1 + c*Ek2;
+        %end
+        Uk1 = x;
+        Ek2 = Ek1;
+        Ek1 = Ek;
         X(:,i) = x;
     else
         x = x_past;
@@ -174,8 +209,8 @@ for i=1:k
     plot((1:samp_len-1)*dt,X_past(i,:),'.-','Color',clrordr(ii,:))
     leg = [leg ; ['Past Primitive ', num2str(i),'Factors']];
     if(doAref)
-        plot((1:samp_len-1)*dt,X_ref(i,:),'Color',clrordr(ii,:))
-        leg = [leg ; ['Aref Primitive ', num2str(i),'Factors']];
+        plot((1:samp_len-1)*dt,EK(i,:),'Color',clrordr(ii,:))
+        leg = [leg ; ['Aref Error     ', num2str(i),'Factors']];
     end
     legend(leg)
 end
@@ -195,3 +230,4 @@ if doAref
 end
 
 figure(42); art_cmd = reshape(art_fb*Yf_area,[num_art,f]); art_cmd(art_cmd<0) = 0;imagesc(art_cmd);
+visual_tract

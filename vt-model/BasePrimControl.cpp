@@ -195,9 +195,11 @@ void BasePrimControl::doControl(Speaker * speaker)
                 static gsl_vector_view Aref_last_view = gsl_vector_subvector(Aref, Aref->size-MAX_NUMBER_OF_TUBES,MAX_NUMBER_OF_TUBES);
                 if (ind_s*MAX_NUMBER_OF_TUBES+f_p[0]*MAX_NUMBER_OF_TUBES> Aref->size) {
                     ind_e--;
-                    gsl_vector_view Aref_view = gsl_vector_subvector(Aref, ind_s*MAX_NUMBER_OF_TUBES,ind_e*MAX_NUMBER_OF_TUBES);
-                    gsl_vector_view Afref_e_view = gsl_vector_subvector(Afref, 0, ind_e*MAX_NUMBER_OF_TUBES);
-                    gsl_vector_memcpy(&Afref_e_view.vector, &Aref_view.vector);
+                    if (ind_e>0) {
+                        gsl_vector_view Aref_view = gsl_vector_subvector(Aref, ind_s*MAX_NUMBER_OF_TUBES,ind_e*MAX_NUMBER_OF_TUBES);
+                        gsl_vector_view Afref_e_view = gsl_vector_subvector(Afref, 0, ind_e*MAX_NUMBER_OF_TUBES);
+                        gsl_vector_memcpy(&Afref_e_view.vector, &Aref_view.vector);
+                    }
                     
                     // If we are simulating longer than the ref then just fill Afref with the last value of Aref
                     if (ind_e<=0){ind_e=0;}
@@ -320,13 +322,63 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
 }
 
 void BasePrimControl::ArefControl() {
+    // 1sd Order Discrete PID controller taken from pg 9 of http://portal.ku.edu.tr/~cbasdogan/Courses/Robotics/projects/Discrete_PID.pdf
+    // PID Gains
+    const double Kp = 0.2;//0.1;
+    const double Ki = 0.5;//0.5;
+    const double Kd = -0.001;//0.02;
+    //const double Kp = 0.0;
+    //const double Ki = 0.0;
+    //const double Kd = 0.1;
+    // Coefficients of Discrete PID Controller
+    static int iter = 0;
+    const double Ts = 1/sample_freq;
+    static double a = Kp;
+    static double b = 0;
+    static double c = 0;
+    static double d = 0;
+    // Just do proportional control for first 2 timesteps then do full PID
+    // TODO: need to look at correct way to initialize pid
+    if (iter==2){
+        a = Kp + Ki*Ts/2 + Kd/Ts;
+        b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
+        c = Kd/Ts;
+        d = 1;
+    }
+    
+    //double a = Kp + Ki*Ts/2 + Kd/Ts;
+    //double b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
+    //double c = Kd/Ts;
+    // Create and Initialize Past error and output terms
+    gsl_vector * Ek = gsl_vector_alloc(num_prim);
+    static gsl_vector * Ek1 = gsl_vector_calloc(num_prim);
+    static gsl_vector * Ek2 = gsl_vector_calloc(num_prim);
+    static gsl_vector * Uk1 = gsl_vector_calloc(num_prim);
+    
+    // Project Afref into low dim space
     gsl_blas_dgemv(CblasNoTrans, 1, Oa_inv, Afref, 0, x);
-    gsl_blas_daxpy(-1, x_past, x);
-    // x is now error in low dim space
-    // Apply proportional gain for now
-    gsl_blas_dscal(0.2, x);
-    //int i = 5;
-    //double xi = gsl_vector_get(x, i);
-    //gsl_vector_set_zero(x);
-    //gsl_vector_set(x,i,xi);
+    // Find error
+    gsl_vector_memcpy(Ek, x);
+    gsl_blas_daxpy(-1, x_past, Ek);
+    
+    // Find Uk1 + aEk + bEk1 + cEk2
+    // Use x as temp var doing addition
+    gsl_blas_dscal(0.0,x); // Zero x to begin with
+    gsl_blas_daxpy(d, Uk1, x);
+    gsl_blas_daxpy(a, Ek, x);
+    gsl_blas_daxpy(b, Ek1, x);
+    gsl_blas_daxpy(c, Ek2, x);
+    //gsl_blas_daxpy(b, Ek1, x);
+    //gsl_blas_daxpy(c, Ek2, x);
+    
+    // Update Past vectors
+    gsl_vector_memcpy(Uk1, x);
+    gsl_vector_memcpy(Ek2, Ek1);
+    gsl_vector_memcpy(Ek1, Ek);
+    
+    iter++;
+    
+    // Override PID right now
+    //gsl_vector_memcpy(x, Ek);
+    //gsl_blas_dscal(Kp, x);
 }

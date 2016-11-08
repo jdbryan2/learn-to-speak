@@ -200,6 +200,8 @@ void AreaRefControl(Speaker* speaker, double log_freq, double log_period) {
     gsl_vector_fscanf(f_stream_mat, Aref);
     fclose(f_stream_mat);
     
+    // Make control longer than sample
+    //utterance_length+=.5;
     BasePrimControl prim(utterance_length,log_period,art,prefix,Aref);
     // Initialize the data logger
     speaker->ConfigDataLogger(prefix + "prim_logs/Areflog" + to_string(1)+ ".log",log_period);
