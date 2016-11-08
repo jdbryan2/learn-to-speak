@@ -324,57 +324,99 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
 void BasePrimControl::ArefControl() {
     // 1sd Order Discrete PID controller taken from pg 9 of http://portal.ku.edu.tr/~cbasdogan/Courses/Robotics/projects/Discrete_PID.pdf
     // PID Gains
-    const double Kp = 0.2;//0.1;
+    const double Kp = 0.2;//0.1;//.2
     const double Ki = 0.5;//0.5;
-    const double Kd = -0.001;//0.02;
+    const double Kd = 0.02;//0.02;
+    const double I_limit = Ki*5; // TODO: How do I set this value?
+    const double Ts = 1/sample_freq;
     //const double Kp = 0.0;
     //const double Ki = 0.0;
     //const double Kd = 0.1;
     // Coefficients of Discrete PID Controller
-    static int iter = 0;
-    const double Ts = 1/sample_freq;
-    static double a = Kp;
-    static double b = 0;
-    static double c = 0;
-    static double d = 0;
-    // Just do proportional control for first 2 timesteps then do full PID
-    // TODO: need to look at correct way to initialize pid
-    if (iter==2){
-        a = Kp + Ki*Ts/2 + Kd/Ts;
-        b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
-        c = Kd/Ts;
-        d = 1;
-    }
-    
-    //double a = Kp + Ki*Ts/2 + Kd/Ts;
-    //double b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
-    //double c = Kd/Ts;
+
     // Create and Initialize Past error and output terms
+    static int iter = 0;
     gsl_vector * Ek = gsl_vector_alloc(num_prim);
     static gsl_vector * Ek1 = gsl_vector_calloc(num_prim);
-    static gsl_vector * Ek2 = gsl_vector_calloc(num_prim);
-    static gsl_vector * Uk1 = gsl_vector_calloc(num_prim);
     
     // Project Afref into low dim space
     gsl_blas_dgemv(CblasNoTrans, 1, Oa_inv, Afref, 0, x);
-    // Find error
+    // Find predicted error
     gsl_vector_memcpy(Ek, x);
     gsl_blas_daxpy(-1, x_past, Ek);
-    
-    // Find Uk1 + aEk + bEk1 + cEk2
-    // Use x as temp var doing addition
+    // Contributing PID Terms
+    // Proportional
+    gsl_vector * P = gsl_vector_alloc(num_prim);
+    gsl_vector_memcpy(P, Ek);
+    gsl_blas_dscal(Kp, P);
+    // Integral
+    static gsl_vector * I1 = gsl_vector_calloc(num_prim);
+    gsl_vector * I = gsl_vector_calloc(num_prim);
+    gsl_vector_memcpy(I, Ek);
+    gsl_blas_daxpy(1.0, Ek1, I);
+    gsl_blas_dscal(Ki*Ts/2, I);
+    gsl_blas_daxpy(1.0, I1, I);
+    // Do Anti-Windup
+    for (int i=0; i<num_prim; i++) {
+        if (gsl_vector_get(I, i)>I_limit) {
+            gsl_vector_set(I, i, I_limit);
+        }
+    }
+    // Derivative
+    gsl_vector * D = gsl_vector_alloc(num_prim);
+    gsl_vector_memcpy(D, Ek);
+    gsl_blas_daxpy(-1.0, Ek1, D);
+    gsl_blas_dscal(Kd/Ts, D);
+    // Sum them all up
     gsl_blas_dscal(0.0,x); // Zero x to begin with
-    gsl_blas_daxpy(d, Uk1, x);
-    gsl_blas_daxpy(a, Ek, x);
-    gsl_blas_daxpy(b, Ek1, x);
-    gsl_blas_daxpy(c, Ek2, x);
-    //gsl_blas_daxpy(b, Ek1, x);
-    //gsl_blas_daxpy(c, Ek2, x);
+    gsl_blas_daxpy(1.0, P, x);
+    gsl_blas_daxpy(1.0, I, x);
+    gsl_blas_daxpy(1.0, D, x);
+    
+    
+    /*
+     static double a = Kp;
+     static double b = 0;
+     static double c = 0;
+     static double d = 0;
+     // Just do proportional control for first 2 timesteps then do full PID
+     // TODO: need to look at correct way to initialize pid
+     if (iter==2){
+     a = Kp + Ki*Ts/2 + Kd/Ts;
+     b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
+     c = Kd/Ts;
+     d = 1;
+     }
+     
+     //double a = Kp + Ki*Ts/2 + Kd/Ts;
+     //double b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
+     //double c = Kd/Ts;
+     // Create and Initialize Past error and output terms
+     gsl_vector * Ek = gsl_vector_alloc(num_prim);
+     static gsl_vector * Ek1 = gsl_vector_calloc(num_prim);
+     static gsl_vector * Ek2 = gsl_vector_calloc(num_prim);
+     static gsl_vector * Uk1 = gsl_vector_calloc(num_prim);
+     
+     // Project Afref into low dim space
+     gsl_blas_dgemv(CblasNoTrans, 1, Oa_inv, Afref, 0, x);
+     // Find error
+     gsl_vector_memcpy(Ek, x);
+     gsl_blas_daxpy(-1, x_past, Ek);
+     
+     // Find Uk1 + aEk + bEk1 + cEk2
+     // Use x as temp var doing addition
+     gsl_blas_dscal(0.0,x); // Zero x to begin with
+     gsl_blas_daxpy(d, Uk1, x);
+     gsl_blas_daxpy(a, Ek, x);
+     gsl_blas_daxpy(b, Ek1, x);
+     gsl_blas_daxpy(c, Ek2, x);
+     //gsl_blas_daxpy(b, Ek1, x);
+     //gsl_blas_daxpy(c, Ek2, x);
+     */
     
     // Update Past vectors
-    gsl_vector_memcpy(Uk1, x);
-    gsl_vector_memcpy(Ek2, Ek1);
     gsl_vector_memcpy(Ek1, Ek);
+    gsl_vector_memcpy(I1, I);
     
     iter++;
     

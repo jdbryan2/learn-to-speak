@@ -29,7 +29,7 @@ hold off
 F(loops) = struct('cdata',[],'colormap',[]);
 v = VideoWriter('vocal_tract.avi');
 
-figure(11);
+figure(12);
 for j = 1:loops
     plot(-21:0, 0.025*area2(j*sub_sample, 1:22), '.r')
     hold on

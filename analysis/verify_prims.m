@@ -28,7 +28,7 @@ end
 vt = VT_log(:,1:end-1)'; %remove sound
 num_vars = length(VT_lab)-1;
 if samp_freq~=samp_freq2
-    error('Primitive sample frequency is different from log sample frequency')
+    errors('Primitive sample frequency is different from log sample frequency')
 end
 
 num_tubes = 89;
@@ -44,16 +44,15 @@ for i=0:p-1
 end
 
 % Loop through each sample and compute error
-error = zeros(samp_len-1,1);
-error2 = error;
-error3 = error;
+errors = zeros(samp_len-1,1);
+errors2 = errors;
+errors3 = errors;
 X_past = zeros(k,samp_len-1);
 EK = X_past;
 X = X_past;
 % Initialize PID history vectors
 Ek1 = zeros(k,1);
-Ek2 = Ek1;
-Uk1 = Ek1;
+I1 = Ek1;
 for i=1:samp_len-1
     % Shift feature sample backward by one in Yp_unscaled
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
@@ -102,36 +101,22 @@ for i=1:samp_len-1
         % PID Gains
         Kp = 0.2;
         Ki = 0.5;
-        Kd = -0.001;
+        Kd = 0.02;
+        I_limit = Ki*5;
+        Ts = 1/samp_freq;
         %Kp = 0.0;
         %Ki = 0.0;
         %Kd = 0.1;
         % Coefficients of discrete controller
-        Ts = 1/samp_freq;
-        if i==1
-            a = Kp;
-            b = 0;
-            c = 0;
-            d = 0;
-        elseif (i==3)
-            a = Kp + Ki*Ts/2 + Kd/Ts;
-            b = -Kp + Ki*Ts/2 - 2*Kd/Ts;
-            c = Kd/Ts;
-            d = 1;
-        end
-        
-        %Compute Error
         Ek = Oarea_inv*Afref - x_past;
         EK(:,i) = Ek;
-%         if i==1
-%             x = a*Ek;
-%         elseif i==2
-%             x = Uk1 + a*Ek +b*Ek1;
-%         else
-        x = d*Uk1 + a*Ek + b*Ek1 + c*Ek2;
-        %end
-        Uk1 = x;
-        Ek2 = Ek1;
+        P = Kp*Ek;
+        I = I1 + Ki*Ts/2*(Ek+Ek1);
+        % Integral anti-windup
+        I(I>I_limit) = I_limit;
+        D = Kd/Ts*(Ek-Ek1);
+        x = P+I+D;
+        I1 = I;
         Ek1 = Ek;
         X(:,i) = x;
     else
@@ -169,9 +154,9 @@ for i=1:samp_len-1
     
     %i
     %art-artlog
-    error(i) = sum(abs(art-artlog));
-    error2(i) = sum(abs(art-(O(num_tubes+1:num_vars,1)*art_std+artmean_f)));
-    error3(i) = sum(abs(artlog-artmean_f));
+    errors(i) = sum(abs(art-artlog));
+    errors2(i) = sum(abs(art-(O(num_tubes+1:num_vars,1)*art_std+artmean_f)));
+    errors3(i) = sum(abs(artlog-artmean_f));
 end
 % pull out part of O matrix that corresponds to generating Area predictions
 % in Xf
@@ -191,7 +176,7 @@ for i=0:f-1
         area_fb(i*num_tubes+1:(i+1)*num_tubes,:) = FB(ind+1:ind+num_tubes,:);
 end
 
-sum(error)
+sum(errors)
 
 %% Plot things
 figure(5)
@@ -211,6 +196,9 @@ for i=1:k
     if(doAref)
         plot((1:samp_len-1)*dt,EK(i,:),'Color',clrordr(ii,:))
         leg = [leg ; ['Aref Error     ', num2str(i),'Factors']];
+        
+        plot((1:samp_len-1)*dt,X(i,:),'--','Color',clrordr(ii,:))
+        leg = [leg ; ['Control Signal ', num2str(i),'Factors']];
     end
     legend(leg)
 end
