@@ -114,6 +114,7 @@ for i=1:samp_len-1
         I = I1 + Ki*Ts/2*(Ek+Ek1);
         % Integral anti-windup
         I(I>I_limit) = I_limit;
+        I(I<-I_limit) = -I_limit;
         D = Kd/Ts*(Ek-Ek1);
         x = P+I+D;
         I1 = I;

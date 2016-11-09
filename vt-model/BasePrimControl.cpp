@@ -17,10 +17,9 @@
 int BasePrimControl::LoadPrims() {
     std::string f_p_file("f_p_mat.prim");
     std::string num_prims_file("num_prim.prim");
-    std::string area_std_file("area_std.prim");
-    std::string art_std_file("art_std.prim");
     std::string samp_freq_file("samp_freq.prim");
     std::string mean_file("mean_mat.prim");
+    std::string stddev_file("stddev.prim");
     std::string K_file("K_mat.prim");
     std::string O_file("O_mat.prim");
     std::string Oa_inv_file("Oa_inv_mat.prim");
@@ -40,16 +39,6 @@ int BasePrimControl::LoadPrims() {
     f_stream >> num_prim;
     f_stream.close();
     
-    filename = file_prefix + area_std_file;
-    f_stream.open(filename);
-    f_stream >> area_std;
-    f_stream.close();
-    
-    filename = file_prefix + art_std_file;
-    f_stream.open(filename);
-    f_stream >> art_std;
-    f_stream.close();
-    
     filename = file_prefix + samp_freq_file;
     f_stream.open(filename);
     f_stream >> sample_freq;
@@ -60,6 +49,12 @@ int BasePrimControl::LoadPrims() {
     f_stream_mat = fopen(filename.c_str(), "r");
     feat_mean = gsl_vector_alloc(mean_len);
     gsl_vector_fscanf(f_stream_mat, feat_mean);
+    fclose(f_stream_mat);
+    
+    filename = file_prefix + stddev_file;
+    f_stream_mat = fopen(filename.c_str(), "r");
+    stddev = gsl_vector_alloc(NUM_FEAT);
+    gsl_vector_fscanf(f_stream_mat, stddev);
     fclose(f_stream_mat);
     
     filename = file_prefix + K_file;
@@ -124,6 +119,7 @@ BasePrimControl::~BasePrimControl() {
     gsl_matrix_free(O);
     gsl_matrix_free(K);
     gsl_vector_free(feat_mean);
+    gsl_vector_free(stddev);
     gsl_matrix_free(Oa_inv);
     gsl_vector_free(Yp);
     gsl_vector_free(Yp_unscaled);
@@ -251,18 +247,19 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     }
     
     // Scale the Area and Articulatory features by their respective standard deviations
-    double inv_area_std = 1/area_std;
-    double inv_art_std = 1/art_std;
-    for (int i=0; i<f_p[1]; i++) {
-        int ind = i*(NUM_FEAT);
-        gsl_vector_view Yp_area_i = gsl_vector_subvector(Yp, ind, MAX_NUMBER_OF_TUBES);
-        gsl_vector_view Yp_art_i = gsl_vector_subvector(Yp, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
-        gsl_blas_dscal(inv_area_std, &Yp_area_i.vector);
-        gsl_blas_dscal(inv_art_std, &Yp_art_i.vector);
-    }
-    if (doArefControl) {
-        // Scale Afref by its standard deviation
-        gsl_blas_dscal(inv_area_std, Afref);
+    for (int i=0; i<NUM_FEAT; i++) {
+        double inv_std = 1/gsl_vector_get(stddev, i);
+        for (int j=0; j<f_p[1]; j++) {
+            gsl_vector_view Yp_ij = gsl_vector_subvector(Yp, j*NUM_FEAT+i, 1);
+            gsl_blas_dscal(inv_std, &Yp_ij.vector);
+        }
+        if (doArefControl && i<MAX_NUMBER_OF_TUBES) {
+            for (int j=0; j<f_p[0]; j++) {
+                // Scale Afref by its standard deviation
+                gsl_vector_view Afref_ij = gsl_vector_subvector(Afref, j*MAX_NUMBER_OF_TUBES+i, 1);
+                gsl_blas_dscal(inv_std, &Afref_ij.vector);
+            }
+        }
     }
     
     // Now actually use the primitives to find the future values
@@ -288,12 +285,12 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     gsl_blas_dgemv(CblasNoTrans, 1, O, x, 0, Yf);
     
     // Now rescale Yf
-    for (int i=0; i<f_p[0]; i++) {
-        int ind = i*(NUM_FEAT);
-        gsl_vector_view Yf_area_i = gsl_vector_subvector(Yf, ind, MAX_NUMBER_OF_TUBES);
-        gsl_vector_view Yf_art_i = gsl_vector_subvector(Yf, ind+MAX_NUMBER_OF_TUBES, kArt_muscle_MAX);
-        gsl_blas_dscal(area_std, &Yf_area_i.vector);
-        gsl_blas_dscal(art_std, &Yf_art_i.vector);
+    for (int i=0; i<NUM_FEAT; i++) {
+        double std = gsl_vector_get(stddev, i);
+        for (int j=0; j<f_p[0]; j++) {
+            gsl_vector_view Yf_ij = gsl_vector_subvector(Yf, j*NUM_FEAT+i, 1);
+            gsl_blas_dscal(std, &Yf_ij.vector);
+        }
     }
     
     // Add back in the mean to Yf
@@ -324,10 +321,10 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
 void BasePrimControl::ArefControl() {
     // 1sd Order Discrete PID controller taken from pg 9 of http://portal.ku.edu.tr/~cbasdogan/Courses/Robotics/projects/Discrete_PID.pdf
     // PID Gains
-    const double Kp = 0.2;//0.1;//.2
-    const double Ki = 0.5;//0.5;
-    const double Kd = 0.02;//0.02;
-    const double I_limit = Ki*5; // TODO: How do I set this value?
+    const double Kp = 0.2;//0.1;//.2//1
+    const double Ki = 0.5;//0.5;//10
+    const double Kd = 0.02;//0.02;//.01
+    const double I_limit = Ki*5; // TODO: How do I set this value? //100
     const double Ts = 1/sample_freq;
     //const double Kp = 0.0;
     //const double Ki = 0.0;
@@ -360,6 +357,8 @@ void BasePrimControl::ArefControl() {
     for (int i=0; i<num_prim; i++) {
         if (gsl_vector_get(I, i)>I_limit) {
             gsl_vector_set(I, i, I_limit);
+        }else if(gsl_vector_get(I, i)<-I_limit) {
+            gsl_vector_set(I, i, -I_limit);
         }
     }
     // Derivative

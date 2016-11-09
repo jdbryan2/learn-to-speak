@@ -30,12 +30,11 @@ private:
     // Primitive Parameters to Read in
     int f_p[2];
     int num_prim;
-    double area_std;
-    double art_std;
     double sample_freq;
     gsl_matrix * O;
     gsl_matrix * K;
     gsl_vector * feat_mean;
+    gsl_vector * stddev;
     gsl_matrix * Oa_inv;
     
     // Variables in DFA

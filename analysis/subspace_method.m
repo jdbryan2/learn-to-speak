@@ -5,12 +5,14 @@ testname = 'test3Area';
 logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
+VT1 = [];
 for i=1:num_logs
     [VT_log, VT_lab, samp_freq, samp_len] = ...
         import_datalog([testname,'/logs/',logs(i).name]);
     % Flip matrix to make more similar to how the spectrogram was processed
     % in earlier code.
     vt = VT_log(:,1:end-1)'; %remove sound
+    VT1 = [VT1,vt];
     VT = [VT,vt(:)];
 end
 num_vars = length(VT_lab)-1;
@@ -18,54 +20,29 @@ dt = 1/samp_freq;
 f = round(samp_len/2);
 p = samp_len-f;
 %L = f+p;
-
-% Scale areas to be simialar to arts in units in variance
-% num_tubes = 89;
-% num_art = 29;
-% tub_ind = [];
-% art_ind = [];
-% for ind = 0:samp_len-1
-%     z = ind*(num_tubes+num_art);
-%     tub_ind = [tub_ind, z+1:z+num_tubes];
-%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-% end
-% tubes = VT(tub_ind,:);
-% arts = VT(art_ind,:);
-% % tub_std = std(tubes(:));
-% % art_std = std(arts(:));
-% % VT(tub_ind,:) = VT(tub_ind,:)/tub_std;
-% % VT(art_ind,:) = VT(art_ind,:)/art_std;
-% % Instead of variance use range
-% tub_rng = range(tubes(:));
-% art_rng = range(arts(:));
-% VT(tub_ind,:) = VT(tub_ind,:)/tub_rng;
-% VT(art_ind,:) = VT(art_ind,:)/art_rng;
-% 
-% % Remove mean from data
-% Xpm = mean(VT(1:p*num_vars,:)')';
-% Xfm = mean(VT(p*num_vars+1:end,:)')';
-% Xp = VT(1:p*num_vars,:)-Xpm*ones(1,num_logs);
-% Xf = VT(p*num_vars+1:end,:)-Xfm*ones(1,num_logs);
-
-% Remove mean from data
-VT_mean = mean(VT,2);
-VTs = VT-VT_mean*ones(1,num_logs);
-% Scale areas to be simialar to arts in units in variance
 num_tubes = 89;
 num_art = 29;
-tub_ind = [];
-art_ind = [];
-for ind = 0:samp_len-1
-    z = ind*(num_tubes+num_art);
-    tub_ind = [tub_ind, z+1:z+num_tubes];
-    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-end
-tubes = VTs(tub_ind,:);
-arts = VTs(art_ind,:);
-tub_std = std(tubes(:));
-art_std = std(arts(:));
-VTs(tub_ind,:) = VTs(tub_ind,:)/tub_std;
-VTs(art_ind,:) = VTs(art_ind,:)/art_std;
+
+% Remove mean of each feature at each timestep from data
+VT_mean = mean(VT,2);
+% Scale by std dev of features over all timesteps
+stdevs = std(VT1,0,2);
+% Make tube sections with 0 std dev = the mean tube std dev
+% May need to set a tolerance here instead of just 0
+tubs = VT1(1:num_tubes,:);
+arts = VT1(num_tubes+1:end,:);
+stdevs(1:num_tubes) = std(tubs(:));
+tub_std = stdevs(1);
+stdevs(num_tubes+1:end) = std(arts(:));
+art_std = stdevs(num_tubes+1);
+%stdevs(1:num_tubes) = mean(stdevs(1:num_tubes));
+%stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
+tub_stds = stdevs(1:num_tubes);
+z_std = mean(tub_stds(tub_stds~=0));
+tub_stds(tub_stds==0) = z_std;
+stdevs(1:89) = tub_stds;
+VTs1 = (VT1 - repmat(reshape(VT_mean,[num_vars,samp_len]),[1,num_logs]))./repmat(stdevs,[1,samp_len*num_logs]);
+VTs = reshape(VTs1,[samp_len*num_vars,num_logs]);
 Xp = VTs(1:p*num_vars,:);
 Xf = VTs(p*num_vars+1:end,:);
 
@@ -154,26 +131,12 @@ for i=1:k
 end
 
 %% Scale Yf back to correct units
-tube_inds = [];
-art_inds = [];
-for j=0:f-1
-    ind = j*num_vars;
-    tube_inds = [tube_inds,ind+1:ind+num_tubes];
-    ind = j*num_vars+num_tubes;
-    art_inds = [art_inds,ind+1:ind+num_art];
-end
 Xf_unscaled = zeros(f*num_vars,num_logs);
 Xf_unscaled_pred = Xf_unscaled;
 Xf_pred = O*K*Xp;
 
 Xf_mean = VT_mean(p*(num_art+num_tubes)+1:end)*ones(1,num_logs);
-Xf_unscaled(tube_inds,:) = Xf(tube_inds,:)*tub_std;
-Xf_unscaled(art_inds,:) = Xf(art_inds,:)*art_std;
-Xf_unscaled = Xf_unscaled+Xf_mean;
-Xf_unscaled2 = VT(p*(num_art+num_tubes)+1:end,:);
-Xf_unscaled_pred(tube_inds,:) = Xf_pred(tube_inds,:)*tub_std;
-Xf_unscaled_pred(art_inds,:) = Xf_pred(art_inds,:)*art_std;
-Xf_unscaled_pred = Xf_unscaled_pred+Xf_mean;
+Xf_unscaled = Xf.*repmat(stdevs,[f,num_logs])+Xf_mean;
 %Xf_unscaled(zs) = 0;
 % Limit predictions to max and min articulator activations as the sim does
 % Should technically pull out just art values and test them not look at
@@ -182,15 +145,12 @@ Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
 Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
 
 errors = (Xf_unscaled-Xf_unscaled_pred);
-tubes_std = std(reshape(tubes,[num_tubes,(f+p)*num_logs]),0,2);
-tube_error = errors(tube_inds,:);
-tube_error = reshape(tube_error,[num_tubes,f*num_logs])./repmat(tubes_std,[1,num_logs*f]);
-%tube_error = errors(tube_inds,:)/tub_std;
+errors = reshape(errors,[num_vars*f,num_logs]);
+tube_error = errors(1:num_tubes,:);
 figure(10); imagesc(tube_error)
-arts_std = std(reshape(arts,[num_art,(f+p)*num_logs]),0,2);
-art_error = errors(art_inds,:);
-art_error = reshape(art_error,[num_art,f*num_logs])./repmat(arts_std,[1,num_logs*f]);
-%art_error = errors(art_inds,:)/art_std;
+art_error = errors(num_tubes+1:num_vars,:);
+% Scale art_error by std dev
+%art_error = ./repmat(arts_std,[1,num_logs*f]);
 figure(11); imagesc(art_error)
 
 
@@ -219,12 +179,8 @@ fid=fopen([testname,'/mean_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',VT_mean);
 fclose(fid);
 
-fid=fopen([testname,'/area_std.prim'],'wt');
-fprintf(fid,'%.32e\n',tub_std);
-fclose(fid);
-
-fid=fopen([testname,'/art_std.prim'],'wt');
-fprintf(fid,'%.32e\n',art_std);
+fid=fopen([testname,'/stddev.prim'],'wt');
+fprintf(fid,'%.32e\n',stdevs);
 fclose(fid);
 
 fp = [f,p];
@@ -240,7 +196,7 @@ fid=fopen([testname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
 
-save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','tub_std','art_std','f','p','samp_freq','k');
+save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','tub_std','art_std','f','p','samp_freq','k');
 
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');
@@ -255,6 +211,15 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','tub_std','art_std','
         import_datalog([testname,'/artword_logs/apa.log']);
 VT_log = VT_log(:,1:end-1)'; %remove sound
 VT_log = VT_log(:);
+
+tub_ind = [];
+art_ind = [];
+for ind = 0:samp_len-1
+    z = ind*(num_tubes+num_art);
+    tub_ind = [tub_ind, z+1:z+num_tubes];
+    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+end
+
 Aref = VT_log(tub_ind);
 
 fid=fopen([testname,'/Aref.alog'],'wt');
