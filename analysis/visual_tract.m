@@ -1,5 +1,5 @@
 % Plot area function and/or pressure function as video
-
+clear
 [data1, labels, Fs, data_len_ref] = import_datalog('test3Area/artword_logs/apa.log');
 [data2, labels, Fs, data_len] = import_datalog('test3Area/prim_logs/Areflog1.log');
 sub_sample = 1;
@@ -31,23 +31,23 @@ v = VideoWriter('vocal_tract.avi');
 
 figure(12);
 for j = 1:loops
-    plot(-21:0, 0.025*area2(j*sub_sample, 1:22), '.r')
+    plot(0:21,0.025*area2(j*sub_sample, 1:22), '.r')
     hold on
-    plot(-21:0,-0.025*area2(j*sub_sample, 1:22), '.r')
-    plot(0.5*area2(j*sub_sample, 23:89), '.b')
-    plot(-0.5*area2(j*sub_sample, 23:89), '.b')
+    plot(0:21,-0.025*area2(j*sub_sample, 1:22), '.r')
+    plot(22:88,0.5*area2(j*sub_sample, 23:89), '.b')
+    plot(22:88,-0.5*area2(j*sub_sample, 23:89), '.b')
     ind = j;
     if j> loops_ref
         ind = loops_ref;
     end
-    plot(-21:0, 0.025*area1(ind*sub_sample, 1:22), '-r')
-    plot(-21:0,-0.025*area1(ind*sub_sample, 1:22), '-r')
-    plot(0.5*area1(ind*sub_sample, 23:89), '-b')
-    plot(-0.5*area1(ind*sub_sample, 23:89), '-b')
+    plot(0:21, 0.025*area1(ind*sub_sample, 1:22), '-r')
+    plot(0:21,-0.025*area1(ind*sub_sample, 1:22), '-r')
+    plot(22:88,0.5*area1(ind*sub_sample, 23:89), '-b')
+    plot(22:88,-0.5*area1(ind*sub_sample, 23:89), '-b')
     hold off
     drawnow
     F(j) = getframe(gcf);
 end
 
 fig = gcf;
-movie(fig,F,3)
+movie(fig,F,3,5)

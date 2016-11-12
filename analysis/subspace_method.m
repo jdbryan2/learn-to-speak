@@ -25,23 +25,40 @@ num_art = 29;
 
 % Remove mean of each feature at each timestep from data
 VT_mean = mean(VT,2);
+VTs1 = (VT1 - repmat(reshape(VT_mean,[num_vars,samp_len]),[1,num_logs]));
 % Scale by std dev of features over all timesteps
-stdevs = std(VT1,0,2);
+% Remove mean first because stddev is over all features not time varying features
+stdevs = std(VTs1,0,2);
 % Make tube sections with 0 std dev = the mean tube std dev
 % May need to set a tolerance here instead of just 0
-tubs = VT1(1:num_tubes,:);
-arts = VT1(num_tubes+1:end,:);
-stdevs(1:num_tubes) = std(tubs(:));
-tub_std = stdevs(1);
-stdevs(num_tubes+1:end) = std(arts(:));
-art_std = stdevs(num_tubes+1);
-%stdevs(1:num_tubes) = mean(stdevs(1:num_tubes));
-%stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
+
+% Trying to match up with last version of code
+% tub_ind = [];
+% art_ind = [];
+% for ind = 0:samp_len-1
+%     z = ind*(num_tubes+num_art);
+%     tub_ind = [tub_ind, z+1:z+num_tubes];
+%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+% end
+% VTs_ = VT-VT_mean*ones(1,num_logs);
+% tubs = VTs_(tub_ind,:);
+% arts = VTs_(art_ind,:);
+% stdevs(1:num_tubes) = std(tubs(:));
+% tub_std = stdevs(1);
+% stdevs(num_tubes+1:end) = std(arts(:));
+% art_std = stdevs(num_tubes+1);
+rng1 = [1:6,19:num_tubes];
+rng2 = 7:18;
+rng3 = num_tubes+1:num_vars;
+stdevs(rng1) = mean(stdevs(rng1));
+stdevs(rng2) = mean(stdevs(rng2));
+stdevs(rng3) = mean(stdevs(rng3));
+stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
 tub_stds = stdevs(1:num_tubes);
 z_std = mean(tub_stds(tub_stds~=0));
 tub_stds(tub_stds==0) = z_std;
 stdevs(1:89) = tub_stds;
-VTs1 = (VT1 - repmat(reshape(VT_mean,[num_vars,samp_len]),[1,num_logs]))./repmat(stdevs,[1,samp_len*num_logs]);
+VTs1 = VTs1./repmat(stdevs,[1,samp_len*num_logs]);
 VTs = reshape(VTs1,[samp_len*num_vars,num_logs]);
 Xp = VTs(1:p*num_vars,:);
 Xf = VTs(p*num_vars+1:end,:);
@@ -54,7 +71,9 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
-k = 8;
+k = 1;
+skip = 0;
+prms = skip+1:k+skip;
 %F = Xf*(Xp'*(Xp*Xp')^-1);
 F = Xf*pinv(Xp);
 Qp_ = cov(Xp')';
@@ -64,9 +83,9 @@ Qf_ = eye(size(Qf_));
 % Take real part of scale factor
 F_sc = real(Qf_^(-.5))*F*real(Qp_^(.5));
 [U,S,V] = svd(F_sc);
-Sk = S(1:k,1:k);
-Vk = V(:,1:k);
-Uk = U(:,1:k);
+Sk = S(prms,prms);
+Vk = V(:,prms);
+Uk = U(:,prms);
 K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
@@ -125,7 +144,11 @@ for i=1:k
     figure(4)
     hold on
     plot(1:num_logs,Factors(i,:))
-    leg = [leg ; ['Primitive ', num2str(i),'Factors']];
+    if i<10
+        leg = [leg ; ['Primitive ', num2str(i),'  Factors']];
+    else
+        leg = [leg ; ['Primitive ', num2str(i),' Factors']];
+    end
     legend(leg)
     hold off
 end
@@ -196,8 +219,8 @@ fid=fopen([testname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
 
-save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','tub_std','art_std','f','p','samp_freq','k');
-
+%save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','tub_std','art_std','f','p','samp_freq','k');
+save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','samp_freq','k');
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');
 % axis xy; axis tight; colormap(hot); view(0,90);

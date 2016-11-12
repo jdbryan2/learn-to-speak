@@ -320,15 +320,24 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
 
 void BasePrimControl::ArefControl() {
     // 1sd Order Discrete PID controller taken from pg 9 of http://portal.ku.edu.tr/~cbasdogan/Courses/Robotics/projects/Discrete_PID.pdf
+    // and here pg. 26 https://www.cds.caltech.edu/~murray/courses/cds101/fa02/caltech/astrom-ch6.pdf
     // PID Gains
-    const double Kp = 0.2;//0.1;//.2//1
-    const double Ki = 0.5;//0.5;//10
-    const double Kd = 0.02;//0.02;//.01
-    const double I_limit = Ki*5; // TODO: How do I set this value? //100
+    //const double Kp_[2] = {4.0/3, 1/3};
+    //const double Ki_[2] = {200.0/3,100/3};
+    //const double Kd_[2] = {0.09/3,.1/3};
+    //const double I_limit_[2] = {Ki_[0]*100,Ki_[1]*100};
+    
+    const double Kp = 4.0/3;
+    const double Ki = 200.0/3;
+    const double Kd = 0.09/3;
+    const double I_limit = Ki*100;
+    //const double Kp = 0;
+    //const double Ki = 0;
+    //const double Kd = 10;
+    //const double I_limit = Ki*100;
+    
     const double Ts = 1/sample_freq;
-    //const double Kp = 0.0;
-    //const double Ki = 0.0;
-    //const double Kd = 0.1;
+
     // Coefficients of Discrete PID Controller
 
     // Create and Initialize Past error and output terms
