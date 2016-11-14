@@ -92,23 +92,27 @@ for i=1:samp_len-1
     X_past(:,i) = x_past;
     if(doAref)
         % PID Gains
-        Kp = 4/3;
-        Ki = 200/3;
-        Kd = .09/3;
-        I_limit = Ki*100;
+        skip = 0;
+        Kp =          [4.0/3,     1/3,       8.0/3,     2.5/3,     10.0/3]';
+        Ki =          [200.0/3,   100/3,     300.0/3,   75.0/4,    10.0]';
+        Kd =          [0.09/3,    0.1/3,     0.21/3,    0.041/3,   0.15/2]';
+        I_limit =     [Ki(1)*100, Ki(2)*100, Ki(3)*100, Ki(4)*100, 1]';
+        Kp = Kp(skip+1:k+skip);
+        Ki = Ki(skip+1:k+skip);
+        Kd = Kd(skip+1:k+skip);
+        I_limit = I_limit(skip+1:k+skip);
         Ts = 1/samp_freq;
-        %Kp = 0.0;
-        %Ki = 0.0;
-        %Kd = 0.1;
         % Coefficients of discrete controller
         Ek = Oarea_inv*Afref - x_past;
         EK(:,i) = Ek;
-        P = Kp*Ek;
-        I = I1 + Ki*Ts/2*(Ek+Ek1);
+        P = Kp.*Ek;
+        I = I1 + Ts/2*Ki.*(Ek+Ek1);
         % Integral anti-windup
-        I(I>I_limit) = I_limit;
-        I(I<-I_limit) = -I_limit;
-        D = Kd/Ts*(Ek-Ek1);
+        max_ind = I>I_limit;
+        I(max_ind) = I_limit(max_ind);
+        min_ind = I<-I_limit;
+        I(min_ind) = -I_limit(min_ind);
+        D = Kd.*(Ek-Ek1)/Ts;
         x = P+I+D;
         I1 = I;
         Ek1 = Ek;

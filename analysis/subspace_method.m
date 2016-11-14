@@ -71,7 +71,7 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
-k = 1;
+k = 3;
 skip = 0;
 prms = skip+1:k+skip;
 %F = Xf*(Xp'*(Xp*Xp')^-1);

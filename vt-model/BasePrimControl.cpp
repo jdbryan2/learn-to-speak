@@ -321,22 +321,19 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
 void BasePrimControl::ArefControl() {
     // 1sd Order Discrete PID controller taken from pg 9 of http://portal.ku.edu.tr/~cbasdogan/Courses/Robotics/projects/Discrete_PID.pdf
     // and here pg. 26 https://www.cds.caltech.edu/~murray/courses/cds101/fa02/caltech/astrom-ch6.pdf
+    // Tuned using method in answer by Joe Baker http://robotics.stackexchange.com/questions/167/what-are-good-strategies-for-tuning-pid-loops
     // PID Gains
-    //const double Kp_[2] = {4.0/3, 1/3};
-    //const double Ki_[2] = {200.0/3,100/3};
-    //const double Kd_[2] = {0.09/3,.1/3};
-    //const double I_limit_[2] = {Ki_[0]*100,Ki_[1]*100};
-    
-    const double Kp = 4.0/3;
-    const double Ki = 200.0/3;
-    const double Kd = 0.09/3;
-    const double I_limit = Ki*100;
-    //const double Kp = 0;
-    //const double Ki = 0;
-    //const double Kd = 10;
-    //const double I_limit = Ki*100;
-    
     const double Ts = 1/sample_freq;
+    double Kp_[5] =      {4.0/3,        1.0/3,        8.0/3,        2.5/3,        10.0/3};
+    double Ki_[5] =      {200.0/3,      100.0/3,      300.0/3,      75.0/4,       10.0};
+    double Kd_[5] =      {0.09/3,       0.1/3,        0.21/3,       0.041/3,      0.15/2};
+    double I_limit_[5] = {Ki_[1]*100.0, Ki_[1]*100.0, Ki_[2]*100.0, Ki_[3]*100.0, 1.0};
+    int skip = 0;
+    
+    gsl_vector_const_view Kp = gsl_vector_const_view_array(&Kp_[skip], num_prim);
+    gsl_vector_const_view Ki = gsl_vector_const_view_array(&Ki_[skip], num_prim);
+    gsl_vector_const_view Kd = gsl_vector_const_view_array(&Kd_[skip], num_prim);
+    gsl_vector_const_view I_limit = gsl_vector_const_view_array(&I_limit_[skip], num_prim);
 
     // Coefficients of Discrete PID Controller
 
@@ -354,27 +351,30 @@ void BasePrimControl::ArefControl() {
     // Proportional
     gsl_vector * P = gsl_vector_alloc(num_prim);
     gsl_vector_memcpy(P, Ek);
-    gsl_blas_dscal(Kp, P);
+    gsl_vector_mul(P,&Kp.vector);
     // Integral
     static gsl_vector * I1 = gsl_vector_calloc(num_prim);
     gsl_vector * I = gsl_vector_calloc(num_prim);
     gsl_vector_memcpy(I, Ek);
     gsl_blas_daxpy(1.0, Ek1, I);
-    gsl_blas_dscal(Ki*Ts/2, I);
+    gsl_vector_mul(I,&Ki.vector);
+    gsl_blas_dscal(Ts/2, I);
     gsl_blas_daxpy(1.0, I1, I);
     // Do Anti-Windup
     for (int i=0; i<num_prim; i++) {
-        if (gsl_vector_get(I, i)>I_limit) {
-            gsl_vector_set(I, i, I_limit);
-        }else if(gsl_vector_get(I, i)<-I_limit) {
-            gsl_vector_set(I, i, -I_limit);
+        double lim = gsl_vector_get(&I_limit.vector,i);
+        if (gsl_vector_get(I, i)>lim) {
+            gsl_vector_set(I, i, lim);
+        }else if(gsl_vector_get(I, i)<-lim) {
+            gsl_vector_set(I, i, -lim);
         }
     }
     // Derivative
     gsl_vector * D = gsl_vector_alloc(num_prim);
     gsl_vector_memcpy(D, Ek);
     gsl_blas_daxpy(-1.0, Ek1, D);
-    gsl_blas_dscal(Kd/Ts, D);
+    gsl_vector_mul(D,&Kd.vector);
+    gsl_blas_dscal(1/Ts, D);
     // Sum them all up
     gsl_blas_dscal(0.0,x); // Zero x to begin with
     gsl_blas_daxpy(1.0, P, x);
