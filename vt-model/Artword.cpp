@@ -32,6 +32,7 @@ void Artword::Init(double _totalTime) {
     for (int i = 0; i < kArt_muscle_MAX; i ++) {
         ArtwordData* f = &(data[i]);
         f->targets.clear();
+        vector<art_target>().swap(f->targets);
         f->numberOfTargets = 2;
         f->targets.push_back(art_target{0.0,0.0});
         f->targets.push_back(art_target{totalTime,0.0});
@@ -41,6 +42,8 @@ void Artword::Init(double _totalTime) {
 void Artword::setTarget (int feature, double time, double target) {
     assert (feature >= 0);
     assert (feature < kArt_muscle_MAX);
+    assert(target>=0);
+    assert(target<=1.0);
     ArtwordData* f = &(data[feature]);
     assert (f->numberOfTargets >= 2);
     vector<art_target>::iterator it = f->targets.begin();
@@ -49,9 +52,15 @@ void Artword::setTarget (int feature, double time, double target) {
     if (time < 0.0) {
         time = 0.0;
     }
+    // Allow entering of a single target value at times greater than totalTime to enable interploation through end of artword
     else if (time > totalTime) {
-        time = totalTime;
-        it = f->targets.end();
+        if (totalTime ==  f->targets.at(f->numberOfTargets-1).time) {
+            f->targets.push_back({time,target});
+            f->numberOfTargets++;
+            return;
+        }
+        // If code gets here then you are trying to add more than one articulation beyond totalTime
+        assert(0);
     }
     else {
         while(time > it->time) {

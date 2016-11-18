@@ -2,6 +2,7 @@
 clear
 [data1, labels, Fs, data_len_ref] = import_datalog('test3Area/artword_logs/apa.log');
 [data2, labels, Fs, data_len] = import_datalog('test3Area/prim_logs/Areflog1.log');
+
 sub_sample = 1;
 loops = floor(data_len/sub_sample);
 loops_ref = floor(data_len_ref/sub_sample);

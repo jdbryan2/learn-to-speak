@@ -27,13 +27,12 @@
 #define DYMIN  0.00001
 #define CRITICAL_VELOCITY  10.0
 #define NOISE_FACTOR  0.1
-#define MONITOR_SAMPLES  100
 
 // While debugging, some of these can be 1; otherwise, they are all 0: 
 #define EQUAL_TUBE_WIDTHS  0
 #define CONSTANT_TUBE_LENGTHS  0 // was set to 1
 #define NO_MOVING_WALLS  0
-#define NO_TURBULENCE  0 // NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
+#define NO_TURBULENCE  1 // ..NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
 #define NO_RADIATION_DAMPING  0
 #define NO_BERNOULLI_EFFECT  0
 #define MASS_LEAPFROG  0
@@ -592,7 +591,8 @@ void Speaker::IterateSim()
             t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
             t->Vnew = t->Anew * t->Dxnew;   // 5.128
 
-            { 
+            {
+                // TODO: This math seems strange here. We are writing over t->R
                 double oneByDyav = t->Dz / t->A;
                 //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
                 if (t->Dy < 0.0)
@@ -719,12 +719,22 @@ void Speaker::IterateSim()
                     (r->eleft + l1->eright + l2->eright + twoc2Dt * (l1->Jhalf + l2->Jhalf - r->Jhalf) +
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
-            } 
+            }
+            if (isnan(tube[6].Anew)) {
+                int temp = 1;
+            }
         } // end second tube loop 
 
         // Save Sound at middle sample
         if (n == ((long)oversamp+ 1) / 2) {
             result->z[sample] = ComputeSound();
+        }
+        
+        // Outupt some data to log file
+        // This needs to be here before the tube parameter update instead of outside of the oversamp loop
+        // because it calls ComputeSound() which relies on values for Jright and Jrightnew
+        if (n==oversamp && log_data) {
+            Log();
         }
 
         // Increment tube parameters for next iteration
@@ -753,10 +763,6 @@ void Speaker::IterateSim()
         }
 
     } // End oversample loop
-    // Outupt some data to log file
-    if (log_data) {
-        Log();
-    }
     ++sample;
     if (!NotDone()) {
         printf("Ending volume: %f liters.\n", getVolume() * 1000);
@@ -775,7 +781,8 @@ double Speaker::ComputeSound()
     {
         Delta_Tube t = &(tube[m]);
         out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
-        if (! t->right1)
+        // Don't perform difference if this is the first logsample, because these values could be held over from the last run of the sim
+        if (! t->right1 && logSample!=0)
             out += t->Jrightnew - t->Jright;   // radiation of open tube end
     }
     out /= 4.0 * M_PI * 0.4 * Dt;
@@ -840,6 +847,7 @@ int Speaker::ConfigDataLogger(std::string filepath, int _log_period)
 {
     log_data = true;
     if( log_stream == nullptr) {
+        // TODO: Is this being properly deleted
         log_stream = new std::ofstream(filepath);
         // Ensure that all of the digits are written out. I think this ensures we have the correct precision.
         // Using 32 digits of precision to get the best accuracy I can without using binary or hex values in the log files
