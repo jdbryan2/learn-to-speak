@@ -7,7 +7,7 @@ else
 end
 % Plot area function and/or pressure function as video
 sub_sample = 1;
-lung_scale = .5;
+lung_scale = .01;
 [~,ts1] = size(area1);
 loops = floor(ts1/sub_sample);
 if compare
@@ -25,13 +25,13 @@ if compare
 end
 area1 = area1-min_area;
 
-max_vt = max(max(area1(1:22,:)'));
-max_lung = max(max(area1(23:89,:)'));
-max_area = max(max_lung*lung_scale,max_vt*.5);
+max_lung = max(max(area1(1:22,:)'));
+max_vt = max(max(area1(23:89,:)'));
+max_area = max(max_lung*lung_scale*.5,max_vt*.5);
 if compare
-    max_vt = max(max(area2(1:22,:)'));
-    max_lung = max(max(area2(23:89,:)'));
-    max_area = max(max_area,max_lung*lung_scale,max_vt*.5);
+    max_lung = max(max(area2(1:22,:)'));
+    max_vt = max(max(area2(23:89,:)'));
+    max_area = max([max_area,max_lung*lung_scale*.5,max_vt*.5]);
 end
 max_area = 1.5*max_area;
 

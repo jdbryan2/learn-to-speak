@@ -32,11 +32,11 @@
 #define EQUAL_TUBE_WIDTHS  0
 #define CONSTANT_TUBE_LENGTHS  0 // was set to 1
 #define NO_MOVING_WALLS  0
-#define NO_TURBULENCE  1 // ..NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
+#define NO_TURBULENCE  0 // ..NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
 #define NO_RADIATION_DAMPING  0
 #define NO_BERNOULLI_EFFECT  0
-#define MASS_LEAPFROG  0
-#define B91  0
+#define MASS_LEAPFROG  0 // Causes it to go unstable
+#define B91  0 // Testing
 // ***** End acoustic simulation constants
 
 using namespace std;
@@ -500,6 +500,7 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
 			t->Qleft = t->Qright = rho0c2;   // 5.113
 			t->pleft = t->pright = 0.0;   // 5.114
 			t->Kleft = t->Kright = 0.0;   // 5.114
+            t->Pturbright = t->Pturbrightnew = 0.0;
 			t->V = t->A * t->Dx;   // 5.114
 			totalVolume += t->V;
 		}
@@ -592,7 +593,6 @@ void Speaker::IterateSim()
             t->Vnew = t->Anew * t->Dxnew;   // 5.128
 
             {
-                // TODO: This math seems strange here. We are writing over t->R
                 double oneByDyav = t->Dz / t->A;
                 //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
                 if (t->Dy < 0.0)
@@ -720,7 +720,7 @@ void Speaker::IterateSim()
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
             }
-            if (isnan(tube[6].Anew)) {
+            if (isnan(tube[m].Jrightnew)||isinf(tube[m].Jrightnew)||isnan(tube[m].Jleftnew)||isinf(tube[m].Jleftnew)||isnan(tube[m].Kleftnew)||isinf(tube[m].Kleftnew)||isnan(tube[m].Qleftnew)||isinf(tube[m].Qleftnew)||isnan(tube[m].Anew)||isinf(tube[m].Anew)) {
                 int temp = 1;
             }
         } // end second tube loop 
