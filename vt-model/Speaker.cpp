@@ -32,11 +32,11 @@
 #define EQUAL_TUBE_WIDTHS  0
 #define CONSTANT_TUBE_LENGTHS  0 // was set to 1
 #define NO_MOVING_WALLS  0
-#define NO_TURBULENCE  0 // ..NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
+#define NO_TURBULENCE  0 // NOTE: Settting to 0 will cause a given artword to produce a different sound when called multiple times with the same speaker.
 #define NO_RADIATION_DAMPING  0
 #define NO_BERNOULLI_EFFECT  0
-#define MASS_LEAPFROG  0 // Causes it to go unstable
-#define B91  0 // Testing
+#define MASS_LEAPFROG  0
+#define B91  0
 // ***** End acoustic simulation constants
 
 using namespace std;
@@ -502,6 +502,9 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
 			t->Kleft = t->Kright = 0.0;   // 5.114
             t->Pturbright = t->Pturbrightnew = 0.0;
 			t->V = t->A * t->Dx;   // 5.114
+            #if MASS_LEAPFROG
+                t->ehalfold;
+            #endif
 			totalVolume += t->V;
 		}
 		printf("Starting volume: %f liters.\n", totalVolume * 1000);
@@ -847,7 +850,6 @@ int Speaker::ConfigDataLogger(std::string filepath, int _log_period)
 {
     log_data = true;
     if( log_stream == nullptr) {
-        // TODO: Is this being properly deleted
         log_stream = new std::ofstream(filepath);
         // Ensure that all of the digits are written out. I think this ensures we have the correct precision.
         // Using 32 digits of precision to get the best accuracy I can without using binary or hex values in the log files

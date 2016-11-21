@@ -54,8 +54,10 @@ void Artword::setTarget (int feature, double time, double target) {
     }
     // Allow entering of a single target value at times greater than totalTime to enable interploation through end of artword
     else if (time > totalTime) {
+        // Replace the last target value with this new target
         if (totalTime ==  f->targets.at(f->numberOfTargets-1).time) {
-            f->targets.push_back({time,target});
+            //f->targets.push_back({time,target});
+            f->targets.back() = {time,target};
             f->numberOfTargets++;
             return;
         }

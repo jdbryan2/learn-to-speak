@@ -29,7 +29,7 @@ RandomStim::RandomStim(double utterance_length_, double sample_freq_,
 }
 
 void RandomStim::CreateArtword() {
-    double hold_times [NUM_ART] = {0};
+    double hold_times [NUM_ART];
     int art = 0;
     double time = 0.0;
     for (int ind = 0; time < artword.totalTime; ind++)
@@ -39,7 +39,7 @@ void RandomStim::CreateArtword() {
         for (int i = 0; i < NUM_ART; i++)
         {
             art = arts[i];
-            if (hold_times[art] <= 0.0) {
+            if (hold_times[art] <= 0.0 || ind == 0) {
                 artword.setTarget(art, time, activation(generator));
                 hold_times[art] = hold_time(generator);
                 continue;

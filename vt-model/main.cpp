@@ -34,6 +34,14 @@ Artword apa () {
     return apa;
 }
 
+Artword sigh () {
+    Artword articulation(0.5);
+    articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
+    articulation.setTarget(kArt_muscle_LUNGS, 0.1, 0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    articulation.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    return articulation;
+}
 
 Artword unstable () {
     Artword articulation(1.0);
@@ -223,14 +231,14 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
     //cout << endl;
     
     // simple interface for playing back the sound that was generated
-    int input =  1;// set to zero to test the speed of simulation.
+    int input =  0;// set to zero to test the speed of simulation.
     while (true)
     {
-        //cout << "Press (1) to play the sound or any key to quit.\n";
-        //std::cin.clear();
+        cout << "Press (1) to play the sound or any key to quit.\n";
+        std::cin.clear();
         //cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        //cin >> input;
-        //cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin >> input;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         if(input == 1) {
             speaker->Speak();
             input =0;
@@ -247,13 +255,6 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
     for (int trial=1; trial <= 75; trial++)
     {
-        if (trial ==63){// && trial <= 63){
-            int temp = 1;
-            //Artword artword = apa();
-            //std::string artword_name = "apa_test_2";
-            //speaker->InitializeTube();
-            //sim_artword(speaker, &artword,artword_name,log_period,prefix);
-    }
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger

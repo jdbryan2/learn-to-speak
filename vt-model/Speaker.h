@@ -71,7 +71,7 @@ public:
     
 public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
-    ~Speaker() { delete result;}
+    ~Speaker() { delete result; delete log_stream;}
     void InitSim(double totalTime, Articulation initialArt);
     int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
