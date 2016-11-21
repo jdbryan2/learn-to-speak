@@ -43,6 +43,7 @@ void Sound::Initialize(long _numberOfChannels, float _duration, double _sampling
 
 void Sound::ResetArray(float _duration) {
     assert(isInitialized);
+    z.clear();
     std::vector<float>().swap(z);   // clear x reallocating
     duration = _duration;
     numberOfSamples = round(duration*samplingFrequency);

@@ -16,35 +16,41 @@
 
 class BasePrimControl : public Control {
 public:
-    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art_, std::string prim_file_prefix);
+    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix, const gsl_vector * Aref_ = nullptr);
     ~BasePrimControl();
     void doControl(Speaker * speaker);
     void InitialArt(Articulation art);
 private:
     int LoadPrims();
+    void StepDFA(const gsl_vector * Yp_unscaled_);
+    void ArefControl();
 public:
     std::string file_prefix;
 private:
     // Primitive Parameters to Read in
     int f_p[2];
     int num_prim;
-    double area_std;
-    double art_std;
     double sample_freq;
     gsl_matrix * O;
     gsl_matrix * K;
     gsl_vector * feat_mean;
+    gsl_vector * stddev;
+    gsl_matrix * Oa_inv;
     
     // Variables in DFA
     gsl_vector * Yf;
     gsl_vector * Yf_unscaled;
     gsl_vector * Yp;
     gsl_vector * Yp_unscaled;
+    gsl_vector * x_past;
     gsl_vector * x;
+    gsl_vector * Aref;
+    gsl_vector * Afref;
     
     // Other Variables
     Articulation last_art;
     bool isInitialized = false;
+    bool doArefControl = false;
     int control_period;
 };
 

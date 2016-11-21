@@ -13,7 +13,8 @@
 #include "Artword.h"
 #include "Articulation_enums.h"
 
-#define NUM_ART 29
+//#define NUM_ART 29
+#define NUM_ART 5
 
 class RandomStim : public ArtwordControl {
 public:

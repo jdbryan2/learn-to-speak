@@ -28,7 +28,6 @@
 #define DYMIN  0.00001
 #define CRITICAL_VELOCITY  10.0
 #define NOISE_FACTOR  0.1
-#define MONITOR_SAMPLES  100
 
 // While debugging, some of these can be 1; otherwise, they are all 0: 
 #define EQUAL_TUBE_WIDTHS  0
@@ -502,7 +501,11 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
 			t->Qleft = t->Qright = rho0c2;   // 5.113
 			t->pleft = t->pright = 0.0;   // 5.114
 			t->Kleft = t->Kright = 0.0;   // 5.114
+            t->Pturbright = t->Pturbrightnew = 0.0;
 			t->V = t->A * t->Dx;   // 5.114
+            #if MASS_LEAPFROG
+                t->ehalfold;
+            #endif
 			totalVolume += t->V;
 		}
 		printf("Starting volume: %f liters.\n", totalVolume * 1000);
@@ -593,7 +596,7 @@ void Speaker::IterateSim()
             t->Dxhalf = 0.5 * (t->Dxnew + t->Dx);   // 5.121
             t->Vnew = t->Anew * t->Dxnew;   // 5.128
 
-            { 
+            {
                 double oneByDyav = t->Dz / t->A;
                 //t->R = 12.0 * 1.86e-5 * t->parallel * t->parallel * oneByDyav * oneByDyav;
                 if (t->Dy < 0.0)
@@ -720,12 +723,22 @@ void Speaker::IterateSim()
                     (r->eleft + l1->eright + l2->eright + twoc2Dt * (l1->Jhalf + l2->Jhalf - r->Jhalf) +
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
-            } 
+            }
+            if (isnan(tube[m].Jrightnew)||isinf(tube[m].Jrightnew)||isnan(tube[m].Jleftnew)||isinf(tube[m].Jleftnew)||isnan(tube[m].Kleftnew)||isinf(tube[m].Kleftnew)||isnan(tube[m].Qleftnew)||isinf(tube[m].Qleftnew)||isnan(tube[m].Anew)||isinf(tube[m].Anew)) {
+                int temp = 1;
+            }
         } // end second tube loop 
 
         // Save Sound at middle sample
         if (n == ((long)oversamp+ 1) / 2) {
             result->z[sample] = ComputeSound();
+        }
+        
+        // Outupt some data to log file
+        // This needs to be here before the tube parameter update instead of outside of the oversamp loop
+        // because it calls ComputeSound() which relies on values for Jright and Jrightnew
+        if (n==oversamp && log_data) {
+            Log();
         }
 
         // Increment tube parameters for next iteration
@@ -754,10 +767,6 @@ void Speaker::IterateSim()
         }
 
     } // End oversample loop
-    // Outupt some data to log file
-    if (log_data) {
-        Log();
-    }
     ++sample;
     if (!NotDone()) {
         printf("Ending volume: %f liters.\n", getVolume() * 1000);
@@ -776,7 +785,8 @@ double Speaker::ComputeSound()
     {
         Delta_Tube t = &(tube[m]);
         out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
-        if (! t->right1)
+        // Don't perform difference if this is the first logsample, because these values could be held over from the last run of the sim
+        if (! t->right1 && logSample!=0)
             out += t->Jrightnew - t->Jright;   // radiation of open tube end
     }
     out /= 4.0 * M_PI * 0.4 * Dt;
