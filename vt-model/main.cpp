@@ -158,7 +158,7 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
 
     std::uniform_real_distribution<double>::param_type lungs_exhale_param(2.0,3.0);
     //std::uniform_real_distribution<double>::param_type lungs_inhale_param(0.1,0.5);
-    std::uniform_real_distribution<double>::param_type lungs_activation_param(0.1,0.3);
+    std::uniform_real_distribution<double>::param_type lungs_activation_param(0.4,0.8);
     std::uniform_real_distribution<double>::param_type lungs_deactivation_param(0.0,0.1);
 
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param, lungs_exhale_param, lungs_activation_param, lungs_deactivation_param);

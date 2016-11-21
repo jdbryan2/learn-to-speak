@@ -1,7 +1,7 @@
 clear all; %#ok<CLALL>
 close all;
 
-for trial = 50:50
+for trial = 1:50
     % Plot area function and/or pressure function as video
 
     [data, labels, Fs, data_len] = import_datalog(sprintf('../data/datalog%i.log', trial));
@@ -20,14 +20,12 @@ for trial = 50:50
 
     area= data(:, 1:89);
     
-    audio = data(:, 208);
+    audio = data(:, end);
     audio = audio/max(abs(audio));
 
-    audiowrite(sprintf('audio/trial_%i.wav', trial), audio, Fs, 'BitsPerSample', 64)
+    audiowrite(sprintf('audio/Nov17_trial_%i.wav', trial), audio, Fs, 'BitsPerSample', 64)
 
-    hold off
-
-    v = VideoWriter(sprintf('video/trial_%i.avi', trial),'Uncompressed AVI'); %#ok<TNMLP>
+    v = VideoWriter(sprintf('video/Nov17_trial_%i.avi', trial),'Uncompressed AVI'); %#ok<TNMLP>
     v.FrameRate = Fs/sub_sample;
     open(v);
 
@@ -45,6 +43,7 @@ for trial = 50:50
     % full screen figure
     figure('units','normalized','position',[0 0 1 1])
     title(sprintf('Trial %i', trial));
+
     for j = 1:loops
         plot(t(lungs), 0.025*area(j*sub_sample, lungs), '-r')
         hold on
