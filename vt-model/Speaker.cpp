@@ -724,7 +724,18 @@ void Speaker::IterateSim()
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
             }
-            if (isnan(tube[m].Jrightnew)||isinf(tube[m].Jrightnew)||isnan(tube[m].Jleftnew)||isinf(tube[m].Jleftnew)||isnan(tube[m].Kleftnew)||isinf(tube[m].Kleftnew)||isnan(tube[m].Qleftnew)||isinf(tube[m].Qleftnew)||isnan(tube[m].Anew)||isinf(tube[m].Anew)) {
+            // JDB: My compiler evidently needs the "std::" before these functions 
+            // (the namespace command up top is not enough)
+            if (std::isnan(tube[m].Jrightnew) || 
+                std::isinf(tube[m].Jrightnew) || 
+                std::isnan(tube[m].Jleftnew) || 
+                std::isinf(tube[m].Jleftnew) || 
+                std::isnan(tube[m].Kleftnew) || 
+                std::isinf(tube[m].Kleftnew) ||
+                std::isnan(tube[m].Qleftnew) ||
+                std::isinf(tube[m].Qleftnew) ||
+                std::isnan(tube[m].Anew) ||
+                std::isinf(tube[m].Anew)) {
                 int temp = 1;
             }
         } // end second tube loop 
@@ -771,8 +782,7 @@ void Speaker::IterateSim()
     if (!NotDone()) {
         printf("Ending volume: %f liters.\n", getVolume() * 1000);
     }
-}
-
+} 
 int Speaker::Speak() 
 {
     return result->play();

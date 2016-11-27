@@ -86,7 +86,7 @@ void RandomStim::CreateArtword() {
         }
     }
 
-    int breathe = 1;
+    /*int breathe = 1;
     art = kArt_muscle_LUNGS;
     for (double time = 0.0; time <= artword.totalTime; time = time + 1/sample_freq)
     {
@@ -104,6 +104,7 @@ void RandomStim::CreateArtword() {
         }
         hold_times[art] -= 1/sample_freq;
     }
+    */
    /* // pump the lungs
     double time = 0.0;
     double hold = 0.0;

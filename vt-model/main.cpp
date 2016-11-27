@@ -309,9 +309,9 @@ int main()
     int oversamp = 90;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test5/");
-    double utterance_length = .5;
-    double desired_log_freq = 50;
+    std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
+    double utterance_length = 2;
+    double desired_log_freq = 1000;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
