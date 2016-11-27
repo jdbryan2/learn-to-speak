@@ -19,6 +19,7 @@ SET(VTSIM_FILES
     Artword.cpp Artword.h
     Artword_def.h
     BasePrimControl.cpp BasePrimControl.h
+    BrownianStim.cpp BrownianStim.h
     Control.h
     Delta.h
     RandomStim.cpp RandomStim.h

@@ -16,6 +16,7 @@
 #include "Control.h"
 #include "ArtwordControl.h"
 #include "RandomStim.h"
+#include "BrownianStim.h"
 #include "BasePrimControl.h"
 #include <gsl/gsl_matrix.h>
 
@@ -266,6 +267,25 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     }
 }
 
+void brownian_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
+    
+    double delta, variance;
+    delta = 0.01;
+    variance = 2;
+    BrownianStim bs(utterance_length, delta, variance);
+    for (int trial=1; trial <= 2; trial++)
+    {
+        // Generate a new random artword
+        bs.NewArtword();
+        // Initialize the data logger
+        speaker->ConfigDataLogger(prefix + "logs/datalog" + to_string(trial)+ ".log",log_period);
+        cout << "Trial " << trial << "\n";
+        simulate(speaker, &bs);
+        speaker->Speak();
+        speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
+    }
+}
+
 void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
     Artword artw = apa();
     Articulation art = {};
@@ -310,8 +330,8 @@ int main()
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
-    double utterance_length = 2;
-    double desired_log_freq = 1000;
+    double utterance_length = 20;
+    double desired_log_freq = 100;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
@@ -322,7 +342,8 @@ int main()
     //sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
-    random_stim_trials(&female,utterance_length,log_period,prefix);
+    //random_stim_trials(&female,utterance_length,log_period,prefix);
+    brownian_stim_trials(&female,utterance_length,log_period,prefix);
     
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
