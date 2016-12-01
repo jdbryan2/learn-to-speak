@@ -88,13 +88,14 @@ public:
     void getPressureFcn(PressureFcn PressureFcn_);
 
     float getLastSample() {return result->z[sample-1];}
-    void LoopBack() { if(!NotDone()) { sample = 0; }}
+    int LoopBack() { if(NotDone()) { return 1;} else {sample = 0; return 0;} }
+    void InitDataLogger();
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
     void UpdateTube();
     double ComputeSound();
-    void InitDataLogger();
+    //void InitDataLogger();
     void Log();
 };
 

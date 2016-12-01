@@ -254,13 +254,13 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     std::normal_distribution<double>::param_type hold_time_param(0.1,0.1);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 75; trial++)
+    for (int trial=1; trial <= 2; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger
         speaker->ConfigDataLogger(prefix + "logs/datalog" + to_string(trial)+ ".log",log_period);
-        cout << "Trial " << trial << "\n";
+        cout << "Chunk " << trial << "\n";
         simulate(speaker, &rs);
         speaker->Speak();
         speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
@@ -271,19 +271,47 @@ void brownian_stim_trials(Speaker* speaker,double utterance_length, double log_p
     
     double delta, variance;
     delta = 0.01;
-    variance = 2;
+    variance = 0.1;
     BrownianStim bs(utterance_length, delta, variance);
-    for (int trial=1; trial <= 2; trial++)
+
+    double chunk_size = 1; // seconds
+    double num_chunks = std::ceil(utterance_length/chunk_size);
+
+    // Generate a new random artword
+    bs.NewArtword();
+
+    // pass the articulator positions into the speaker BEFORE initializing the simulation
+    // otherwise, we just get a strong discontinuity after the first instant
+    Articulation art;
+    bs.InitialArt(art);
+
+    // initialize the simulation and tell it how many seconds to buffer
+    speaker->InitSim(chunk_size, art);
+
+    for (int trial=1; trial <= num_chunks; trial++)
     {
-        // Generate a new random artword
-        bs.NewArtword();
         // Initialize the data logger
         speaker->ConfigDataLogger(prefix + "logs/datalog" + to_string(trial)+ ".log",log_period);
-        cout << "Trial " << trial << "\n";
-        simulate(speaker, &bs);
+        cout << "Trial " << trial << " of " << num_chunks << "\n";
+         
+        speaker->InitDataLogger();
+        
+        cout << "Simulating...\n";
+        
+        while (speaker->LoopBack())
+        {
+            bs.doControl(speaker);
+            // generate the next acoustic sample
+            speaker->IterateSim();
+        }
+        cout << "Done!\n";
         speaker->Speak();
+        cout << "Save..." << endl;
         speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
+        cout << "Save done..." << endl;
+        
     }
+        cout << "Simulation done..." << endl;
 }
 
 void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
@@ -326,11 +354,11 @@ void AreaRefControl(Speaker* speaker, double log_freq, double log_period, std::s
 int main()
 {
     double sample_freq = 8000;
-    int oversamp = 90;
+    int oversamp = 80;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
-    double utterance_length = 20;
+    double utterance_length = 1;
     double desired_log_freq = 100;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
@@ -353,5 +381,6 @@ int main()
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);
     
+    cout << "about to return..." << endl;
     return 0;
 }

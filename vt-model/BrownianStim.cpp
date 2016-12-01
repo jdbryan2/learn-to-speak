@@ -48,7 +48,7 @@ void BrownianStim::CreateArtword() {
                 target = -1.0*target;
             }
             if(target > 1.0){
-                target = target-1.0;
+                target = target-trunc(target);
             }
             
             artword.setTarget(art, time, target);
