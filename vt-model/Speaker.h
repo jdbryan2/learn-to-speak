@@ -25,8 +25,11 @@
 #include "Sound.h"
 #include "VocalTract.h"
 #include <string>
+#include <iostream>
 #include <random>
 #include <fstream>
+
+using namespace std;
 
 typedef double AreaFcn[MAX_NUMBER_OF_TUBES];
 typedef double PressureFcn[MAX_NUMBER_OF_TUBES];
@@ -41,6 +44,8 @@ public:
     double oversamp;
     long numberOfSamples;
     long sample;
+    long loop_count;
+    double totalTime;
     Sound *result;
     
     double Dt,
@@ -72,12 +77,13 @@ public:
     
 public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
-    ~Speaker() { delete result; delete log_stream;}
+    ~Speaker() {cout << "end speaker 0" << endl;  delete result; cout << "end speaker 1" << endl; delete log_stream; cout << "end speaker 2" << std::endl; }
     void InitSim(double totalTime, Articulation initialArt);
     int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
+    double NowSecondsLooped(){return (numberOfSamples+sample)/fsamp;}
     long Now() {return sample;}
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
     double getMuscle(int muscle) const {return art[muscle];}
@@ -88,7 +94,7 @@ public:
     void getPressureFcn(PressureFcn PressureFcn_);
 
     float getLastSample() {return result->z[sample-1];}
-    int LoopBack() { if(NotDone()) { return 1;} else {sample = 0; return 0;} }
+    int LoopBack() { if(NotDone()) { return 1;} else {sample = 0; loop_count++;return 0;} }
     void InitDataLogger();
     
 private:

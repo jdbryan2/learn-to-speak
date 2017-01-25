@@ -206,12 +206,15 @@ void simulate(Speaker* speaker, Control* controller) {
     speaker->InitSim(controller->utterance_length, art);
     
     cout << "Simulating...\n";
-    
+    //int i =0;
     while (speaker->NotDone())
     {
         controller->doControl(speaker);
         // generate the next acoustic sample
         speaker->IterateSim();
+        //i++;
+        //if (i>5) 
+            //break;
     }
     cout << "Done!\n";
 }
@@ -250,31 +253,33 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
     cout << "Artword Ending-------\n";
 }
 
-void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
+void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) 
+{
     std::normal_distribution<double>::param_type hold_time_param(0.1,0.1);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 2; trial++)
+    for (int trial=1; trial <= 100; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger
         speaker->ConfigDataLogger(prefix + "logs/datalog" + to_string(trial)+ ".log",log_period);
-        cout << "Chunk " << trial << "\n";
+        cout << "Trial " << trial << "\n";
         simulate(speaker, &rs);
         speaker->Speak();
         speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
     }
 }
 
-void brownian_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
+void brownian_stim_trials(Speaker* speaker, double utterance_length, double log_period, std::string prefix) 
+{
     
     double delta, variance;
-    delta = 0.01;
-    variance = 0.1;
+    delta = 0.05;
+    variance = 0.15;
     BrownianStim bs(utterance_length, delta, variance);
 
-    double chunk_size = 1; // seconds
+    double chunk_size = utterance_length; //20; // seconds
     double num_chunks = std::ceil(utterance_length/chunk_size);
 
     // Generate a new random artword
@@ -304,14 +309,11 @@ void brownian_stim_trials(Speaker* speaker,double utterance_length, double log_p
             // generate the next acoustic sample
             speaker->IterateSim();
         }
-        cout << "Done!\n";
         speaker->Speak();
-        cout << "Save..." << endl;
         speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
-        cout << "Save done..." << endl;
         
     }
-        cout << "Simulation done..." << endl;
+    return;
 }
 
 void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
@@ -354,12 +356,12 @@ void AreaRefControl(Speaker* speaker, double log_freq, double log_period, std::s
 int main()
 {
     double sample_freq = 8000;
-    int oversamp = 80;
+    int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
     double utterance_length = 1;
-    double desired_log_freq = 100;
+    double desired_log_freq = 800;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
@@ -370,8 +372,8 @@ int main()
     //sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
-    //random_stim_trials(&female,utterance_length,log_period,prefix);
-    brownian_stim_trials(&female,utterance_length,log_period,prefix);
+    random_stim_trials(&female,utterance_length,log_period,prefix);
+    //brownian_stim_trials(&female,utterance_length,log_period,prefix);
     
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
@@ -381,6 +383,5 @@ int main()
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);
     
-    cout << "about to return..." << endl;
     return 0;
 }

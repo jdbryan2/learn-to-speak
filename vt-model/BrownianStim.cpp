@@ -15,8 +15,10 @@ BrownianStim::BrownianStim(double utterance_length_, double delta_,
                     ArtwordControl(utterance_length_)
 {
     // Articulators that we want to randomly stimulate
-    for(int i=0; i<=kArt_muscle_MAX; i++)
-        arts[i] = i;
+    for (int k=0; k < BROWN_ART; k++) {
+        arts[k] = k;
+    } 
+
     delta = delta_;
     variance = variance_;
     std::normal_distribution<double>::param_type walk_params(0,sqrt(delta*variance));
@@ -27,10 +29,9 @@ BrownianStim::BrownianStim(double utterance_length_, double delta_,
 void BrownianStim::CreateArtword() {
     int art = 0;
     double time = 0.0;
-    for (int ind = 0; time < artword.totalTime; ind++)
+    while( time < artword.totalTime)
     {
-
-        time = time + delta;
+        time+=delta;
 
         // if we're over time we adjust the variance of the random walk for the final time step
         if(time > artword.totalTime) {
@@ -41,7 +42,7 @@ void BrownianStim::CreateArtword() {
             time = artword.totalTime;
         } 
 
-        for(art=0; art<NUM_ART;art++){
+        for(art=0; art<BROWN_ART;art++){
             double target;
             target = artword.getTarget(art, time-delta)+walk(generator);
             if(target < 0.0){
@@ -55,6 +56,7 @@ void BrownianStim::CreateArtword() {
         }
 
     }
+
 
 }
 

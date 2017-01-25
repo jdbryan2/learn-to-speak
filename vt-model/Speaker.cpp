@@ -468,10 +468,11 @@ void Speaker::UpdateTube()
 	}
 }
 
-void Speaker::InitSim(double totalTime, Articulation initialArt)
+void Speaker::InitSim(double totalTime_, Articulation initialArt)
 {
 	try {
         // TODO: Make Articulation a class and use either a copy funciton or overload =
+        totalTime = totalTime_;
         memcpy(art, initialArt, sizeof(Articulation));
         if(!result->IsInitialized()) {
             result->Initialize(1, totalTime, fsamp);
@@ -481,6 +482,7 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
         }
 		numberOfSamples = result -> numberOfSamples;
         sample = 0;
+        loop_count = 0;
 
         UpdateTube();
 

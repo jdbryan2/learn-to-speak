@@ -47,7 +47,7 @@ int BasePrimControl::LoadPrims() {
     f_stream >> sample_freq;
     f_stream.close();
     
-    double mean_len = (f_p[0]+f_p[1])*NUM_FEAT;
+    double mean_len = NUM_FEAT; // adjusted because the mean length is now just the number of features
     filename = file_prefix + mean_file;
     cout << filename << endl;
     f_stream_mat = fopen(filename.c_str(), "r");
@@ -86,6 +86,7 @@ int BasePrimControl::LoadPrims() {
     
     Yp = gsl_vector_alloc(f_p[1]*NUM_FEAT);
     Yp_unscaled = gsl_vector_alloc(f_p[1]*NUM_FEAT);
+    cout << Yp_unscaled->size<<endl;
     Yf = gsl_vector_alloc(f_p[0]*NUM_FEAT);
     Yf_unscaled = gsl_vector_alloc(f_p[0]*NUM_FEAT);
     x_past = gsl_vector_alloc(num_prim);
@@ -193,6 +194,7 @@ void BasePrimControl::doControl(Speaker * speaker)
             gsl_vector_memcpy(&Yp_u_recent.vector, feat);
             // Store next f future Area reference in Afref
             if (doArefControl) {
+                cout << "Aref control";
                 // TODO: Fix this to rely on function from Speaker. This is ugly
                 // First sammple of Aref is from IC's and second is taken care of by initialization of Afref so the first sample where we would need to shift is 3
                 static int ind_s = 2;
@@ -240,12 +242,22 @@ void BasePrimControl::InitialArt(double *art) {
 
 void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     // Remove mean from Yp
-    gsl_vector_const_view past_mean = gsl_vector_const_subvector(feat_mean, 0, f_p[1]*NUM_FEAT);
+    cout << "Step DFA" << endl;
+    gsl_vector_const_view past_mean = gsl_vector_const_subvector(feat_mean, 0, NUM_FEAT);
     gsl_vector_memcpy(Yp, Yp_unscaled_);
-    gsl_blas_daxpy(-1.0, &past_mean.vector, Yp);
+    int ind;
+    for( int i=0; i<f_p[1]; i++)
+    {
+        ind = i*(NUM_FEAT);
+        gsl_vector_view Yp_i = gsl_vector_subvector(Yp, ind, NUM_FEAT);
+        gsl_blas_daxpy(-1.0, &past_mean.vector, &Yp_i.vector); // Yp = -1.0*past_mean + Yp
+    }
+
+
+    // area reference control
     if (doArefControl) {
         // Remove mean from Afref
-        gsl_vector * Af_mean = gsl_vector_alloc(f_p[0]*MAX_NUMBER_OF_TUBES);
+        gsl_vector * Af_mean = gsl_vector_alloc(MAX_NUMBER_OF_TUBES);
         for (int j=0; j<f_p[0]; j++) {
             int ind = (f_p[1]+j)*NUM_FEAT;
             gsl_vector_view mean_Afj = gsl_vector_subvector(feat_mean, ind, MAX_NUMBER_OF_TUBES);
@@ -258,6 +270,7 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     // Scale the Area and Articulatory features by their respective standard deviations
     for (int i=0; i<NUM_FEAT; i++) {
         double inv_std = 1/gsl_vector_get(stddev, i);
+
         for (int j=0; j<f_p[1]; j++) {
             gsl_vector_view Yp_ij = gsl_vector_subvector(Yp, j*NUM_FEAT+i, 1);
             gsl_blas_dscal(inv_std, &Yp_ij.vector);
@@ -290,9 +303,15 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     else {
         // Don't modify x_past
         gsl_vector_memcpy(x, x_past);
+        for(int j=0; j<num_prim; j++) {
+            cout << j << ": " << gsl_vector_get(x, j) << endl;
+        }
     }
     gsl_blas_dgemv(CblasNoTrans, 1, O, x, 0, Yf);
     
+    //for(int i=0; i<NUM_FEAT; i++) {
+        //cout << gsl_vector_get(Yf_unscaled, i) << endl;
+    //}
     // Now rescale Yf
     for (int i=0; i<NUM_FEAT; i++) {
         double std = gsl_vector_get(stddev, i);
@@ -303,9 +322,10 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     }
     
     // Add back in the mean to Yf
-    gsl_vector_const_view future_mean = gsl_vector_const_subvector(feat_mean, f_p[1]*NUM_FEAT, f_p[0]*NUM_FEAT);
+    gsl_vector_const_view future_mean = gsl_vector_const_subvector(feat_mean, 0, NUM_FEAT);// (feat_mean, f_p[1]*NUM_FEAT, f_p[0]*NUM_FEAT);
     gsl_vector_memcpy(Yf_unscaled, Yf);
     gsl_blas_daxpy(1.0, &future_mean.vector, Yf_unscaled);
+
     
     // Set last_art to the new command for the next timestep
     // TESTING: Increment an individual articulator command

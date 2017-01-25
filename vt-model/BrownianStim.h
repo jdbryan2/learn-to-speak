@@ -13,9 +13,7 @@
 #include "Artword.h"
 #include "Articulation_enums.h"
 
-#ifndef NUM_ART
-#define NUM_ART 29
-#endif
+#define BROWN_ART 29
 
 class BrownianStim : public ArtwordControl {
 public:
@@ -28,7 +26,8 @@ public:
     void InitialArt(Articulation art);
 private:
     void CreateArtword();
-    int arts[NUM_ART];
+private:
+    int arts[BROWN_ART];
     double delta;
     double variance;
     // TODO: May want to set the seed for generator.

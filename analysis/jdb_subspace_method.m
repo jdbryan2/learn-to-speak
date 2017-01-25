@@ -11,50 +11,55 @@ num_pressure = 89;
 num_art = 29;
 
 VT = [];
+VTs = [];
 %VT1 = [];
 for i=1:num_logs
+    %logs(i).name
     [VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/logs/',logs(i).name]);
+        import_datalog([testname,sprintf('/logs/datalog%i.log', i)]);
     % Flip matrix to make more similar to how the spectrogram was processed
     % in earlier code.
     vt = VT_log(:,1:end-1)'; %remove sound
     vt((num_tubes+1):(num_tubes+num_pressure), :) = []; % remove pressure for now
 %    VT1 = [VT1; vt];
     VT = [VT,vt];
+%end
+    %VT1 = VT;
+
+    num_vars = length(VT_lab)-num_pressure-1;
+    dt = 1/samp_freq;
+    f = 1; %round(samp_len/2);
+    p = 200;%samp_len-f;
+    L = f+p;
+
+    % Remove mean of each feature at each timestep from data
+    VT_mean = mean(VT,2);% ???
+    VTs1 = (VT - repmat(VT_mean,[1,num_logs*samp_len]));
+
+    % Scale by std dev of features over all timesteps
+    % Remove mean first because stddev is over all features not time varying features
+    stdevs = std(VTs1,0,2);
+    % Make tube sections with 0 std dev = the mean tube std dev
+    % May need to set a tolerance here instead of just 0
+    rng1 = 19:num_tubes; % trachea to lips
+    rng2 = 7:18; % lungs
+    rng3 = (num_tubes+1):num_vars; % articulators
+
+    stdevs(rng1) = mean(stdevs(rng1));
+    stdevs(rng2) = mean(stdevs(rng2));
+    stdevs(rng3) = mean(stdevs(rng3));
+    stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
+    tub_stds = stdevs(1:num_tubes);
+    z_std = mean(tub_stds(tub_stds~=0));
+    tub_stds(tub_stds==0) = z_std;
+    stdevs(1:89) = tub_stds;
+    VTs1 = VTs1./repmat(stdevs,[1,samp_len*num_logs]); % normalize by standard deviation
+    VTs2 = reshape(VTs1,[samp_len*num_vars*num_logs,1]); % turn into column vector
+    %VTs2 = buffer(VTs2, num_vars*L, num_vars*p); % buffer turns it into a sliding window format
+    VTs2 = buffer(VTs2, num_vars*L, 0); % buffer turns it into a sliding window format
+    VTs2(:, 1) = [];
+    VTs = [VTs;VTs2];
 end
-%VT1 = VT;
-
-num_vars = length(VT_lab)-num_pressure-1;
-dt = 1/samp_freq;
-f = 1; %round(samp_len/2);
-p = 10;%samp_len-f;
-L = f+p;
-
-% Remove mean of each feature at each timestep from data
-VT_mean = mean(VT,2);% ???
-VTs1 = (VT - repmat(VT_mean,[1,num_logs*samp_len]));
-
-% Scale by std dev of features over all timesteps
-% Remove mean first because stddev is over all features not time varying features
-stdevs = std(VTs1,0,2);
-% Make tube sections with 0 std dev = the mean tube std dev
-% May need to set a tolerance here instead of just 0
-rng1 = 19:num_tubes; % trachea to lips
-rng2 = 7:18; % lungs
-rng3 = (num_tubes+1):num_vars; % articulators
-
-stdevs(rng1) = mean(stdevs(rng1));
-stdevs(rng2) = mean(stdevs(rng2));
-stdevs(rng3) = mean(stdevs(rng3));
-stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
-tub_stds = stdevs(1:num_tubes);
-z_std = mean(tub_stds(tub_stds~=0));
-tub_stds(tub_stds==0) = z_std;
-stdevs(1:89) = tub_stds;
-VTs1 = VTs1./repmat(stdevs,[1,samp_len*num_logs]); % normalize by standard deviation
-VTs = reshape(VTs1,[samp_len*num_vars,num_logs]); % turn into column vector
-VTs = buffer(VTs, num_vars*L, num_vars*p); % buffer turns it into a sliding window format
-VTs(:, 1:p) = [];
 
 num_logs = size(VTs, 2); % num_logs being used pretty differently here
 
@@ -69,7 +74,7 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
-k = 3;
+k = 8;
 skip = 0;
 prms = skip+1:k+skip;
 %F = Xf*(Xp'*(Xp*Xp')^-1);
@@ -229,7 +234,7 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % colorbar
 %% Load Area function Reference and Export
 [VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/artword_logs/apa.log']);
+        import_datalog([testname,'/artword_logs/apa1.log']);
 VT_log = VT_log(:,1:end-1)'; %remove sound
 VT_log = VT_log(:);
 

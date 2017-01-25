@@ -16,13 +16,14 @@ RandomStim::RandomStim(double utterance_length_, double sample_freq_,
                     ArtwordControl(utterance_length_)
 {
     // Articulators that we want to randomly stimulate
-    //for(int i=0; i<=kArt_muscle_MAX; i++)
-    //    arts[i] = i;
-    arts[0] = kArt_muscle_INTERARYTENOID;
+    for(int i=0; i<kArt_muscle_MAX; i++) {
+        arts[i] = i;
+    }
+    /*arts[0] = kArt_muscle_INTERARYTENOID;
     arts[1] = kArt_muscle_LEVATOR_PALATINI;
     arts[2] = kArt_muscle_LUNGS;
     arts[3] = kArt_muscle_MASSETER;
-    arts[4] = kArt_muscle_ORBICULARIS_ORIS;
+    arts[4] = kArt_muscle_ORBICULARIS_ORIS;*/
     sample_freq = sample_freq_;
     hold_time.param(hold_time_param);
     activation.param(activation_param);
