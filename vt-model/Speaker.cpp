@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <cstring>
+#include <cmath>
 
 // ***** Constants for modifying acoustic simulation
 #define DYMIN  0.00001
@@ -723,7 +725,7 @@ void Speaker::IterateSim()
                      r->Kleftnew * r->Vnew + l1->Krightnew * l1->Vnew + l2->Krightnew * l2->Vnew) /
                     (r->Vnew + l1->Vnew + l2->Vnew);   // 5.137
             }
-            if (isnan(tube[m].Jrightnew)||isinf(tube[m].Jrightnew)||isnan(tube[m].Jleftnew)||isinf(tube[m].Jleftnew)||isnan(tube[m].Kleftnew)||isinf(tube[m].Kleftnew)||isnan(tube[m].Qleftnew)||isinf(tube[m].Qleftnew)||isnan(tube[m].Anew)||isinf(tube[m].Anew)) {
+            if (std::isnan(tube[m].Jrightnew)||std::isinf(tube[m].Jrightnew)||std::isnan(tube[m].Jleftnew)||std::isinf(tube[m].Jleftnew)||std::isnan(tube[m].Kleftnew)||std::isinf(tube[m].Kleftnew)||std::isnan(tube[m].Qleftnew)||std::isinf(tube[m].Qleftnew)||std::isnan(tube[m].Anew)||std::isinf(tube[m].Anew)) {
                 int temp = 1;
             }
         } // end second tube loop 

@@ -1,7 +1,7 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = 'test3Area';
+testname = 'test3';
 logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
@@ -229,23 +229,25 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % title('Log Magnitude Squared Spectrogram')
 % set(gca,'FontSize',12)
 % colorbar
+
+
 %% Load Area function Reference and Export
-[VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/artword_logs/apa.log']);
-VT_log = VT_log(:,1:end-1)'; %remove sound
-VT_log = VT_log(:);
-
-tub_ind = [];
-art_ind = [];
-for ind = 0:samp_len-1
-    z = ind*(num_tubes+num_art);
-    tub_ind = [tub_ind, z+1:z+num_tubes];
-    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-end
-
-Aref = VT_log(tub_ind);
-
-fid=fopen([testname,'/Aref.alog'],'wt');
-fprintf(fid,'%.32e\n',Aref);
-fclose(fid);
-save([testname,'/Aref.mat'],'Aref');
+% [VT_log, VT_lab, samp_freq, samp_len] = ...
+%         import_datalog([testname,'/artword_logs/apa.log']);
+% VT_log = VT_log(:,1:end-1)'; %remove sound
+% VT_log = VT_log(:);
+% 
+% tub_ind = [];
+% art_ind = [];
+% for ind = 0:samp_len-1
+%     z = ind*(num_tubes+num_art);
+%     tub_ind = [tub_ind, z+1:z+num_tubes];
+%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+% end
+% 
+% Aref = VT_log(tub_ind);
+% 
+% fid=fopen([testname,'/Aref.alog'],'wt');
+% fprintf(fid,'%.32e\n',Aref);
+% fclose(fid);
+% save([testname,'/Aref.mat'],'Aref');
