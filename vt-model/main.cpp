@@ -263,11 +263,11 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
         // Generate a new random artword
         rs.NewArtword();
         // Initialize the data logger
-        speaker->ConfigDataLogger(prefix + "logs/datalog" + to_string(trial)+ ".log",log_period);
+        speaker->ConfigDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_period);
         cout << "Trial " << trial << "\n";
         simulate(speaker, &rs);
         speaker->Speak();
-        speaker->SaveSound(prefix + "logs/sound" + to_string(trial) + ".log");
+        speaker->SaveSound(prefix + "sound" + to_string(trial) + ".log");
     }
 }
 
@@ -359,9 +359,11 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
-    double utterance_length = 1;
-    double desired_log_freq = 800;
+    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test5/");
+    //std::string prefix ("/home/jacob/Projects/learn-to-speak/data/logs_7/");
+    std::string prefix ("/home/jacob/Projects/learn-to-speak/analysis/test3/");
+    double utterance_length = 0.5;
+    double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
