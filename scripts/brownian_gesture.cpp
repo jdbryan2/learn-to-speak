@@ -15,29 +15,60 @@
 #include "Artword.h"
 #include "Control.h"
 #include "ArtwordControl.h"
-#include "RandomStim.h"
+#include "BrownianStim.h"
 #include "functions.h"
 #include <yarp/os/all.h>
 #include <sys/stat.h>
 
 using namespace std;
 
-void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, int trials, std::string prefix) 
+
+void brownian_stim_trials(Speaker* speaker, 
+                            double utterance_length, 
+                            double log_period, 
+                            int trials,
+                            double delta,
+                            double variance,
+                            std::string prefix) 
 {
-    std::normal_distribution<double>::param_type hold_time_param(0.1,0.1);
-    std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
-    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= trials; trial++)
+    
+    BrownianStim bs(utterance_length, delta, variance);
+
+    double chunk_size = utterance_length; //20; // seconds
+    double num_chunks = std::ceil(utterance_length/chunk_size);
+
+    // Generate a new random artword
+    bs.NewArtword();
+
+    // pass the articulator positions into the speaker BEFORE initializing the simulation
+    // otherwise, we just get a strong discontinuity after the first instant
+    Articulation art;
+    bs.InitialArt(art);
+
+    // initialize the simulation and tell it how many seconds to buffer
+    speaker->InitSim(chunk_size, art);
+
+    for (int trial=1; trial <= num_chunks; trial++)
     {
-        // Generate a new random artword
-        rs.NewArtword();
         // Initialize the data logger
         speaker->ConfigDataLogger(prefix + "datalog" + to_string(trial)+ ".log",log_period);
-        cout << "Trial " << trial << "\n";
-        simulate(speaker, &rs);
+        cout << "Trial " << trial << " of " << num_chunks << "\n";
+         
+        speaker->InitDataLogger();
+        
+        cout << "Simulating...\n";
+        
+        while (speaker->LoopBack())
+        {
+            bs.doControl(speaker);
+            // generate the next acoustic sample
+            speaker->IterateSim();
+        }
         speaker->Speak();
         speaker->SaveSound(prefix + "sound" + to_string(trial) + ".log");
+        
     }
+    return;
 }
 
 
@@ -45,7 +76,7 @@ int main(int argc, char *argv[])
 {
     yarp::os::ResourceFinder rf;
 	rf.configure("ICUB_ROOT",argc,argv);
-    rf.setDefaultConfigFile("/home/jacob/Projects/learn-to-speak/bin/conf/gesture.ini");
+    rf.setDefaultConfigFile("/home/jacob/Projects/learn-to-speak/bin/conf/brownian.ini");
 
     double sample_freq = rf.find("sample_freq").asDouble();
     int oversamp = rf.find("oversamp").asInt();
@@ -63,16 +94,15 @@ int main(int argc, char *argv[])
         index++;
         prefix.clear();
         prefix.append(_prefix);
-        prefix.append("rand_gesture");
+        prefix.append("brownian_gesture");
         prefix.append(to_string(index));
         dir_err = mkdir(prefix.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        cout << index <<  dir_err << endl;
     }
     while(dir_err == -1);
 
     prefix.clear();
     prefix.append(_prefix);
-    prefix.append("rand_gesture");
+    prefix.append("brownian_gesture");
     prefix.append(to_string(index));
     prefix.append("/");
 
@@ -82,10 +112,13 @@ int main(int argc, char *argv[])
     double log_freq = sample_freq/log_period;
 
     int trials = rf.find("trials").asInt();
+
+    double delta = rf.find("delta").asDouble();
+    double variance = rf.find("variance").asDouble();
+    
     
     // 2.) Generate Randomly Stimulated data trials
-    random_stim_trials(&female,utterance_length,log_period, trials, prefix);
-    //brownian_stim_trials(&female,utterance_length,log_period,prefix);
+    brownian_stim_trials(&female,utterance_length,log_period,trials, delta, variance, prefix);
     
     return 0;
 }
