@@ -1,9 +1,10 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = '../data/';
-logs = dir([testname, '/logs/datalog*.log']);
-num_logs = 1;%length(logs);
+testname = 'brownian_gesture1';
+file_string = ['data/logs/', testname, '/datalog%i.log'];
+logs = dir(['data/logs/', testname, '/datalog*.log']);
+num_logs = length(logs);
 
 % setup ranges we want
 num_tubes = 89;
@@ -16,25 +17,23 @@ VTs = [];
 for i=1:num_logs
     %logs(i).name
     [VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,sprintf('/logs/datalog%i.log', i)]);
+        import_datalog(sprintf(file_string, i));
     % Flip matrix to make more similar to how the spectrogram was processed
     % in earlier code.
     vt = VT_log(:,1:end-1)'; %remove sound
     vt((num_tubes+1):(num_tubes+num_pressure), :) = []; % remove pressure for now
-%    VT1 = [VT1; vt];
     VT = [VT,vt];
-%end
-    %VT1 = VT;
+
 
     num_vars = length(VT_lab)-num_pressure-1;
     dt = 1/samp_freq;
     f = 1; %round(samp_len/2);
-    p = 200;%samp_len-f;
+    p = 20;%samp_len-f;
     L = f+p;
 
     % Remove mean of each feature at each timestep from data
     VT_mean = mean(VT,2);% ???
-    VTs1 = (VT - repmat(VT_mean,[1,num_logs*samp_len]));
+    VTs1 = (VT - repmat(mean(VT, 2),[1,size(VT, 2)]));
 
     % Scale by std dev of features over all timesteps
     % Remove mean first because stddev is over all features not time varying features
@@ -53,11 +52,11 @@ for i=1:num_logs
     z_std = mean(tub_stds(tub_stds~=0));
     tub_stds(tub_stds==0) = z_std;
     stdevs(1:89) = tub_stds;
-    VTs1 = VTs1./repmat(stdevs,[1,samp_len*num_logs]); % normalize by standard deviation
-    VTs2 = reshape(VTs1,[samp_len*num_vars*num_logs,1]); % turn into column vector
+    VTs1 = VTs1./repmat(stdevs,[1,size(VTs1, 2)]); % normalize by standard deviation
+    VTs2 = reshape(VTs1,[],1); % turn into column vector
     %VTs2 = buffer(VTs2, num_vars*L, num_vars*p); % buffer turns it into a sliding window format
     VTs2 = buffer(VTs2, num_vars*L, 0); % buffer turns it into a sliding window format
-    VTs2(:, 1) = [];
+    %VTs2(:, 1) = [];
     VTs = [VTs;VTs2];
 end
 
@@ -187,43 +186,45 @@ figure(11); imagesc(art_error)
 % using binary or hex values in the log files
 % TODO: Use hex or binary log files
 kt = K';
-fid=fopen([testname,'/K_mat.prim'],'wt');
+dirname = ['data/primitives/', testname];
+mkdir(dirname);
+fid=fopen([dirname,'/K_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',kt);
 fclose(fid);
 
 ot = O';
-fid=fopen([testname,'/O_mat.prim'],'wt');
+fid=fopen([dirname,'/O_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',ot);
 fclose(fid);
 
 oait = Oarea_inv';
-fid=fopen([testname,'/Oa_inv_mat.prim'],'wt');
+fid=fopen([dirname,'/Oa_inv_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',oait);
 fclose(fid);
 
-fid=fopen([testname,'/mean_mat.prim'],'wt');
+fid=fopen([dirname,'/mean_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',VT_mean);
 fclose(fid);
 
-fid=fopen([testname,'/stddev.prim'],'wt');
+fid=fopen([dirname,'/stddev.prim'],'wt');
 fprintf(fid,'%.32e\n',stdevs);
 fclose(fid);
 
 fp = [f,p];
-fid=fopen([testname,'/f_p_mat.prim'],'wt');
+fid=fopen([dirname,'/f_p_mat.prim'],'wt');
 fprintf(fid,'%d\n',fp);
 fclose(fid);
 
-fid=fopen([testname,'/samp_freq.prim'],'wt');
+fid=fopen([dirname,'/samp_freq.prim'],'wt');
 fprintf(fid,'%.32e\n',samp_freq);
 fclose(fid);
 
-fid=fopen([testname,'/num_prim.prim'],'wt');
+fid=fopen([dirname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
 
 %save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','tub_std','art_std','f','p','samp_freq','k');
-save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','samp_freq','k');
+save([dirname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','samp_freq','k');
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');
 % axis xy; axis tight; colormap(hot); view(0,90);
@@ -232,23 +233,24 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % title('Log Magnitude Squared Spectrogram')
 % set(gca,'FontSize',12)
 % colorbar
+
 %% Load Area function Reference and Export
-[VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/artword_logs/apa1.log']);
-VT_log = VT_log(:,1:end-1)'; %remove sound
-VT_log = VT_log(:);
-
-tub_ind = [];
-art_ind = [];
-for ind = 0:samp_len-1
-    z = ind*(num_tubes+num_art);
-    tub_ind = [tub_ind, z+1:z+num_tubes];
-    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-end
-
-Aref = VT_log(tub_ind);
-
-fid=fopen([testname,'/Aref.alog'],'wt');
-fprintf(fid,'%.32e\n',Aref);
-fclose(fid);
-save([testname,'/Aref.mat'],'Aref');
+% [VT_log, VT_lab, samp_freq, samp_len] = ...
+%         import_datalog([testname,'/artword_logs/apa1.log']);
+% VT_log = VT_log(:,1:end-1)'; %remove sound
+% VT_log = VT_log(:);
+% 
+% tub_ind = [];
+% art_ind = [];
+% for ind = 0:samp_len-1
+%     z = ind*(num_tubes+num_art);
+%     tub_ind = [tub_ind, z+1:z+num_tubes];
+%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+% end
+% 
+% Aref = VT_log(tub_ind);
+% 
+% fid=fopen([testname,'/Aref.alog'],'wt');
+% fprintf(fid,'%.32e\n',Aref);
+% fclose(fid);
+% save([testname,'/Aref.mat'],'Aref');
