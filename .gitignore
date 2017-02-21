@@ -10,6 +10,7 @@ vt-model/build/*
 vt-yarpsim/build/*
 analysis/manifolds/timit/*
 build/*
+data/*
 bin/*
 
 # vim swap files
@@ -33,3 +34,7 @@ xcuserdata/
 *.m~
 *.prim
 *.alog
+
+# Video/audio files
+###################
+*.avi
