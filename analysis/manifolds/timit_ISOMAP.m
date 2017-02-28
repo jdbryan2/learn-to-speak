@@ -5,7 +5,7 @@
 
 % script level variables
 window_size = 20; % ms
-step_size = 5; % ms 
+step_size = 20; % ms 
 p = 25;
 
 
@@ -31,18 +31,26 @@ for k = 1:length(flist)
 end
 fname = 'full_dir';
 
+% LPC based manifold
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % convert window size and overlap to samples
-window_size = window_size*Fs/1000;
-step_size = step_size*Fs/1000;
+% window_size = window_size*Fs/1000;
+% step_size = step_size*Fs/1000;
+% 
+% data = WindowReshape(Y, hamming(window_size), step_size);
+% distance_mat = PairwiseLPC(data, p);
 
-data = WindowReshape(Y, hamming(window_size), step_size);
-distance_mat = PairwiseLPC(data, p);
+% MFCC based manifold
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+data = MFCC(Y, Fs, p, 512, hamming(window_size), window_size-step_size);
+distance_mat = PairwiseNorm(data, 2);
+
 
 K = 20; % K nearest neighbors
 if true %generate_ISOMAP_LPC
     X = ISOMAP(distance_mat,K);
     if true %save_ISOMAP_LPC
-        save(['LPCISOMAP_',num2str(K),'_', fname, '.mat'],'X', 'Y', 'distance_mat','K')
+        save(['MFCCISOMAP_',num2str(K),'_', fname, '.mat'],'X', 'Y', 'distance_mat','K')
     end
 elseif false %load_ISOMAP_LPC
     load('X_IsomapLPC_3trials.mat')
