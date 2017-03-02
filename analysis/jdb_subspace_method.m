@@ -1,7 +1,7 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = 'brownian_gesture1';
+testname = 'rand_gesture3';
 file_string = ['data/logs/', testname, '/datalog%i.log'];
 logs = dir(['data/logs/', testname, '/datalog*.log']);
 num_logs = length(logs);
@@ -10,54 +10,72 @@ num_logs = length(logs);
 num_tubes = 89;
 num_pressure = 89;
 num_art = 29;
+num_sound = 1; % gets removed 
+num_vars = num_tubes+num_art;
 
-VT = [];
+rng1 = 7:18; % lungs
+rng2 = 19:num_tubes; % trachea to lips
+rng3 = (num_tubes+1):num_vars; % articulators
+
+% setup prediction variables
+f = 1; %round(samp_len/2);
+p = 60;%samp_len-f;
+L = f+p;
+
+
+
 VTs = [];
 %VT1 = [];
 for i=1:num_logs
     %logs(i).name
     [VT_log, VT_lab, samp_freq, samp_len] = ...
         import_datalog(sprintf(file_string, i));
-    % Flip matrix to make more similar to how the spectrogram was processed
-    % in earlier code.
-    vt = VT_log(:,1:end-1)'; %remove sound
-    vt((num_tubes+1):(num_tubes+num_pressure), :) = []; % remove pressure for now
-    VT = [VT,vt];
+    
+    % Throw out unstable datas
+    if sum(sum(isnan(VT_log))) == 0
+        % Flip matrix to make more similar to how the spectrogram was processed
+        % in earlier code.
+        VT = VT_log(:,1:end-1)'; %remove sound
+        VT((num_tubes+1):(num_tubes+num_pressure), :) = []; % remove pressure for now
+
+        dt = 1/samp_freq;
+
+        % Remove mean of each feature at each timestep from data
+        VT_mean = mean(VT,2);% ???
+        VTs1 = (VT - repmat(mean(VT, 2),[1,size(VT, 2)]));
+
+        % Scale by std dev of features over all timesteps
+        % Remove mean first because stddev is over all features not time varying features
+        stdevs = std(VTs1,0,2);
+        % Make tube sections with 0 std dev = the mean tube std dev
+        % May need to set a tolerance here instead of just 0
 
 
-    num_vars = length(VT_lab)-num_pressure-1;
-    dt = 1/samp_freq;
-    f = 1; %round(samp_len/2);
-    p = 20;%samp_len-f;
-    L = f+p;
-
-    % Remove mean of each feature at each timestep from data
-    VT_mean = mean(VT,2);% ???
-    VTs1 = (VT - repmat(mean(VT, 2),[1,size(VT, 2)]));
-
-    % Scale by std dev of features over all timesteps
-    % Remove mean first because stddev is over all features not time varying features
-    stdevs = std(VTs1,0,2);
-    % Make tube sections with 0 std dev = the mean tube std dev
-    % May need to set a tolerance here instead of just 0
-    rng1 = 19:num_tubes; % trachea to lips
-    rng2 = 7:18; % lungs
-    rng3 = (num_tubes+1):num_vars; % articulators
-
-    stdevs(rng1) = mean(stdevs(rng1));
-    stdevs(rng2) = mean(stdevs(rng2));
-    stdevs(rng3) = mean(stdevs(rng3));
-    stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
-    tub_stds = stdevs(1:num_tubes);
-    z_std = mean(tub_stds(tub_stds~=0));
-    tub_stds(tub_stds==0) = z_std;
-    stdevs(1:89) = tub_stds;
-    VTs1 = VTs1./repmat(stdevs,[1,size(VTs1, 2)]); % normalize by standard deviation
-    VTs2 = reshape(VTs1,[],1); % turn into column vector
-    %VTs2 = buffer(VTs2, num_vars*L, num_vars*p); % buffer turns it into a sliding window format
-    VTs2 = buffer(VTs2, num_vars*L, 0); % buffer turns it into a sliding window format
-    %VTs2(:, 1) = [];
-    VTs = [VTs;VTs2];
+        stdevs(rng1) = mean(stdevs(rng1)); % lungs
+        stdevs(rng2) = mean(stdevs(rng2)); % trachea to lips
+        stdevs(rng3) = mean(stdevs(rng3)); % articulators
+       
+        stdevs(stdevs==0) = mean(stdevs(stdevs~=0)); % make all zero values equal to average
+        
+        %redundant with rng3
+        %stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
+        
+        %tub_stds = stdevs(1:num_tubes);
+        %z_std = mean(tub_stds(tub_stds~=0));
+        %tub_stds(tub_stds==0) = z_std;
+        %stdevs(1:num_tubes) = tub_stds;
+        
+        % normalize by standard deviation
+        VTs1 = VTs1./repmat(stdevs,[1,size(VTs1, 2)]); 
+        
+        % reshape into sliding window format
+        VTs1 = reshape(VTs1,[],1); % turn into column vector
+        %VTs2 = buffer(VTs2, num_vars*L, num_vars*p); % buffer turns it into a sliding window format
+        VTs1 = buffer(VTs1, num_vars*L, 0); % buffer turns it into a sliding window format
+        VTs1(:, end) = []; % last row ends with zeros (usually) so we throw it out
+        %VTs2(:, 1) = [];
+        VTs = [VTs,VTs1];
+    end
 end
 
 num_logs = size(VTs, 2); % num_logs being used pretty differently here
@@ -74,22 +92,23 @@ Xf(zs) = 1e-10;
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
 k = 8;
-skip = 0;
-prms = skip+1:k+skip;
-%F = Xf*(Xp'*(Xp*Xp')^-1);
-F = Xf*pinv(Xp);
-Qp_ = cov(Xp')';
-Qf_ = cov(Xf')';
-Qp_ = eye(size(Qp_));
-Qf_ = eye(size(Qf_));
-% Take real part of scale factor
-F_sc = real(Qf_^(-.5))*F*real(Qp_^(.5));
-[U,S,V] = svd(F_sc);
-Sk = S(prms,prms);
-Vk = V(:,prms);
-Uk = U(:,prms);
-K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
-O = real(Qf_^(.5))*Uk*Sk^(1/2);
+[K, O, ~, ~, ~] = SubspaceDFA(Xf, Xp, k);
+% skip = 0;
+% prms = skip+1:k+skip;
+% %F = Xf*(Xp'*(Xp*Xp')^-1);
+% F = Xf*pinv(Xp);
+% Qp_ = cov(Xp')';
+% Qf_ = cov(Xf')';
+% Qp_ = eye(size(Qp_));
+% Qf_ = eye(size(Qf_));
+% % Take real part of scale factor
+% F_sc = real(Qf_^(-.5))*F*real(Qp_^(.5));
+% [U,S,V] = svd(F_sc);
+% Sk = S(prms,prms);
+% Vk = V(:,prms);
+% Uk = U(:,prms);
+% K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
+% O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
 
 % pull out part of O matrix that corresponds to generating Area predictions
