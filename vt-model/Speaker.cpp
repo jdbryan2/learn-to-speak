@@ -952,3 +952,29 @@ int Speaker::SaveSound(std::string filepath)
 {
     return result->save(filepath);
 }
+
+
+// Boost wrappers
+void Speaker::py_InitSim(double totalTime, boost::python::list initialArtList) {
+    Articulation initialArt = {0};
+    for(int i = 0; i<kArt_muscle_MAX; i++) {
+        initialArt[i] = boost::python::extract<double>(initialArtList[i]);
+    }
+    InitSim(totalTime, initialArt);
+        
+}
+
+boost::python::list Speaker::py_getAreaFcn() {
+    boost::python::list AreaFcn;
+    for(int ind=0; ind<numberOfTubes; ind++)
+    {
+        AreaFcn.append(tube[ind].A);
+    }
+}
+boost::python::list Speaker::py_getPressureFcn(){
+    boost::python::list PressureFcn;
+    for(int ind=0; ind<numberOfTubes; ind++)
+    {
+        PressureFcn.append(tube[ind].Qhalf);
+    }
+}

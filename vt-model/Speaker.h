@@ -28,6 +28,9 @@
 #include <iostream>
 #include <random>
 #include <fstream>
+// boost stuff
+#include <boost/python/list.hpp>
+#include <boost/python/class.hpp>
 
 using namespace std;
 
@@ -96,6 +99,12 @@ public:
     float getLastSample() {return result->z[sample-1];}
     int LoopBack() { if(NotDone()) { return 1;} else {sample = 0; loop_count++;return 0;} }
     void InitDataLogger();
+
+    // Boost wrappers
+    void py_InitSim(double totalTime, boost::python::list initialArtList);
+    boost::python::list py_getAreaFcn();
+    boost::python::list py_getPressureFcn();
+
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
@@ -104,6 +113,26 @@ private:
     //void InitDataLogger();
     void Log();
 };
+
+// Boost it up!
+
+#include <boost/python/module.hpp>
+#include <boost/python/def.hpp>
+using namespace boost::python;
+
+BOOST_PYTHON_MODULE(speaker) // tells boost where to look
+{
+   class_<Speaker>("Speaker", init<std::string, int, double, int>)
+       .def("InitSim", &Speaker::py_InitSim)
+       .def("IterateSim", &Speaker::IterateSim)
+       .def("getAreaFcn", &Speaker::py_getAreaFcn)
+       .def("Now", &Speaker::Now)
+       .def("getLastSample", &Speaker::py_getLastSample)
+       .def("NotDone", &Speaker::NotDone)
+       .def("setMuscle", &Speaker::setMuscle)
+       .def("getMuscle", &Speaker::getMuscle)
+    ;
+}
 
 /* End of file Speaker.h */
 #endif
