@@ -120,7 +120,7 @@ private:
 #include <boost/python/def.hpp>
 using namespace boost::python;
 
-BOOST_PYTHON_MODULE(speaker) // tells boost where to look
+BOOST_PYTHON_MODULE(vtSim) // tells boost where to look
 {
    class_<Speaker>("Speaker", init<std::string, int, double, int>())
        .def("InitSim", &Speaker::py_InitSim)
