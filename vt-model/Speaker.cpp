@@ -970,6 +970,7 @@ boost::python::list Speaker::py_getAreaFcn() {
     {
         AreaFcn.append(tube[ind].A);
     }
+    return AreaFcn;
 }
 boost::python::list Speaker::py_getPressureFcn(){
     boost::python::list PressureFcn;
@@ -977,4 +978,5 @@ boost::python::list Speaker::py_getPressureFcn(){
     {
         PressureFcn.append(tube[ind].Qhalf);
     }
+    return PressureFcn;
 }

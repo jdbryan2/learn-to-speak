@@ -122,12 +122,12 @@ using namespace boost::python;
 
 BOOST_PYTHON_MODULE(speaker) // tells boost where to look
 {
-   class_<Speaker>("Speaker", init<std::string, int, double, int>)
+   class_<Speaker>("Speaker", init<std::string, int, double, int>())
        .def("InitSim", &Speaker::py_InitSim)
        .def("IterateSim", &Speaker::IterateSim)
        .def("getAreaFcn", &Speaker::py_getAreaFcn)
        .def("Now", &Speaker::Now)
-       .def("getLastSample", &Speaker::py_getLastSample)
+       .def("getLastSample", &Speaker::getLastSample)
        .def("NotDone", &Speaker::NotDone)
        .def("setMuscle", &Speaker::setMuscle)
        .def("getMuscle", &Speaker::getMuscle)
