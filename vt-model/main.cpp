@@ -227,12 +227,8 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
     prefix = prefix + "artword_logs/";
     speaker->ConfigDataLogger(prefix + artword_name + to_string(1) + ".log",log_period);
     simulate(speaker, &awcontrol);
-        speaker->SaveSound(prefix + artword_name + "_sound" + to_string(1) + ".log");
-    for(int i =0; i< 10; i++)
-    {
-        //cout << speaker->result->z[100*i] << ", ";
-    }
-    //cout << endl;
+
+    speaker->SaveSound(prefix + artword_name + "_sound" + to_string(1) + ".log");
     
     // simple interface for playing back the sound that was generated
     int input =  0;// set to zero to test the speed of simulation.
@@ -356,25 +352,25 @@ void AreaRefControl(Speaker* speaker, double log_freq, double log_period, std::s
 int main()
 {
     double sample_freq = 8000;
-    int oversamp = 70;
+    int oversamp = 80;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test5/");
-    std::string prefix ("/home/jacob/Projects/learn-to-speak/data/logs_8/");
+    std::string prefix ("/home/jacob/Projects/learn-to-speak/data/");
     //std::string prefix ("/home/jacob/Projects/learn-to-speak/analysis/test3/");
     double utterance_length = 0.5;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
-    //Artword artword = apa();
-    //std::string artword_name = "apa";
+    Artword artword = apa();
+    std::string artword_name = "apa2";
     //Artword artword = unstable2();
     //std::string artword_name = "unstable2_artword";
-    //sim_artword(&female, &artword,artword_name,log_period,prefix);
+    sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
-    random_stim_trials(&female,utterance_length,log_period,prefix);
+    //random_stim_trials(&female,utterance_length,log_period,prefix);
     //brownian_stim_trials(&female,utterance_length,log_period,prefix);
     
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)

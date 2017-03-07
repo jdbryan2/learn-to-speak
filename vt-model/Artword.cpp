@@ -17,6 +17,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _BOOST_
+#define _BOOST_  1
+#endif
+
 #include "Artword.h"
 #include <assert.h>
 #include <vector>
@@ -139,4 +143,11 @@ void Artword::Copy(Artword* newArtword) {
     }
 }
 
+#if _BOOST_
+void Artword::py_intoArt(boost::python::numeric::array & art, double tim) {
+	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
+		art [feature] = getTarget (feature, tim);
+	}
+}
+#endif
 /* End of file Artword.cpp */

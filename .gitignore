@@ -1,6 +1,7 @@
 # Compiled sources
 ###################
 *.o
+*.so
 vt-model/build/CMakeFiles/
 #vt-model/vt-model/build/vocal_tract # executable
 vt-model/build/CMakeCache.txt

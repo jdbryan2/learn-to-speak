@@ -29,8 +29,10 @@
 #include <random>
 #include <fstream>
 // boost stuff
-#include <boost/python/list.hpp>
-#include <boost/python/class.hpp>
+
+#if _BOOST_
+#include <boost/python/numeric.hpp>
+#endif
 
 using namespace std;
 
@@ -45,6 +47,7 @@ public:
     // ***** SIMULATION VARIABLES ***** //
     double fsamp;
     double oversamp;
+	
     long numberOfSamples;
     long sample;
     long loop_count;
@@ -100,11 +103,16 @@ public:
     int LoopBack() { if(NotDone()) { return 1;} else {sample = 0; loop_count++;return 0;} }
     void InitDataLogger();
 
+#if _BOOST_
     // Boost wrappers
-    void py_InitSim(double totalTime, boost::python::list initialArtList);
-    boost::python::list py_getAreaFcn();
-    boost::python::list py_getPressureFcn();
+    void py_InitSim(double totalTime, boost::python::numeric::array initialArtList);
+    //boost::python::numeric::array py_getAreaFcn();
+    //boost::python::numeric::array py_getPressureFcn();
 
+    void py_getAreaFcn(boost::python::numeric::array& AreaFcn); 
+    void py_getPressureFcn(boost::python::numeric::array& AreaFcn);
+    void py_setArticulation(boost::python::numeric::array& art);
+#endif 
     
 private:
     void InitializeTube(); // map speaker parameters into delta tube
@@ -114,25 +122,33 @@ private:
     void Log();
 };
 
+#if _BOOST_
 // Boost it up!
-
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
-using namespace boost::python;
+#include <boost/python/class.hpp>
+
+    //using namespace boost::python;
 
 BOOST_PYTHON_MODULE(vtSim) // tells boost where to look
 {
-   class_<Speaker>("Speaker", init<std::string, int, double, int>())
+    boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+
+    boost::python::class_<Speaker>("Speaker", boost::python::init<std::string, int, double, int>())
        .def("InitSim", &Speaker::py_InitSim)
        .def("IterateSim", &Speaker::IterateSim)
        .def("getAreaFcn", &Speaker::py_getAreaFcn)
        .def("Now", &Speaker::Now)
+       .def("NowSeconds", &Speaker::NowSeconds)
        .def("getLastSample", &Speaker::getLastSample)
        .def("NotDone", &Speaker::NotDone)
        .def("setMuscle", &Speaker::setMuscle)
        .def("getMuscle", &Speaker::getMuscle)
+       .def("setArticulation", &Speaker::py_setArticulation)
+       .def("SaveSound", &Speaker::SaveSound)
     ;
 }
 
+#endif
 /* End of file Speaker.h */
 #endif

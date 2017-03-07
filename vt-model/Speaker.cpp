@@ -17,13 +17,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifndef _BOOST_
+#define _BOOST_  1
+#endif
+
 #include "Speaker.h"
 #include <math.h>
 #include <algorithm>
-#include <iostream>
-#include <fstream>
 #include <cstring>
-#include <cmath>
 
 // ***** Constants for modifying acoustic simulation
 #define DYMIN  0.00001
@@ -475,6 +476,10 @@ void Speaker::InitSim(double totalTime_, Articulation initialArt)
         // TODO: Make Articulation a class and use either a copy funciton or overload =
         totalTime = totalTime_;
         memcpy(art, initialArt, sizeof(Articulation));
+        // boost debugs
+        for(int i = 0; i<kArt_muscle_MAX; i++) {
+            std::cout << std::to_string(i) << ", " << art[i] << std::endl;
+        } // end boost debugs
         if(!result->IsInitialized()) {
             result->Initialize(1, totalTime, fsamp);
         }
@@ -799,7 +804,8 @@ double Speaker::ComputeSound()
         Delta_Tube t = &(tube[m]);
         out += rho0 * t->Dx * t->Dz * t->dDydt * Dt * 1000.0;   // radiation of wall movement, 5.140
         // Don't perform difference if this is the first logsample, because these values could be held over from the last run of the sim
-        if (! t->right1 && logSample!=0)
+        //if (! t->right1 && logSample!=0)
+        if (! t->right1)
             out += t->Jrightnew - t->Jright;   // radiation of open tube end
     }
     out /= 4.0 * M_PI * 0.4 * Dt;
@@ -953,30 +959,44 @@ int Speaker::SaveSound(std::string filepath)
     return result->save(filepath);
 }
 
-
+#if _BOOST_
 // Boost wrappers
-void Speaker::py_InitSim(double totalTime, boost::python::list initialArtList) {
+void Speaker::py_InitSim(double totalTime, boost::python::numeric::array initialArtList) {
     Articulation initialArt = {0};
     for(int i = 0; i<kArt_muscle_MAX; i++) {
         initialArt[i] = boost::python::extract<double>(initialArtList[i]);
+        std::cout << std::to_string(i) << ", " << initialArt[i] << std::endl;
     }
     InitSim(totalTime, initialArt);
+    logSample = 1;
         
 }
 
-boost::python::list Speaker::py_getAreaFcn() {
-    boost::python::list AreaFcn;
+//boost::python::numeric::array Speaker::py_getAreaFcn() {
+void Speaker::py_getAreaFcn(boost::python::numeric::array & AreaFcn) {
     for(int ind=0; ind<numberOfTubes; ind++)
     {
-        AreaFcn.append(tube[ind].A);
+        //AreaFcn.append(tube[ind].A);
+        AreaFcn[ind] = tube[ind].A;
     }
-    return AreaFcn;
+    //return AreaFcn;
 }
-boost::python::list Speaker::py_getPressureFcn(){
-    boost::python::list PressureFcn;
+//boost::python::numeric::array Speaker::py_getPressureFcn(boost::python::numeric::array PressureFcn){
+void Speaker::py_getPressureFcn(boost::python::numeric::array & PressureFcn){
     for(int ind=0; ind<numberOfTubes; ind++)
     {
-        PressureFcn.append(tube[ind].Qhalf);
+        //PressureFcn.append(tube[ind].Qhalf);
+        PressureFcn[ind] = tube[ind].Qhalf;
     }
-    return PressureFcn;
+    //return PressureFcn;
 }
+
+void Speaker::py_setArticulation(boost::python::numeric::array & _art) {
+    for(int ind=0; ind<kArt_muscle_MAX; ind++) {
+        art[ind] = boost::python::extract<double>(_art[ind]);
+        //std::cout << art[ind] << ",";
+    }
+    //std::cout<< std::endl;
+
+}
+#endif 
