@@ -43,18 +43,18 @@ SET(VTSIM_FILES
 
 ADD_LIBRARY(vtModel ${VTSIM_FILES})
 
-ADD_LIBRARY(vtSim SHARED Speaker.cpp VocalTract.cpp Sound.cpp)
+ADD_LIBRARY(PyRAAT SHARED Speaker.cpp VocalTract.cpp Sound.cpp)
 ADD_LIBRARY(Artword SHARED Artword.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
-TARGET_LINK_LIBRARIES(vtSim ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+TARGET_LINK_LIBRARIES(PyRAAT ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 TARGET_LINK_LIBRARIES(Artword ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
-set_target_properties(vtSim PROPERTIES PREFIX "" )
+set_target_properties(PyRAAT PROPERTIES PREFIX "" )
 set_target_properties(Artword PROPERTIES PREFIX "" )
 
 ADD_EXECUTABLE(vocal_tract main.cpp)
 TARGET_LINK_LIBRARIES(vocal_tract vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio )
 INSTALL(TARGETS vocal_tract DESTINATION /home/jacob/Projects/learn-to-speak/bin)
-INSTALL(TARGETS vtSim DESTINATION /home/jacob/Projects/learn-to-speak/python)
-INSTALL(TARGETS Artword DESTINATION /home/jacob/Projects/learn-to-speak/python)
+INSTALL(TARGETS PyRAAT DESTINATION /home/jacob/Projects/learn-to-speak/bin)
+INSTALL(TARGETS Artword DESTINATION /home/jacob/Projects/learn-to-speak/bin)

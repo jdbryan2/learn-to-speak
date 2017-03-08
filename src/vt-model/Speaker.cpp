@@ -476,10 +476,6 @@ void Speaker::InitSim(double totalTime_, Articulation initialArt)
         // TODO: Make Articulation a class and use either a copy funciton or overload =
         totalTime = totalTime_;
         memcpy(art, initialArt, sizeof(Articulation));
-        // boost debugs
-        for(int i = 0; i<kArt_muscle_MAX; i++) {
-            std::cout << std::to_string(i) << ", " << art[i] << std::endl;
-        } // end boost debugs
         if(!result->IsInitialized()) {
             result->Initialize(1, totalTime, fsamp);
         }
@@ -965,10 +961,9 @@ void Speaker::py_InitSim(double totalTime, boost::python::numeric::array initial
     Articulation initialArt = {0};
     for(int i = 0; i<kArt_muscle_MAX; i++) {
         initialArt[i] = boost::python::extract<double>(initialArtList[i]);
-        std::cout << std::to_string(i) << ", " << initialArt[i] << std::endl;
     }
     InitSim(totalTime, initialArt);
-    logSample = 1;
+    logSample = 1; // hacky way of removing data logger trouble
         
 }
 

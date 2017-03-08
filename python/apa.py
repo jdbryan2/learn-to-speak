@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.io.wavfile import write
-import vtSim as vt
+import PyRAAT as vt
 import Artword as aw
 
 import pylab as plt
@@ -25,26 +25,23 @@ utterance_length = 0.5
 articulations = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
 
 apa.intoArt(articulations, 0.0)
-
 speaker.InitSim(utterance_length, articulations)
 
-sound_wave = np.array([]);
-i = 0;
+sound_wave = np.zeros(np.ceil(sample_freq*utterance_length))
+
 while speaker.NotDone() :
 
     apa.intoArt(articulations, speaker.NowSeconds())
     speaker.setArticulation(articulations)
 
-    #print speaker.NowSeconds()
+    # alternative way of feeding each muscle individually
     #for k in range(aw.kArt_muscle.MAX):
     #    speaker.setMuscle(k, apa.getTarget(k, speaker.NowSeconds()))
 
     speaker.IterateSim()
 
-    sound_wave=np.append(sound_wave, speaker.getLastSample())
-    i+= 1;
-    #if i > 20:
-        #break;
+    #sound_wave=np.append(sound_wave, speaker.getLastSample())
+    sound_wave[speaker.Now()-1] = speaker.getLastSample()
 
 
 plt.plot(sound_wave)

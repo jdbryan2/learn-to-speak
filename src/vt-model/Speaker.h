@@ -83,7 +83,7 @@ public:
     
 public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
-    ~Speaker() {cout << "end speaker 0" << endl;  delete result; cout << "end speaker 1" << endl; delete log_stream; cout << "end speaker 2" << std::endl; }
+    ~Speaker() { delete result;  delete log_stream;  }
     void InitSim(double totalTime, Articulation initialArt);
     int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
@@ -130,7 +130,7 @@ private:
 
     //using namespace boost::python;
 
-BOOST_PYTHON_MODULE(vtSim) // tells boost where to look
+BOOST_PYTHON_MODULE(PyRAAT) // tells boost where to look
 {
     boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
 
