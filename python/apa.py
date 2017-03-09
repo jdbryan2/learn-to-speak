@@ -5,6 +5,7 @@ import Artword as aw
 
 import pylab as plt
 
+
 apa = aw.Artword(0.5)
 apa.setTarget(aw.kArt_muscle.INTERARYTENOID, 0, 0.5);
 apa.setTarget(aw.kArt_muscle.INTERARYTENOID,0.5,0.5);
