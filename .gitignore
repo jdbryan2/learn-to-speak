@@ -4,15 +4,18 @@
 *.so
 vt-model/build/CMakeFiles/
 #vt-model/vt-model/build/vocal_tract # executable
-vt-model/build/CMakeCache.txt
-vt-model/build/Makefile
-vt-model/build/vocal_tract 
-vt-model/build/*
-vt-yarpsim/build/*
+src/vt-model/build/CMakeCache.txt
+src/vt-model/build/Makefile
+src/vt-model/build/vocal_tract 
+src/vt-model/build/*
+src/yarpsim/build/*
 analysis/manifolds/timit/*
+analysis/data_old/*
 build/*
 data/*
 bin/*
+python/data/*
+python/.ropeproject/*
 
 # vim swap files
 ################
