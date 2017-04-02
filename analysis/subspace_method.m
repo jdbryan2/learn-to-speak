@@ -1,20 +1,26 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = 'test3Area';
+testname = 'test5';
 logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
 VT1 = [];
+nan_inds = [];
 for i=1:num_logs
     [VT_log, VT_lab, samp_freq, samp_len] = ...
         import_datalog([testname,'/logs/',logs(i).name]);
     % Flip matrix to make more similar to how the spectrogram was processed
     % in earlier code.
     vt = VT_log(:,1:end-1)'; %remove sound
+    if sum(sum(isnan(vt)))
+        nan_inds = [nan_inds, i];
+        continue
+    end
     VT1 = [VT1,vt];
     VT = [VT,vt(:)];
 end
+num_logs = num_logs - length(nan_inds);
 num_vars = length(VT_lab)-1;
 dt = 1/samp_freq;
 f = round(samp_len/2);
@@ -71,7 +77,7 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
-k = 3;
+k = 40;
 skip = 0;
 prms = skip+1:k+skip;
 %F = Xf*(Xp'*(Xp*Xp')^-1);
@@ -231,7 +237,7 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % colorbar
 %% Load Area function Reference and Export
 [VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/artword_logs/apa.log']);
+        import_datalog([testname,'/artword_logs/apa1.log']);
 VT_log = VT_log(:,1:end-1)'; %remove sound
 VT_log = VT_log(:);
 

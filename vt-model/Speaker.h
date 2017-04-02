@@ -68,6 +68,7 @@ public:
     long numberOfLogSamples;
     int logCounter;
     long logSample;
+    double last_snd;
     
 public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);

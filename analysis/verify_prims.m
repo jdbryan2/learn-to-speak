@@ -4,7 +4,7 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-testname = 'test3Area';
+testname = 'test5';
 load([testname,'/prims.mat']);
 load([testname,'/Aref.mat']);
 doAref = true;
@@ -13,8 +13,8 @@ doAref = true;
 if doAref
     refctrllog = '/prim_logs/Areflog1.log';
     refctrlsnd = '/prim_logs/Arefsound1.log';
-    reflog = '/artword_logs/apa.log';
-    refsnd = '/artword_logs/apasound1.log';
+    reflog = '/artword_logs/apa1.log';
+    refsnd = '/artword_logs/apa_sound1.log';
 
     [VT_log, VT_lab, samp_freq2, samp_len_aref] = ...
     import_datalog([testname,reflog]);
@@ -93,10 +93,18 @@ for i=1:samp_len-1
     if(doAref)
         % PID Gains
         skip = 0;
-        Kp =          [4.0/3,     1/3,       8.0/3,     2.5/3,     10.0/3]';
-        Ki =          [200.0/3,   100/3,     300.0/3,   75.0/4,    10.0]';
-        Kd =          [0.09/3,    0.1/3,     0.21/3,    0.041/3,   0.15/2]';
-        I_limit =     [Ki(1)*100, Ki(2)*100, Ki(3)*100, Ki(4)*100, 1]';
+%         Kp =          [0.2/2,   0.8/3,       0.4/3,     2.5/3,     10.0/3]';
+%         Ki =          [20.0,    20.0/2,     10.0/3,   75.0/4,    10.0]';
+%         Kd =          [0.005/3, 0.02/3,     0.001,    0.041/3,   0.15/2]';
+%         I_limit =     [Ki(1)*100, Ki(2)*100, Ki(3)*100, Ki(4)*100, 1]';
+        
+        scale = 0.0031;
+        nn = 40;
+        Kp = [38.1375, 33.3272, 29.4786, 27.0174, 21.1427, 19.4681, 17.2987, 12.9520, 12.6968, 11.4316, 9.4109, 8.8003, 7.1776, 6.9008, 5.8787, 5.6424, 5.3387, 4.5657, 4.3664, 3.7702, 3.5929, 3.4918, 3.2031, 3.0276, 2.9124, 2.3938, 2.3026, 2.1132, 1.9882, 1.9070, 1.7922, 1.7125, 1.5319, 1.4327, 1.3016, 1.2827, 1.1766, 1.1448, 1.0682, 1.0356]';
+        Kp = Kp*scale;
+        Ki = zeros(nn,1);
+        Kd = zeros(nn,1);
+        I_limit = zeros(nn,1);
         Kp = Kp(skip+1:k+skip);
         Ki = Ki(skip+1:k+skip);
         Kd = Kd(skip+1:k+skip);
@@ -119,6 +127,7 @@ for i=1:samp_len-1
         X(:,i) = x;
     else
         x = x_past;
+        X(:,i) = x;
     end
 %     primno = 1;
 %     xno = x(primno);

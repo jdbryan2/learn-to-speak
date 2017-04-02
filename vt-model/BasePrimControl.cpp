@@ -164,6 +164,7 @@ void BasePrimControl::doControl(Speaker * speaker)
             //gsl_vector_memcpy(Yp_unscaled, &past_mean.vector);
             if (doArefControl) {
                 // Begin tracking starting at second sample because first sample is from IC's
+                // NOTE: Aref must be as long as f+1
                 gsl_vector_view Afref_view = gsl_vector_subvector(Aref, MAX_NUMBER_OF_TUBES, f_p[0]*MAX_NUMBER_OF_TUBES);
                 gsl_vector_memcpy(Afref, &Afref_view.vector);
             }
@@ -324,11 +325,24 @@ void BasePrimControl::ArefControl() {
     // Tuned using method in answer by Joe Baker http://robotics.stackexchange.com/questions/167/what-are-good-strategies-for-tuning-pid-loops
     // PID Gains
     const double Ts = 1/sample_freq;
-    double Kp_[5] =      {4.0/3,        1.0/3,        8.0/3,        2.5/3,        10.0/3};
-    double Ki_[5] =      {200.0/3,      100.0/3,      300.0/3,      75.0/4,       10.0};
-    double Kd_[5] =      {0.09/3,       0.1/3,        0.21/3,       0.041/3,      0.15/2};
-    double I_limit_[5] = {Ki_[1]*100.0, Ki_[1]*100.0, Ki_[2]*100.0, Ki_[3]*100.0, 1.0};
+//    double Kp_[5] =      {0.2/2,     0.8/3,       0.4/3,        2.5/3,        10.0/3};
+//    double Ki_[5] =      {20.0,      20.0/2,      10.0/3,      75.0/4,       10.0};
+//    double Kd_[5] =      {0.005/3,   0.02/3,      0.001,       0.041/3,      0.15/2};
+//    double I_limit_[5] = {Ki_[1]*100.0, Ki_[1]*100.0, Ki_[2]*100.0, Ki_[3]*100.0, 1.0};
     int skip = 0;
+    
+    #define nn 40
+    double Kp_[nn] = {38.1375, 33.3272, 29.4786, 27.0174, 21.1427, 19.4681, 17.2987, 12.9520, 12.6968, 11.4316, 9.4109, 8.8003, 7.1776, 6.9008, 5.8787, 5.6424, 5.3387, 4.5657, 4.3664, 3.7702, 3.5929, 3.4918, 3.2031, 3.0276, 2.9124, 2.3938, 2.3026, 2.1132, 1.9882, 1.9070, 1.7922, 1.7125, 1.5319, 1.4327, 1.3016, 1.2827, 1.1766, 1.1448, 1.0682, 1.0356};
+    double Ki_[nn];
+    double Kd_[nn];
+    double I_limit_[nn];
+    double scale = 0.0031;
+    for (int i=0; i<nn; i++) {
+        Kp_[i] = Kp_[i]*scale;
+        Ki_[i] = 0.0;
+        Kd_[i] = 0.0;
+        I_limit_[i] = 0.0;
+    }
     
     gsl_vector_const_view Kp = gsl_vector_const_view_array(&Kp_[skip], num_prim);
     gsl_vector_const_view Ki = gsl_vector_const_view_array(&Ki_[skip], num_prim);

@@ -728,16 +728,10 @@ void Speaker::IterateSim()
             }
         } // end second tube loop 
 
+        last_snd = ComputeSound();
         // Save Sound at middle sample
         if (n == ((long)oversamp+ 1) / 2) {
-            result->z[sample] = ComputeSound();
-        }
-        
-        // Outupt some data to log file
-        // This needs to be here before the tube parameter update instead of outside of the oversamp loop
-        // because it calls ComputeSound() which relies on values for Jright and Jrightnew
-        if (n==oversamp && log_data) {
-            Log();
+            result->z[sample] = last_snd;
         }
 
         // Increment tube parameters for next iteration
@@ -766,6 +760,10 @@ void Speaker::IterateSim()
         }
 
     } // End oversample loop
+    // Outupt some data to log file
+    if (log_data) {
+        Log();
+    }
     ++sample;
     if (!NotDone()) {
         printf("Ending volume: %f liters.\n", getVolume() * 1000);
@@ -830,7 +828,7 @@ void Speaker::Log()
             *log_stream << art[ind];
             *log_stream << "\t";
         }
-        *log_stream << ComputeSound();
+        *log_stream << last_snd;
         *log_stream << "\n";
         
         ++logSample;

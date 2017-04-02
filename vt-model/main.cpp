@@ -250,7 +250,7 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
 }
 
 void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
-    std::normal_distribution<double>::param_type hold_time_param(0.1,0.1);
+    std::normal_distribution<double>::param_type hold_time_param(0.1,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
     for (int trial=1; trial <= 75; trial++)
@@ -292,7 +292,6 @@ void AreaRefControl(Speaker* speaker, double log_freq, double log_period, std::s
     gsl_vector * Aref = gsl_vector_alloc(MAX_NUMBER_OF_TUBES*(utterance_length*log_freq+1));
     gsl_vector_fscanf(f_stream_mat, Aref);
     fclose(f_stream_mat);
-    
     // Make control longer than sample
     utterance_length+=2,0;
     BasePrimControl prim(utterance_length,log_period,art,prefix,Aref);
@@ -310,7 +309,7 @@ int main()
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test5/");
-    double utterance_length = .5;
+    double utterance_length = 0.5;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
@@ -322,7 +321,7 @@ int main()
     //sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
-    random_stim_trials(&female,utterance_length,log_period,prefix);
+    //random_stim_trials(&female,utterance_length,log_period,prefix);
     
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
@@ -330,7 +329,7 @@ int main()
     //prim_control(&female, utterance_length, log_period,prefix);
     
     // 5.) Perform Area Function Tracking of 1.)
-    //AreaRefControl(&female, log_freq, log_period,prefix);
+    AreaRefControl(&female, log_freq, log_period,prefix);
     
     return 0;
 }
