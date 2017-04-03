@@ -1,14 +1,15 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-spect = 1;
+spectrum = 1;
 tubart = 2;
 stubart = 3;
 
 % Function Selection
-data_type = spect;
-%testname = 'testThesis4';
-testname = 'testSpeech1';
+data_type = stubart;
+testname = 'testThesis4';
+% testname = 'testSpeech1';
+% data_type = spectrum;
 
 % Model Parameters
 % History lengths
@@ -17,7 +18,7 @@ testname = 'testSpeech1';
 k = 8;
 
 % Import Data and Preprocess accordingly
-if data_type == spect
+if data_type == spectrum
     load([testname,'/sample1_30sec.mat'])
     %win_time = 20/1000;
     win_time = 5/1000;
@@ -45,7 +46,7 @@ if data_type == spect
     logmag = log10(mag_spect.^2);
     f_ind = 1:5:num_f;
     freqs = freq(f_ind);
-    n_freqs = length(freqs);
+    num_freqs = length(freqs);
     length_fact = length(t)-L;
     XP = zeros(length(f_ind),p*length_fact);
     XF = zeros(length(f_ind),f*length_fact);
@@ -71,11 +72,11 @@ if data_type == spect
     Xp = Xp_-Xpm*ones(1,length_fact);
     Xf = Xf_-Xfm*ones(1,length_fact);
     
-    % Translation from old spectrogram variable names to VT names
-    num_vars = n_freqs;
+    % Translation from old spectrogram variable names to D names
+    num_vars = num_freqs;
     num_logs = length_fact;
-    VT_lab = num2cell(freqs);
-    VT_mean = [Xpm;Xfm];
+    D_lab = num2cell(freqs);
+    dmean = [Xpm;Xfm];
     stdevs = std(XPF,0,2);
 elseif data_type == tubart
     f = 1;
@@ -157,8 +158,92 @@ elseif data_type == tubart
     VTs = reshape(VTs1,[samp_len*num_vars,num_logs]);
     Xp = VTs(1:p*num_vars,:);
     Xf = VTs(p*num_vars+1:end,:);
+    
+    %Translation of variable names
+    D_lab = VT_lab;
+    dmean = VT_mean;
 elseif data_type == stubart
-    error('Not a supported Data Type');
+    % Keep f+p<=samp_len-1
+    p = 5;
+    f = 20;
+    L = f+p;
+    logs = dir([testname, '/logs/datalog*.log']);
+    snd_logs = dir([testname, '/logs/sound*.log']);
+    num_logs = length(logs);
+    assert(num_logs == length(snd_logs));
+    dvec = [];
+    dmat = [];
+    nan_inds = [];
+    for i=1:num_logs
+        %Import Datalog
+        [VT_log, VT_lab, samp_freq, samp_len] = ...
+            import_datalog([testname,'/logs/',logs(i).name]);
+        % Flip matrix to make more similar to how the spectrogram was processed
+        % in earlier code.
+        vt = VT_log(:,1:end-1)'; %remove sound
+        if sum(sum(isnan(vt)))
+            nan_inds = [nan_inds, i];
+            continue
+        end
+        % Clip data to exact length of future and past vectors
+        % Also remove first sample to line up data with STFT
+        vt = vt(:,2:end);
+        samp_time = (samp_len-1)/samp_freq;
+        
+        %Import Sound
+        [snd, fs, duration] = import_sound([testname,'/logs/',snd_logs(i).name],false);
+        %Perform Spectrogram
+        win_time = (samp_time)/L;
+        nfft = floor(fs*win_time); % To get x ms long window
+        assert(mod(nfft,1)==0)
+        %noverlap = nfft-round(nfft/2);
+        noverlap = 0;
+        win = hamming(nfft,'symmetric'); % Might need to be 'periodic' not sure
+        fignum = 1;
+        [mag_spect, freq, t] = my_spectrogram(snd,win,noverlap,nfft,fs,fignum);
+        dt = t(2)-t(1);
+        [num_f,num_samp] = size(mag_spect);
+        %Remove any zeros and replace with small value to not mess up svd
+        zs = mag_spect==0;
+        mag_spect(zs) = 1e-10;
+        logmag = log10(mag_spect.^2);
+        % Pull out every 5th frequency for analysis
+        f_ind = 1:5:num_f;
+        freqs = freq(f_ind);
+        num_freqs = length(freqs);
+        spect = logmag(f_ind,:);
+        
+        combo = [vt;spect];
+        dmat = [dmat,combo];
+        dvec = [dvec,combo(:)];
+    end
+    D_lab = [VT_lab(1:end-1),num2cell(freqs)];
+    num_vars = length(D_lab);
+    num_tubes = 89;
+    num_art = 29;
+    % Remove mean of each feature at each timestep from data
+    dmean = mean(dvec,2);
+    Dmat = (dmat - repmat(reshape(dmean,[num_vars,L]),[1,num_logs]));
+    stdevs = std(Dmat,0,2);
+
+    % Scaling each variable individually
+    % Scale by std dev of features over all timesteps
+
+    % First remove zero std devs from tube sections that don't move
+    tub_stds = stdevs(1:num_tubes);
+    z_std = mean(tub_stds(tub_stds~=0));
+    tub_stds(tub_stds==0) = z_std;
+    stdevs(1:num_tubes) = tub_stds;
+    
+    Dmat = Dmat./repmat(stdevs,[1,L*num_logs]);
+    D = reshape(Dmat,[L*num_vars,num_logs]);
+    Xp = D(1:p*num_vars,:);
+    Xf = D(p*num_vars+1:end,:);
+
+    %samp_len =- L
+    %VT =- dvec
+    %VT1 =- dmat
+    %VT_lab =- combo_lab
 else
     error('Not a supported Data Type');
 end
@@ -211,7 +296,7 @@ for i=1:k
     title(['Primitive ', num2str(i), ' Input Mapping'])
     set(gca,'FontSize',12)
     set(gca,'YTick',1:num_vars)
-    set(gca,'YTickLabel',VT_lab(1:end-1))
+    set(gca,'YTickLabel',D_lab(1:end-1))
     colorbar
     
     figure(3)
@@ -228,7 +313,7 @@ for i=1:k
     title(['Primitive ', num2str(i), ' Output Mapping'])
     set(gca,'FontSize',12)
     set(gca,'YTick',1:num_vars)
-    set(gca,'YTickLabel',VT_lab(1:end-1))
+    set(gca,'YTickLabel',D_lab(1:end-1))
     colorbar
     
     figure(4)
@@ -244,30 +329,54 @@ for i=1:k
 end
 
 %% Scale Yf back to correct units
-Xf_unscaled = zeros(f*num_vars,num_logs);
-Xf_unscaled_pred = Xf_unscaled;
 Xf_pred = O*K*Xp;
-
-Xf_mean = VT_mean(p*(num_vars)+1:end)*ones(1,num_logs);
+Xf_mean = dmean(p*(num_vars)+1:end)*ones(1,num_logs);
+Xf_unscaled_pred = Xf_pred.*repmat(stdevs,[f,num_logs])+Xf_mean;
 Xf_unscaled = Xf.*repmat(stdevs,[f,num_logs])+Xf_mean;
 %Xf_unscaled(zs) = 0;
 % Limit predictions to max and min articulator activations as the sim does
 % Should technically pull out just art values and test them not look at
-% tubes as well
-Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
-Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
+% tubes as well. 
+%  The two lines below need fixed if we are actually going to limit them
+% Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
+% Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
 
+errors_scaled = Xf_pred-Xf;
 errors = (Xf_unscaled-Xf_unscaled_pred);
 errors = reshape(errors,[num_vars*f,num_logs]);
-figure(10); imagesc(errors);
+figure(20); imagesc(errors);
+title('Combined Xf Prediction Error')
+colorbar
+figure(21);imagesc(errors_scaled)
+title('Combined Normalized Xf Prediction Error')
+colorbar
 
+% Plot an example error from each component
 if data_type == tubart || data_type == stubart
     tube_error = errors(1:num_tubes,:);
-    art_error = errors(num_tubes+1:num_vars,:);
-    figure(11); imagesc(tube_error)
+    art_error = errors(num_tubes+1:num_tubes+num_art,:);
+    figure(22); imagesc(tube_error)
+    title('Tube Area Xf Prediction Error Example')
+    colorbar
     % Scale art_error by std dev
     %art_error = ./repmat(arts_std,[1,num_logs*f]);
-    figure(12); imagesc(art_error)
+    figure(23); imagesc(art_error)
+    title('Articulation Xf Prediction Error Example')
+    colorbar
+    % pull out part of O matrix that corresponds to generating Area predictions
+    % in Xf
+    Oarea = zeros(f*num_tubes,k);
+    for i=0:f-1
+            ind = i*num_vars;
+            Oarea(i*num_tubes+1:(i+1)*num_tubes,:) = O(ind+1:ind+num_tubes,:);
+    end
+    Oarea_inv = pinv(Oarea);
+end
+if data_type == stubart
+    spect_error = errors(num_tubes+num_art+1:num_vars,:);
+    figure(24); imagesc(spect_error)
+    title('Spectrogram Xf Prediction Error Example')
+    colorbar
 end
 
 
@@ -277,7 +386,7 @@ end
 % Using 32 digits of precision to get the best accuracy I can without 
 % using binary or hex values in the log files
 % TODO: Use hex or binary log files
-if data_type == tubart || data_type == stubart
+if data_type == tubart
 kt = K';
 fid=fopen([testname,'/K_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',kt);
@@ -294,7 +403,7 @@ fprintf(fid,'%.32e\n',oait);
 fclose(fid);
 
 fid=fopen([testname,'/mean_mat.prim'],'wt');
-fprintf(fid,'%.32e\n',VT_mean);
+fprintf(fid,'%.32e\n',dmean);
 fclose(fid);
 
 fid=fopen([testname,'/stddev.prim'],'wt');
@@ -326,15 +435,6 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % colorbar
 end
 %% Load Area function Reference and Export
-
-% % pull out part of O matrix that corresponds to generating Area predictions
-% % in Xf
-% Oarea = zeros(f*num_tubes,k);
-% for i=0:f-1
-%         ind = i*num_vars;
-%         Oarea(i*num_tubes+1:(i+1)*num_tubes,:) = O(ind+1:ind+num_tubes,:);
-% end
-% Oarea_inv = pinv(Oarea);
 
 % [VT_log, VT_lab, samp_freq, samp_len] = ...
 %         import_datalog([testname,'/artword_logs/apa1.log']);
