@@ -16,13 +16,13 @@ RandomStim::RandomStim(double utterance_length_, double sample_freq_,
                     ArtwordControl(utterance_length_)
 {
     // Articulators that we want to randomly stimulate
-    //for(int i=0; i<=kArt_muscle_MAX; i++)
-    //    arts[i] = i;
-    arts[0] = kArt_muscle_INTERARYTENOID;
-    arts[1] = kArt_muscle_LEVATOR_PALATINI;
-    arts[2] = kArt_muscle_LUNGS;
-    arts[3] = kArt_muscle_MASSETER;
-    arts[4] = kArt_muscle_ORBICULARIS_ORIS;
+    for(int i=0; i<=kArt_muscle_MAX; i++)
+        arts[i] = i;
+    //arts[0] = kArt_muscle_INTERARYTENOID;
+    //arts[1] = kArt_muscle_LEVATOR_PALATINI;
+    //arts[2] = kArt_muscle_LUNGS;
+    //arts[3] = kArt_muscle_MASSETER;
+    //arts[4] = kArt_muscle_ORBICULARIS_ORIS;
     sample_freq = sample_freq_;
     hold_time.param(hold_time_param);
     activation.param(activation_param);
@@ -59,6 +59,7 @@ void RandomStim::CreateArtword() {
                 // Set target past end of artword so that articulations can be interpolated up til end of artword
                 artword.setTarget(art, time+hold_times[art], activation(generator));
                 // hold_times[art] won't be used again for this art because this is the last iteration of ind for loop
+                continue;
             }
             hold_times[art] -= 1/sample_freq;
         }

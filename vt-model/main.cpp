@@ -253,7 +253,7 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     std::normal_distribution<double>::param_type hold_time_param(0.1,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 75; trial++)
+    for (int trial=1; trial <= 50; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
@@ -266,16 +266,16 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     }
 }
 
-void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
+void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix,int lognum) {
     Artword artw = apa();
     Articulation art = {};
     artw.intoArt(art, 0.0);
     BasePrimControl prim(utterance_length,log_period,art,prefix);
     // Initialize the data logger
-    speaker->ConfigDataLogger(prefix + "prim_logs/primlog" + to_string(1)+ ".log",log_period);
+    speaker->ConfigDataLogger(prefix + "prim_logs/primlog" + to_string(lognum)+ ".log",log_period);
     simulate(speaker, &prim);
     speaker->Speak();
-    speaker->SaveSound(prefix + "prim_logs/sound" + to_string(1) + ".log");
+    speaker->SaveSound(prefix + "prim_logs/sound" + to_string(lognum) + ".log");
 }
 
 void AreaRefControl(Speaker* speaker, double log_freq, double log_period, std::string prefix) {
@@ -308,17 +308,18 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test5/");
-    double utterance_length = 0.5;
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testThesis4/");
+    int lognum = 2;
+    double utterance_length = 1.5;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
-    //Artword artword = apa();
-    //std::string artword_name = "apa";
+    /*Artword artword = apa();
+    std::string artword_name = "apa";
     //Artword artword = unstable2();
     //std::string artword_name = "unstable2_artword";
-    //sim_artword(&female, &artword,artword_name,log_period,prefix);
+    sim_artword(&female, &artword,artword_name,log_period,prefix);*/
     
     // 2.) Generate Randomly Stimulated data trials
     //random_stim_trials(&female,utterance_length,log_period,prefix);
@@ -326,10 +327,10 @@ int main()
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
     // 4.) Perform Primitive Control based on IC only
-    //prim_control(&female, utterance_length, log_period,prefix);
+    prim_control(&female, utterance_length, log_period,prefix,lognum);
     
     // 5.) Perform Area Function Tracking of 1.)
-    AreaRefControl(&female, log_freq, log_period,prefix);
+    //AreaRefControl(&female, log_freq, log_period,prefix);
     
     return 0;
 }

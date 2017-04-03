@@ -1,7 +1,10 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-testname = 'test5';
+testname = 'testThesis4';
+% History lengths
+f = 1;
+p = 17;
 logs = dir([testname, '/logs/datalog*.log']);
 num_logs = length(logs);
 VT = [];
@@ -17,14 +20,15 @@ for i=1:num_logs
         nan_inds = [nan_inds, i];
         continue
     end
+    % Clip data to exact length of future and past vectors
+    vt = vt(:,1:f+p);
     VT1 = [VT1,vt];
     VT = [VT,vt(:)];
 end
+samp_len = f+p;
 num_logs = num_logs - length(nan_inds);
 num_vars = length(VT_lab)-1;
 dt = 1/samp_freq;
-f = round(samp_len/2);
-p = samp_len-f;
 %L = f+p;
 num_tubes = 89;
 num_art = 29;
@@ -52,14 +56,25 @@ stdevs = std(VTs1,0,2);
 % stdevs(1:num_tubes) = std(tubs(:));
 % tub_std = stdevs(1);
 % stdevs(num_tubes+1:end) = std(arts(:));
-% art_std = stdevs(num_tubes+1);
-rng1 = [1:6,19:num_tubes];
-rng2 = 7:18;
-rng3 = num_tubes+1:num_vars;
-stdevs(rng1) = mean(stdevs(rng1));
-stdevs(rng2) = mean(stdevs(rng2));
-stdevs(rng3) = mean(stdevs(rng3));
-stdevs(num_tubes+1:end) = mean(stdevs(num_tubes+1:end));
+% %art_std = stdevs(num_tubes+1);
+
+% Scaling non-lung tubes, lung tubes ish?, and arts differently
+% rng1 = [1:6,19:num_tubes];
+% rng2 = 7:18;
+% rng3 = num_tubes+1:num_vars;
+% stdevs(rng1) = mean(stdevs(rng1));
+% stdevs(rng2) = mean(stdevs(rng2));
+% stdevs(rng3) = mean(stdevs(rng3));
+
+% Scaling tubes and arts by the respective mean stddevs
+% rng1 = 1:num_tubes;
+% rng2 = num_tubes+1:num_vars;
+% stdevs(rng1) = mean(stdevs(rng1));
+% stdevs(rng2) = mean(stdevs(rng2));
+
+% Scaling each variable individually
+% Do nothing
+
 tub_stds = stdevs(1:num_tubes);
 z_std = mean(tub_stds(tub_stds~=0));
 tub_stds(tub_stds==0) = z_std;
@@ -77,7 +92,7 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 %% Perform Least Squares Regression
-k = 40;
+k = 5;
 skip = 0;
 prms = skip+1:k+skip;
 %F = Xf*(Xp'*(Xp*Xp')^-1);
@@ -236,22 +251,22 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','sam
 % set(gca,'FontSize',12)
 % colorbar
 %% Load Area function Reference and Export
-[VT_log, VT_lab, samp_freq, samp_len] = ...
-        import_datalog([testname,'/artword_logs/apa1.log']);
-VT_log = VT_log(:,1:end-1)'; %remove sound
-VT_log = VT_log(:);
-
-tub_ind = [];
-art_ind = [];
-for ind = 0:samp_len-1
-    z = ind*(num_tubes+num_art);
-    tub_ind = [tub_ind, z+1:z+num_tubes];
-    art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-end
-
-Aref = VT_log(tub_ind);
-
-fid=fopen([testname,'/Aref.alog'],'wt');
-fprintf(fid,'%.32e\n',Aref);
-fclose(fid);
-save([testname,'/Aref.mat'],'Aref');
+% [VT_log, VT_lab, samp_freq, samp_len] = ...
+%         import_datalog([testname,'/artword_logs/apa1.log']);
+% VT_log = VT_log(:,1:end-1)'; %remove sound
+% VT_log = VT_log(:);
+% 
+% tub_ind = [];
+% art_ind = [];
+% for ind = 0:samp_len-1
+%     z = ind*(num_tubes+num_art);
+%     tub_ind = [tub_ind, z+1:z+num_tubes];
+%     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
+% end
+% 
+% Aref = VT_log(tub_ind);
+% 
+% fid=fopen([testname,'/Aref.alog'],'wt');
+% fprintf(fid,'%.32e\n',Aref);
+% fclose(fid);
+% save([testname,'/Aref.mat'],'Aref');

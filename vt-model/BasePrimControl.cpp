@@ -267,15 +267,21 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     gsl_blas_dgemv(CblasNoTrans, 1, K, Yp, 0, x_past);
     // TESTING: Disable all but one of the primitives.
     /*double xarr[8] = {};
-    static double inc = 0;
-    inc =  inc-.5;
+    int keep = 0;
+    //static double inc = 0;
+    //inc =  inc-.5;
     for (int i=0; i<num_prim; i++) {
-     if (i==10)
-     //continue;//   gsl_vector_set(x, i, 1);
-         gsl_vector_set(x, i, gsl_vector_get(x, i)+inc);
-     //gsl_vector_set(x, i, 0.0);
         xarr[i] = gsl_vector_get(x, i);
-     } */
+        if (i==keep)
+        {
+            //gsl_vector_set(x, i, 10);
+            continue;
+        }
+        gsl_vector_set(x, i, 0.0);
+        xarr[i] = gsl_vector_get(x, i);
+        //gsl_vector_set(x, i, gsl_vector_get(x, i)+inc);
+     }*/
+    
     if (doArefControl) {
         ArefControl();
     }

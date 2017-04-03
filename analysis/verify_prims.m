@@ -4,11 +4,11 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-testname = 'test5';
+testname = 'testThesis4';
 load([testname,'/prims.mat']);
-load([testname,'/Aref.mat']);
-doAref = true;
-%doAref = false;
+%load([testname,'/Aref.mat']);
+%doAref = true;
+doAref = false;
 
 if doAref
     refctrllog = '/prim_logs/Areflog1.log';
