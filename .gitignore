@@ -30,3 +30,5 @@ xcuserdata/
 *.prim
 *.alog
 *.rtf
+*.eps
+*converted-to.pdf

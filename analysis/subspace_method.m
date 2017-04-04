@@ -8,8 +8,9 @@ stubart = 3;
 % Function Selection
 data_type = stubart;
 testname = 'testThesis4';
-% testname = 'testSpeech1';
-% data_type = spectrum;
+%testname = 'testSpeech1';
+%data_type = spectrum;
+save_figs = true;
 
 % Model Parameters
 % History lengths
@@ -19,9 +20,10 @@ k = 8;
 
 % Import Data and Preprocess accordingly
 if data_type == spectrum
-    load([testname,'/sample1_30sec.mat'])
+    filename = 'sample1_30sec';
+    load([testname,'/',filename,'.mat'])
     %win_time = 20/1000;
-    win_time = 5/1000;
+    win_time = 5/1000; %textured one
     nfft = fs*win_time; % To get x ms long window
     %noverlap = nfft-round(nfft/2);
     noverlap = 0;
@@ -29,15 +31,22 @@ if data_type == spectrum
 
     % Phrase 1
     fignum = 1;
-    [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum);
+    %[mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
+    [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum); %textured one
+    if save_figs == true
+        saveas(fignum,[testname,'/',filename,'_spectrogram'],'epsc');
+        saveas(fignum,[testname,'/',filename,'_spectrogram'],'fig');
+    end
     dt = t(2)-t(1);
     
     % Randomly select N samples of length L from data
     %N = 10000;
-    %f = round(.3/dt);
-    %p = round(.3/dt);
-    f =1*4;
-    p = 29*4;
+    %tlen = 0.3;
+    tlen = 0.15;
+    %f = round(tlen/dt);
+    %p = round(tlen/dt);
+    f =1*4; %textured one
+    p = 29*4; %textured one
     L = f+p;
     [num_f,num_samp] = size(mag_spect);
     %Remove any zeros and replace with small value to not mess up svd
@@ -164,8 +173,8 @@ elseif data_type == tubart
     dmean = VT_mean;
 elseif data_type == stubart
     % Keep f+p<=samp_len-1
-    p = 5;
-    f = 20;
+    p = 13;
+    f = 12;
     L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
     snd_logs = dir([testname, '/logs/sound*.log']);
