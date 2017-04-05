@@ -6,24 +6,38 @@ tubart = 2;
 stubart = 3;
 
 % Function Selection
-data_type = stubart;
-testname = 'testThesis4';
-%testname = 'testSpeech1';
-%data_type = spectrum;
+% Human Speech
+testname = 'testSpeech1';
+data_type = spectrum;
+%config = 'simple';
+config = 'texture';
+
+% VT-acoustic-articulatory
+%data_type = stubart;
+%testname = 'testThesis4';
+
 save_figs = true;
 
 % Model Parameters
 % History lengths
 % f = 1;
 % p = 17;
-k = 8;
+%mk = ceil(sqrt(k));
+%nk = mk;
+k = 5;
+factor(k)
+mk = floor(sqrt(k));
+nk = ceil(sqrt(k));
 
 % Import Data and Preprocess accordingly
 if data_type == spectrum
     filename = 'sample1_30sec';
     load([testname,'/',filename,'.mat'])
-    %win_time = 20/1000;
-    win_time = 5/1000; %textured one
+    if strcmp(config,'simple')
+        win_time = 20/1000;
+    elseif strcmp(config,'texture')
+        win_time = 5/1000; %textured one
+    end
     nfft = fs*win_time; % To get x ms long window
     %noverlap = nfft-round(nfft/2);
     noverlap = 0;
@@ -31,11 +45,14 @@ if data_type == spectrum
 
     % Phrase 1
     fignum = 1;
-    %[mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
-    [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum); %textured one
+    if strcmp(config,'simple')
+        [mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
+    elseif strcmp(config,'texture')
+        [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum);
+    end
     if save_figs == true
-        saveas(fignum,[testname,'/',filename,'_spectrogram'],'epsc');
-        saveas(fignum,[testname,'/',filename,'_spectrogram'],'fig');
+        saveas(fignum,[testname,'/',filename,'_spectrogram','_',config],'epsc');
+        saveas(fignum,[testname,'/',filename,'_spectrogram','_',config],'fig');
     end
     dt = t(2)-t(1);
     
@@ -43,10 +60,13 @@ if data_type == spectrum
     %N = 10000;
     %tlen = 0.3;
     tlen = 0.15;
-    %f = round(tlen/dt);
-    %p = round(tlen/dt);
-    f =1*4; %textured one
-    p = 29*4; %textured one
+    if strcmp(config,'simple')
+        f = round(tlen/dt);
+        p = round(tlen/dt);
+    elseif strcmp(config,'texture')
+        f =1*4; %textured one
+        p = 29*4; %textured one
+    end
     L = f+p;
     [num_f,num_samp] = size(mag_spect);
     %Remove any zeros and replace with small value to not mess up svd
@@ -84,7 +104,8 @@ if data_type == spectrum
     % Translation from old spectrogram variable names to D names
     num_vars = num_freqs;
     num_logs = length_fact;
-    D_lab = num2cell(freqs);
+    % Round frequencies for labels
+    D_lab = num2cell(floor(freqs));
     dmean = [Xpm;Xfm];
     stdevs = std(XPF,0,2);
 elseif data_type == tubart
@@ -226,7 +247,8 @@ elseif data_type == stubart
         dmat = [dmat,combo];
         dvec = [dvec,combo(:)];
     end
-    D_lab = [VT_lab(1:end-1),num2cell(freqs)];
+    %Round labels
+    D_lab = [VT_lab(1:end-1),num2cell(floor(freqs))];
     num_vars = length(D_lab);
     num_tubes = 89;
     num_art = 29;
@@ -283,14 +305,22 @@ K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
 
-mn = ceil(sqrt(k));
+%% Graph Primitives
 leg = [];
-figure(4); clf;
+figure(2); clf; f2 = gcf;
+[ha2,~] =tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
+figure(3); clf; f3 = gcf;
+[ha3,~] = tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
+figure(4); clf; f4 = gcf;
+Kmin = min(min(K)); Kmax = max(max(K));
+Omin = min(min(O)); Omax = max(max(O));
 for i=1:k
     Ps{i} = reshape(K(i,:),[num_vars,p]);
     Fs{i} = reshape(O(:,i),[num_vars,f]);
     figure(2)
-    subplot(mn,mn,i)
+    %xlabel('Time (s)')
+    %ylabel('VT variables')
+    axes(ha2(i));
     % Hacky way to make surf not delete 1 row and 1 col at end of data
     % could use imagesc instead, but I think label editing is harder
     % http://www.mathworks.com/examples/matlab/community/6386-offsets-and-discarded-data-via-pcolor-and-surf
@@ -300,16 +330,24 @@ for i=1:k
     %surf((1:p)*dt,1:num_vars,Ps{i},'EdgeColor','none');
     %shading interp
     axis xy; axis tight; colormap(hot); view(0,90);
-    xlabel('Time (s)')
-    ylabel('VT variables')
-    title(['Primitive ', num2str(i), ' Input Mapping'])
-    set(gca,'FontSize',12)
-    set(gca,'YTick',1:num_vars)
-    set(gca,'YTickLabel',D_lab(1:end-1))
-    colorbar
+    %title(['Primitive ', num2str(i)])
+    %set(gca,'FontSize',12)
+    set(gca,'clim',[Kmin,Kmax])
+    ylab_ind = 1:floor(num_vars/5):num_vars;
+    set(gca,'YTick',ylab_ind,'YTickLabel',D_lab(ylab_ind),...
+      'YTickLabelRotation',45,'XTickLabelRotation',45)
+    if mod(i-1,nk)
+        set(gca,'Ytick',[]);
+    end
+    if i/((mk-1)*nk)<1 && k<mk*nk
+        set(gca,'Xtick',[]);
+    end
+    %colorbar
     
     figure(3)
-    subplot(mn,mn,i)
+    %xlabel('Time (s)')
+    %ylabel('VT variables')
+    axes(ha3(i));
     % Hacky way to make surf not delete 1 row and 1 col at end of data
     % could use imagesc instead, but I think label editing is harder
     surf(((p:p+f))*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
@@ -317,13 +355,20 @@ for i=1:k
     %surf((p+1:p+f)*dt,1:num_vars,Fs{i},'EdgeColor','none');
     %shading interp
     axis xy; axis tight; colormap(hot); view(0,90);
-    xlabel('Time (s)')
-    ylabel('VT variables')
-    title(['Primitive ', num2str(i), ' Output Mapping'])
-    set(gca,'FontSize',12)
-    set(gca,'YTick',1:num_vars)
-    set(gca,'YTickLabel',D_lab(1:end-1))
-    colorbar
+    %title(['Primitive ', num2str(i)])
+    %set(gca,'FontSize',12)
+    %set(gca,'YTick',1:num_vars)
+    set(gca,'clim',[Omin,Omax])
+    ylab_ind = 1:floor(num_vars/5):num_vars;
+    set(gca,'YTick',ylab_ind,'YTickLabel',D_lab(ylab_ind),...
+      'YTickLabelRotation',45,'XTickLabelRotation',45)
+    if mod(i-1,nk)
+        set(gca,'Ytick',[]);
+    end
+    if i/((mk-1)*nk)<1 && k<mk*nk
+        set(gca,'Xtick',[]);
+    end
+    %colorbar
     
     figure(4)
     hold on
@@ -335,6 +380,36 @@ for i=1:k
     end
     legend(leg)
     hold off
+end
+for i=k+1:mk*nk
+    axes(ha2(i));
+    set(gca,'Visible','off')
+    axes(ha3(i));
+    set(gca,'Visible','off')
+end
+
+
+h2 = mtit(f2,'Input Primitives');
+xlabel(h2.ah,'Time (sec)','Visible','on')
+ylabel(h2.ah,'Frequency (Hz)','Visible','on')
+set(h2.ah,'FontSize',14)
+set(h2.ah,'clim',[Kmin,Kmax])
+colorbar(h2.ah) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SET COLORBAR of figures to have same value and move position
+
+h3 = mtit(f3,'Output Primitives');
+xlabel(h3.ah,'Time (sec)','Visible','on')
+ylabel(h3.ah,'Frequency (Hz)','Visible','on')
+set(h3.ah,'FontSize',14)
+set(h3.ah,'clim',[Omin,Omax])
+colorbar(h3.ah)
+
+if save_figs == true
+    set(f2,'PaperPosition',[.25,.25,8,4])
+    saveas(f2,[testname,'/',filename,'_in-map_',config],'epsc');
+    %print(-f2,[testname,'/',filename,'_in-map_',config],'-depsc');
+    saveas(f2,[testname,'/',filename,'_in-map_',config],'fig');
+    saveas(f3,[testname,'/',filename,'_out-map_',config],'epsc');
+    saveas(f3,[testname,'/',filename,'_out-map_',config],'fig');
 end
 
 %% Scale Yf back to correct units
