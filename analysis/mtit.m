@@ -1,5 +1,5 @@
 %MTIT		creates a major title in a figure with many axes
-%
+% From Here: http://www.mathworks.com/matlabcentral/fileexchange/3218-mtit--a-pedestrian-major-title-creator
 %		MTIT
 %		- creates a major title above all
 %		  axes in a figure

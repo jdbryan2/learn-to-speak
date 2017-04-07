@@ -1,22 +1,31 @@
 % Subspace Method
 %% Load log files and combine data into one array
 clear
-spectrum = 1;
-tubart = 2;
-stubart = 3;
 
 % Function Selection
+%save_figs = true;
+save_figs = false;
 % Human Speech
-testname = 'testSpeech1';
-data_type = spectrum;
-%config = 'simple';
-config = 'texture';
+% data_type = 'spectrum';
+% testname = 'testSpeech1';
+% filename = 'sample1_30sec';
+% %config = 'simple';
+% %config = 'texture';
+% config = 'smooth';
+
+% VT-articulatory
+data_type = 'tubart';
+testname = 'testThesis4';
+config = 'test';
 
 % VT-acoustic-articulatory
-%data_type = stubart;
-%testname = 'testThesis4';
+% data_type = 'stubart';
+% testname = 'testThesis4';
+% config = 'test';
 
-save_figs = true;
+%data_type = 'stubart';
+
+naming = {testname,data_type,config};
 
 % Model Parameters
 % History lengths
@@ -25,15 +34,13 @@ save_figs = true;
 %mk = ceil(sqrt(k));
 %nk = mk;
 k = 5;
-factor(k)
 mk = floor(sqrt(k));
 nk = ceil(sqrt(k));
 
 % Import Data and Preprocess accordingly
-if data_type == spectrum
-    filename = 'sample1_30sec';
+if strcmp(data_type, 'spectrum')
     load([testname,'/',filename,'.mat'])
-    if strcmp(config,'simple')
+    if strcmp(config,'simple') || strcmp(config,'smooth')
         win_time = 20/1000;
     elseif strcmp(config,'texture')
         win_time = 5/1000; %textured one
@@ -45,22 +52,23 @@ if data_type == spectrum
 
     % Phrase 1
     fignum = 1;
-    if strcmp(config,'simple')
+    if strcmp(config,'simple') || strcmp(config,'smooth')
         [mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
     elseif strcmp(config,'texture')
         [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum);
     end
     if save_figs == true
-        saveas(fignum,[testname,'/',filename,'_spectrogram','_',config],'epsc');
-        saveas(fignum,[testname,'/',filename,'_spectrogram','_',config],'fig');
+        saveas(fignum,[testname,'/',data_type,'_spectrogram','_',config],'epsc');
+        saveas(fignum,[testname,'/',data_type,'_spectrogram','_',config],'fig');
     end
     dt = t(2)-t(1);
     
-    % Randomly select N samples of length L from data
-    %N = 10000;
-    %tlen = 0.3;
-    tlen = 0.15;
     if strcmp(config,'simple')
+        tlen = 0.15;
+        f = round(tlen/dt);
+        p = round(tlen/dt);
+    elseif strcmp(config,'smooth')
+        tlen = 0.3;
         f = round(tlen/dt);
         p = round(tlen/dt);
     elseif strcmp(config,'texture')
@@ -108,7 +116,7 @@ if data_type == spectrum
     D_lab = num2cell(floor(freqs));
     dmean = [Xpm;Xfm];
     stdevs = std(XPF,0,2);
-elseif data_type == tubart
+elseif strcmp(data_type, 'tubart')
     f = 1;
     p = 17;
     logs = dir([testname, '/logs/datalog*.log']);
@@ -192,7 +200,7 @@ elseif data_type == tubart
     %Translation of variable names
     D_lab = VT_lab;
     dmean = VT_mean;
-elseif data_type == stubart
+elseif strcmp(data_type, 'stubart')
     % Keep f+p<=samp_len-1
     p = 13;
     f = 12;
@@ -305,114 +313,33 @@ K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
 
-%% Graph Primitives
-leg = [];
-figure(2); clf; f2 = gcf;
-[ha2,~] =tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
-figure(3); clf; f3 = gcf;
-[ha3,~] = tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
-figure(4); clf; f4 = gcf;
-Kmin = min(min(K)); Kmax = max(max(K));
-Omin = min(min(O)); Omax = max(max(O));
-for i=1:k
-    Ps{i} = reshape(K(i,:),[num_vars,p]);
-    Fs{i} = reshape(O(:,i),[num_vars,f]);
-    figure(2)
-    %xlabel('Time (s)')
-    %ylabel('VT variables')
-    axes(ha2(i));
-    % Hacky way to make surf not delete 1 row and 1 col at end of data
-    % could use imagesc instead, but I think label editing is harder
-    % http://www.mathworks.com/examples/matlab/community/6386-offsets-and-discarded-data-via-pcolor-and-surf
-    
-    surf(((0:p))*dt,(1:num_vars+1)-.5,[[Ps{i}; zeros(1,p)],zeros(num_vars+1,1)],'EdgeColor','none');
-    % Or use interpolation which doesn't get rid of values
-    %surf((1:p)*dt,1:num_vars,Ps{i},'EdgeColor','none');
-    %shading interp
-    axis xy; axis tight; colormap(hot); view(0,90);
-    %title(['Primitive ', num2str(i)])
-    %set(gca,'FontSize',12)
-    set(gca,'clim',[Kmin,Kmax])
-    ylab_ind = 1:floor(num_vars/5):num_vars;
-    set(gca,'YTick',ylab_ind,'YTickLabel',D_lab(ylab_ind),...
-      'YTickLabelRotation',45,'XTickLabelRotation',45)
-    if mod(i-1,nk)
-        set(gca,'Ytick',[]);
-    end
-    if i/((mk-1)*nk)<1 && k<mk*nk
-        set(gca,'Xtick',[]);
-    end
-    %colorbar
-    
-    figure(3)
-    %xlabel('Time (s)')
-    %ylabel('VT variables')
-    axes(ha3(i));
-    % Hacky way to make surf not delete 1 row and 1 col at end of data
-    % could use imagesc instead, but I think label editing is harder
-    surf(((p:p+f))*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
-    % Or use interpolation which doesn't get rid of values
-    %surf((p+1:p+f)*dt,1:num_vars,Fs{i},'EdgeColor','none');
-    %shading interp
-    axis xy; axis tight; colormap(hot); view(0,90);
-    %title(['Primitive ', num2str(i)])
-    %set(gca,'FontSize',12)
-    %set(gca,'YTick',1:num_vars)
-    set(gca,'clim',[Omin,Omax])
-    ylab_ind = 1:floor(num_vars/5):num_vars;
-    set(gca,'YTick',ylab_ind,'YTickLabel',D_lab(ylab_ind),...
-      'YTickLabelRotation',45,'XTickLabelRotation',45)
-    if mod(i-1,nk)
-        set(gca,'Ytick',[]);
-    end
-    if i/((mk-1)*nk)<1 && k<mk*nk
-        set(gca,'Xtick',[]);
-    end
-    %colorbar
-    
-    figure(4)
-    hold on
-    plot(1:num_logs,Factors(i,:))
-    if i<10
-        leg = [leg ; ['Primitive ', num2str(i),'  Factors']];
-    else
-        leg = [leg ; ['Primitive ', num2str(i),' Factors']];
-    end
-    legend(leg)
-    hold off
+%% View Pimitives
+view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,naming);
+%% View Factors
+figure(4) % Graph common factors vs sample/time
+plot(Factors')
+leg = [repmat('Primitive ',[k,1]),num2str((1:k)'),repmat('  Factors',[k,1])];
+if k>=10
+    leg = [leg; [repmat('Primitive ',[k,1]),num2str((1:k)'),repmat(' Factors',[k,1])]];
 end
-for i=k+1:mk*nk
-    axes(ha2(i));
-    set(gca,'Visible','off')
-    axes(ha3(i));
-    set(gca,'Visible','off')
-end
+legend(leg)
 
+% Try a different plot of first 3 factors in 3D
+% Has color vary overtime up to time tt
+figure(16);clf;
+tt = floor(num_logs*1);
+st = 1;%ceil(num_logs*1);
+col = st:st-1+tt;
+xx = Factors(1,col); yy=Factors(2,col);zz = Factors(3,col);
+surface([xx;xx],[yy;yy],[zz;zz],[col;col],'facecol','no','edgecol','interp','linew',2);
+grid on
 
-h2 = mtit(f2,'Input Primitives');
-xlabel(h2.ah,'Time (sec)','Visible','on')
-ylabel(h2.ah,'Frequency (Hz)','Visible','on')
-set(h2.ah,'FontSize',14)
-set(h2.ah,'clim',[Kmin,Kmax])
-colorbar(h2.ah) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%SET COLORBAR of figures to have same value and move position
-
-h3 = mtit(f3,'Output Primitives');
-xlabel(h3.ah,'Time (sec)','Visible','on')
-ylabel(h3.ah,'Frequency (Hz)','Visible','on')
-set(h3.ah,'FontSize',14)
-set(h3.ah,'clim',[Omin,Omax])
-colorbar(h3.ah)
-
-if save_figs == true
-    set(f2,'PaperPosition',[.25,.25,8,4])
-    saveas(f2,[testname,'/',filename,'_in-map_',config],'epsc');
-    %print(-f2,[testname,'/',filename,'_in-map_',config],'-depsc');
-    saveas(f2,[testname,'/',filename,'_in-map_',config],'fig');
-    saveas(f3,[testname,'/',filename,'_out-map_',config],'epsc');
-    saveas(f3,[testname,'/',filename,'_out-map_',config],'fig');
-end
-
-%% Scale Yf back to correct units
+% And plot them as 3D scatter plot
+figure(17);clf
+plot3(xx,yy,zz,'.')
+grid on
+%% Compute Errors
+% Scale Yf back to correct units
 Xf_pred = O*K*Xp;
 Xf_mean = dmean(p*(num_vars)+1:end)*ones(1,num_logs);
 Xf_unscaled_pred = Xf_pred.*repmat(stdevs,[f,num_logs])+Xf_mean;
@@ -436,7 +363,7 @@ title('Combined Normalized Xf Prediction Error')
 colorbar
 
 % Plot an example error from each component
-if data_type == tubart || data_type == stubart
+if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
     tube_error = errors(1:num_tubes,:);
     art_error = errors(num_tubes+1:num_tubes+num_art,:);
     figure(22); imagesc(tube_error)
@@ -456,13 +383,12 @@ if data_type == tubart || data_type == stubart
     end
     Oarea_inv = pinv(Oarea);
 end
-if data_type == stubart
+if strcmp(data_type, 'stubart')
     spect_error = errors(num_tubes+num_art+1:num_vars,:);
     figure(24); imagesc(spect_error)
     title('Spectrogram Xf Prediction Error Example')
     colorbar
 end
-
 
 %% Save K, O, Oarea_inv, VT_mean, tub_std, art_std, f, p, and samp_freq to output files
 % compatible with GSL matrix files (vectorization of the matrix transpose)
@@ -470,7 +396,7 @@ end
 % Using 32 digits of precision to get the best accuracy I can without 
 % using binary or hex values in the log files
 % TODO: Use hex or binary log files
-if data_type == tubart
+if strcmp(data_type, 'tubart')
 kt = K';
 fid=fopen([testname,'/K_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',kt);
