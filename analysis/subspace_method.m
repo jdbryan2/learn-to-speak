@@ -3,25 +3,33 @@
 clear
 
 % Function Selection
-%save_figs = true;
-save_figs = false;
-% Human Speech
+save_figs = true;
+%save_figs = false;
+% % Human Speech
 % data_type = 'spectrum';
 % testname = 'testSpeech1';
 % filename = 'sample1_30sec';
-% %config = 'simple';
+% %config = 'simple'; % noisy ish ball with some rotation
 % %config = 'texture';
-% config = 'smooth';
+% config = 'smooth'; % Super smooth and lots of rotation
 
 % VT-articulatory
 data_type = 'tubart';
-testname = 'testThesis4';
-config = 'test';
+%testname = 'testThesis4';
+%testname = 'testFeatureTrack';
+testname = 'testFeatureTrack2';
+%testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
+config = 'long';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
-% testname = 'testThesis4';
-% config = 'test';
+% %testname = 'testThesis4';
+% testname = 'testFeatureTrack'; %smooth ish ball with a lot of rotation (.1,.25) 10 sec 5 logs
+% %testname = 'testFeatureTrack2'; %smooth ish ball with some rotation (.25,.25) 10 sec 5 logs
+% %testname = 'testFeatureTrack3'; % smooth ish Ball, no rotation (.25,.25) 10 sec 10 logs
+% %testname = 'testFeatureTrack4'; %smooth ish ball with some rotation (.1,.25) 10 sec 5 logs
+% config = 'long'; % Long random stim trials
+% %config = 'longer'; % longer f and p
 
 %data_type = 'stubart';
 
@@ -36,6 +44,8 @@ naming = {testname,data_type,config};
 k = 5;
 mk = floor(sqrt(k));
 nk = ceil(sqrt(k));
+num_tubes = 89;
+num_art = 29;
 
 % Import Data and Preprocess accordingly
 if strcmp(data_type, 'spectrum')
@@ -85,16 +95,12 @@ if strcmp(data_type, 'spectrum')
     freqs = freq(f_ind);
     num_freqs = length(freqs);
     length_fact = length(t)-L;
-    XP = zeros(length(f_ind),p*length_fact);
-    XF = zeros(length(f_ind),f*length_fact);
     XPF = zeros(length(f_ind),L*length_fact);
     Xp_ = zeros(length(f_ind)*p,length_fact);
     Xf_ = zeros(length(f_ind)*f,length_fact);
     for n=1:length_fact
         xp = logmag(f_ind,n:n+p-1);
         xf = logmag(f_ind,n+p:n+p+f-1);
-        XP(:,1+(n-1)*p:n*p) = xp;
-        XF(:,1+(n-1)*f:n*f) = xf;
         XPF(:,1+(n-1)*L:n*L) = [xp,xf];
         Xp_(:,n) = xp(:);
         Xf_(:,n) = xf(:);
@@ -116,15 +122,25 @@ if strcmp(data_type, 'spectrum')
     D_lab = num2cell(floor(freqs));
     dmean = [Xpm;Xfm];
     stdevs = std(XPF,0,2);
+    % Was Not scaling Spectrogram features!
+    Xp = Xp./repmat(stdevs,[p,num_logs]);
+    Xf = Xf./repmat(stdevs,[f,num_logs]);
 elseif strcmp(data_type, 'tubart')
-    f = 1;
-    p = 17;
+    if strcmp(config,'long')
+        f = 13;
+        p = 13;
+    elseif strcmp(config,'longer')
+        f = 15;
+        p = 15;
+    end
+    L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
-    num_logs = length(logs);
-    VT = [];
-    VT1 = [];
+    num_files = length(logs);
+    Xp_ = [];
+    Xf_ = [];
+    XPF = [];
     nan_inds = [];
-    for i=1:num_logs
+    for i=1:num_files
         [VT_log, VT_lab, samp_freq, samp_len] = ...
             import_datalog([testname,'/logs/',logs(i).name]);
         % Flip matrix to make more similar to how the spectrogram was processed
@@ -134,85 +150,87 @@ elseif strcmp(data_type, 'tubart')
             nan_inds = [nan_inds, i];
             continue
         end
-        % Clip data to exact length of future and past vectors
-        vt = vt(:,1:f+p);
-        VT1 = [VT1,vt];
-        VT = [VT,vt(:)];
+        if i==1
+%              zinds = find(mean(vt,2)~=0);
+%             num_vars = length(VT_lab);
+%             if(length(intersect(zinds,1:num_vars))>length(zinds))
+%                 error('Zero average for variable other than tubes')
+%             end
+%             num_tubes = num_tubes - length(zinds);
+%             zinds = intersect(1:num_vars-1,zinds);
+            zinds = 1:length(VT_lab)-1;
+            D_lab = VT_lab(zinds);
+            num_vars = length(D_lab);
+        end
+        vt = vt(zinds,:);
+        length_fact = samp_len+1-L;
+        xpf = zeros(num_vars,L*length_fact);
+        XP_ = zeros(num_vars*p,length_fact);
+        XF_ = zeros(num_vars*f,length_fact);
+        for n=1:length_fact
+            xp = vt(:,n:n+p-1);
+            xf = vt(:,n+p:n+p+f-1);
+            xpf(:,1+(n-1)*L:n*L) = [xp,xf];
+            XP_(:,n) = xp(:);
+            XF_(:,n) = xf(:);
+        end
+        Xp_ = [Xp_,XP_];
+        Xf_ = [Xf_,XF_];
+        XPF = [XPF,xpf];
     end
-    samp_len = f+p;
-    num_logs = num_logs - length(nan_inds);
-    num_vars = length(VT_lab)-1;
+    [~,num_logs] = size(Xp_);
     dt = 1/samp_freq;
-    num_tubes = 89;
-    num_art = 29;
-
-    % Remove mean of each feature at each timestep from data
-    VT_mean = mean(VT,2);
-    VTs1 = (VT1 - repmat(reshape(VT_mean,[num_vars,samp_len]),[1,num_logs]));
-    % Scale by std dev of features over all timesteps
-    % Remove mean first because stddev is over all features not time varying features
-    stdevs = std(VTs1,0,2);
-    % Make tube sections with 0 std dev = the mean tube std dev
-    % May need to set a tolerance here instead of just 0
-
-    % Trying to match up with last version of code
-    % tub_ind = [];
-    % art_ind = [];
-    % for ind = 0:samp_len-1
-    %     z = ind*(num_tubes+num_art);
-    %     tub_ind = [tub_ind, z+1:z+num_tubes];
-    %     art_ind = [art_ind, z+num_tubes+1:z+num_tubes+num_art];
-    % end
-    % VTs_ = VT-VT_mean*ones(1,num_logs);
-    % tubs = VTs_(tub_ind,:);
-    % arts = VTs_(art_ind,:);
-    % stdevs(1:num_tubes) = std(tubs(:));
-    % tub_std = stdevs(1);
-    % stdevs(num_tubes+1:end) = std(arts(:));
-    % %art_std = stdevs(num_tubes+1);
-
+    
+    %Remove mean of time-varying features. i.e. mean computed over time and
+    %feature space
+    Xpm = mean(Xp_,2);
+    Xfm = mean(Xf_,2);
+    dmean = [Xpm;Xfm];
+    Xp = Xp_-Xpm*ones(1,num_logs);
+    Xf = Xf_-Xfm*ones(1,num_logs);
+    
+    % Scale features
+    
+    % Scaling over feature space and not time.
+    % Standard: Do nothing
+    stdevs = std(XPF,0,2);
     % Scaling non-lung tubes, lung tubes ish?, and arts differently
-    % rng1 = [1:6,19:num_tubes];
-    % rng2 = 7:18;
-    % rng3 = num_tubes+1:num_vars;
-    % stdevs(rng1) = mean(stdevs(rng1));
-    % stdevs(rng2) = mean(stdevs(rng2));
-    % stdevs(rng3) = mean(stdevs(rng3));
+    rng1 = [1:6,19:num_tubes];
+    rng2 = 7:18;
+    rng3 = num_tubes+1:num_vars;
+    stdevs(rng1) = mean(stdevs(rng1));
+    stdevs(rng2) = mean(stdevs(rng2));
+    stdevs(rng3) = mean(stdevs(rng3));
 
     % Scaling tubes and arts by the respective mean stddevs
     % rng1 = 1:num_tubes;
     % rng2 = num_tubes+1:num_vars;
     % stdevs(rng1) = mean(stdevs(rng1));
     % stdevs(rng2) = mean(stdevs(rng2));
-
-    % Scaling each variable individually
-    % Do nothing
-
-    tub_stds = stdevs(1:num_tubes);
-    z_std = mean(tub_stds(tub_stds~=0));
-    tub_stds(tub_stds==0) = z_std;
-    stdevs(1:89) = tub_stds;
-    VTs1 = VTs1./repmat(stdevs,[1,samp_len*num_logs]);
-    VTs = reshape(VTs1,[samp_len*num_vars,num_logs]);
-    Xp = VTs(1:p*num_vars,:);
-    Xf = VTs(p*num_vars+1:end,:);
     
-    %Translation of variable names
-    D_lab = VT_lab;
-    dmean = VT_mean;
-elseif strcmp(data_type, 'stubart')
+    % Make tube sections with 0 std dev = the mean tube std dev
+    % May need to set a tolerance here instead of just 0
+    tub_stds = stdevs(1:num_tubes);
+    ztubs = tub_stds~=0;
+    z_std = mean(tub_stds(ztubs));
+    tub_stds(tub_stds==0) = z_std;
+    stdevs(1:num_tubes) = tub_stds;
+    
+    Xp = Xp./repmat(stdevs,[p,num_logs]);
+    Xf = Xf./repmat(stdevs,[f,num_logs]);
+elseif strcmp(data_type, 'stubart') %FIX THIS!!!!!!!!!!!!!!!!
     % Keep f+p<=samp_len-1
     p = 13;
     f = 12;
     L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
     snd_logs = dir([testname, '/logs/sound*.log']);
-    num_logs = length(logs);
-    assert(num_logs == length(snd_logs));
+    num_files = length(logs);
+    assert(num_files == length(snd_logs));
     dvec = [];
     dmat = [];
     nan_inds = [];
-    for i=1:num_logs
+    for i=1:num_files
         %Import Datalog
         [VT_log, VT_lab, samp_freq, samp_len] = ...
             import_datalog([testname,'/logs/',logs(i).name]);
@@ -223,15 +241,27 @@ elseif strcmp(data_type, 'stubart')
             nan_inds = [nan_inds, i];
             continue
         end
-        % Clip data to exact length of future and past vectors
-        % Also remove first sample to line up data with STFT
-        vt = vt(:,2:end);
-        samp_time = (samp_len-1)/samp_freq;
+        if i==1
+%              zinds = find(mean(vt,2)~=0);
+%             num_vars = length(VT_lab);
+%             if(length(intersect(zinds,1:num_vars))>length(zinds))
+%                 error('Zero average for variable other than tubes')
+%             end
+%             num_tubes = num_tubes - length(zinds);
+%             zinds = intersect(1:num_vars-1,zinds);
+            zinds = 1:length(VT_lab)-1; %From removing sound
+            VT_lab = VT_lab(zinds);
+            num_vt_vars = length(VT_lab);
+        end
+        % Remove first sample to line up data with STFT
+        vt = vt(zinds,2:end);
+        %samp_time = (samp_len-1)/samp_freq;
         
         %Import Sound
         [snd, fs, duration] = import_sound([testname,'/logs/',snd_logs(i).name],false);
         %Perform Spectrogram
-        win_time = (samp_time)/L;
+        %win_time = (samp_time)/L;
+        win_time = 1/(floor(0.02*samp_freq)*samp_freq);
         nfft = floor(fs*win_time); % To get x ms long window
         assert(mod(nfft,1)==0)
         %noverlap = nfft-round(nfft/2);
@@ -251,18 +281,27 @@ elseif strcmp(data_type, 'stubart')
         num_freqs = length(freqs);
         spect = logmag(f_ind,:);
         
-        combo = [vt;spect];
-        dmat = [dmat,combo];
-        dvec = [dvec,combo(:)];
+        num_vars = num_freqs+num_vt_vars;
+        length_fact = samp_len-L;
+        Xpf = zeros(num_vars,L*length_fact);
+        xpf = zeros(num_vars*L,length_fact);
+        for n=1:length_fact
+            xp = [vt(:,n:n+p-1);spect(:,n:n+p-1)];
+            xf = [vt(:,n+p:n+p+f-1);spect(:,n+p:n+p+f-1)];
+            Xpf(:,1+(n-1)*L:n*L) = [xp,xf];
+            xpf(:,n) = [xp(:);xf(:)];
+        end
+        
+        dmat = [dmat,Xpf];
+        dvec = [dvec,xpf];
     end
+    num_logs = length_fact*num_files;
     %Round labels
-    D_lab = [VT_lab(1:end-1),num2cell(floor(freqs))];
-    num_vars = length(D_lab);
-    num_tubes = 89;
-    num_art = 29;
+    D_lab = [VT_lab,num2cell(floor(freqs))];
     % Remove mean of each feature at each timestep from data
     dmean = mean(dvec,2);
-    Dmat = (dmat - repmat(reshape(dmean,[num_vars,L]),[1,num_logs]));
+    % Assuming all file lengths are the same currently
+    Dmat = (dmat - repmat(reshape(dmean,[num_vars,L]),[1,num_files*length_fact]));
     stdevs = std(Dmat,0,2);
 
     % Scaling each variable individually
@@ -270,7 +309,8 @@ elseif strcmp(data_type, 'stubart')
 
     % First remove zero std devs from tube sections that don't move
     tub_stds = stdevs(1:num_tubes);
-    z_std = mean(tub_stds(tub_stds~=0));
+    ztubs = tub_stds~=0;
+    z_std = mean(tub_stds(ztubs));
     tub_stds(tub_stds==0) = z_std;
     stdevs(1:num_tubes) = tub_stds;
     
@@ -278,11 +318,6 @@ elseif strcmp(data_type, 'stubart')
     D = reshape(Dmat,[L*num_vars,num_logs]);
     Xp = D(1:p*num_vars,:);
     Xf = D(p*num_vars+1:end,:);
-
-    %samp_len =- L
-    %VT =- dvec
-    %VT1 =- dmat
-    %VT_lab =- combo_lab
 else
     error('Not a supported Data Type');
 end
@@ -327,7 +362,7 @@ legend(leg)
 % Try a different plot of first 3 factors in 3D
 % Has color vary overtime up to time tt
 figure(16);clf;
-tt = floor(num_logs*1);
+tt = floor(num_logs);
 st = 1;%ceil(num_logs*1);
 col = st:st-1+tt;
 xx = Factors(1,col); yy=Factors(2,col);zz = Factors(3,col);
@@ -352,27 +387,36 @@ Xf_unscaled = Xf.*repmat(stdevs,[f,num_logs])+Xf_mean;
 % Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
 % Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
 
-errors_scaled = Xf_pred-Xf;
+if strcmp(data_type,'tubart') || strcmp(data_type,'stubart')
+    nzero_f_inds = repmat([ztubs;logical(ones(num_vars-num_tubes,1))],[f,1]);
+elseif strcmp(data_type,'spectrum')
+    nzero_f_inds = logical(ones(num_vars*f,1));
+    ztubs = 1;
+end
+
+errors_scaled = (Xf_pred-Xf);
+%errors_scaled = errors_scaled(nzero_f_inds,:);
 errors = (Xf_unscaled-Xf_unscaled_pred);
-errors = reshape(errors,[num_vars*f,num_logs]);
+errors = errors(nzero_f_inds,:);
+errors = reshape(errors,[(num_vars-sum(~ztubs))*f,num_logs]);
 figure(20); imagesc(errors);
-title('Combined Xf Prediction Error')
+title('Combined Unscaled Xf Prediction Error')
 colorbar
 figure(21);imagesc(errors_scaled)
-title('Combined Normalized Xf Prediction Error')
+title('Combined Xf Prediction Error')
 colorbar
 
 % Plot an example error from each component
 if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
-    tube_error = errors(1:num_tubes,:);
-    art_error = errors(num_tubes+1:num_tubes+num_art,:);
+    tube_error = errors_scaled(1:num_tubes,:);
+    art_error = errors_scaled(num_tubes+1:num_tubes+num_art,:);
     figure(22); imagesc(tube_error)
-    title('Tube Area Xf Prediction Error Example')
+    title('Tube Area Xf Prediction Error')
     colorbar
     % Scale art_error by std dev
     %art_error = ./repmat(arts_std,[1,num_logs*f]);
     figure(23); imagesc(art_error)
-    title('Articulation Xf Prediction Error Example')
+    title('Articulation Xf Prediction Error')
     colorbar
     % pull out part of O matrix that corresponds to generating Area predictions
     % in Xf
@@ -384,7 +428,7 @@ if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
     Oarea_inv = pinv(Oarea);
 end
 if strcmp(data_type, 'stubart')
-    spect_error = errors(num_tubes+num_art+1:num_vars,:);
+    spect_error = errors_scaled(num_tubes+num_art+1:num_vars,:);
     figure(24); imagesc(spect_error)
     title('Spectrogram Xf Prediction Error Example')
     colorbar
@@ -432,9 +476,9 @@ fclose(fid);
 fid=fopen([testname,'/num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
-
+ 
 %save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','tub_std','art_std','f','p','samp_freq','k');
-save([testname,'/prims.mat'],'K','O','Oarea_inv','VT_mean','stdevs','f','p','samp_freq','k');
+save([testname,'/prims.mat'],'K','O','Oarea_inv','dmean','stdevs','f','p','samp_freq','k');
 % figure(1)
 % surf(t,freq,logmag,'EdgeColor','none');
 % axis xy; axis tight; colormap(hot); view(0,90);

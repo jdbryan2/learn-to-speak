@@ -41,7 +41,7 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
 
         figure(3) % Graph Output Prims
         axes(ha3(i));
-        surf(((0:f))*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
+        surf((p:p+f)*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
         axis xy; axis tight; colormap(hot); view(0,90);
         if mod(i-1,nk)
             set(ha2(i),'Ytick',[]);

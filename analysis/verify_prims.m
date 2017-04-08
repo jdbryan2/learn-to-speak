@@ -4,7 +4,7 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-testname = 'testThesis4';
+testname = 'testFeatureTrack4';
 load([testname,'/prims.mat']);
 %load([testname,'/Aref.mat']);
 %doAref = true;
@@ -56,13 +56,13 @@ for i=1:samp_len-1
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
     Yp_unscaled(end-num_vars+1:end) = vt(:,i);
     % Remove mean from Yp_unscaled
-    Yp = Yp_unscaled - VT_mean(1:num_vars*p);
+    Yp = Yp_unscaled - dmean(1:num_vars*p);
     % Setup the f future Area function that we are tracking and remove mean
     % and scale
     Af_mean = zeros((num_tubes)*f,1);
     for j=1:f
         ind = (j-1)*(num_tubes+num_art)+p*(num_tubes+num_art);
-        Af_mean((j-1)*num_tubes+1:j*num_tubes) = VT_mean(ind+1:ind+num_tubes);
+        Af_mean((j-1)*num_tubes+1:j*num_tubes) = dmean(ind+1:ind+num_tubes);
     end
     
     if(doAref)
@@ -145,13 +145,13 @@ for i=1:samp_len-1
     Yf_unscaled = Yf.*repmat(stdevs,[f,1]);
     
     % Add back mean to Yf
-    Yf_unscaled = Yf_unscaled + VT_mean(num_vars*p+1:end);
+    Yf_unscaled = Yf_unscaled + dmean(num_vars*p+1:end);
     
     art = Yf_unscaled(num_tubes+1:num_vars);
     art(art>1) = 1;
     art(art<0) = 0;
     artlog = vt(num_tubes+1:num_vars,i+1);
-    artmean_f = VT_mean(num_vars*p+num_tubes+1:num_vars*(p+1));
+    artmean_f = dmean(num_vars*p+num_tubes+1:num_vars*(p+1));
     
     errors(i) = sum(abs(art-artlog));
 end
@@ -215,13 +215,13 @@ hold off
 
 figure(6);imagesc(vt(90:end,:))
 figure(7);imagesc(log(vt(1:89,:)))
-[Snd,fs,duration] = import_sound([testname,refctrlsnd]);
+[Snd,fs,duration] = import_sound([testname,refctrlsnd],true);
 figure(11);plot(linspace(0,duration,duration*fs),Snd)
 
 if doAref
     pause(duration+1)
     hold on
-    [Snd_ref,fs,duration] = import_sound([testname,refsnd]);
+    [Snd_ref,fs,duration] = import_sound([testname,refsnd],true);
     figure(11);plot(linspace(0,duration,duration*fs),Snd_ref)
     hold off
 end

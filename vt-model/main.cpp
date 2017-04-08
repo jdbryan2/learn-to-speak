@@ -253,7 +253,7 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     std::normal_distribution<double>::param_type hold_time_param(0.1,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 50; trial++)
+    for (int trial=1; trial <= 5; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
@@ -308,9 +308,9 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testThesis4/");
-    int lognum = 2;
-    double utterance_length = 1.5;
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testFeatureTrack2/");
+    int lognum = 1;
+    double utterance_length = 3;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
