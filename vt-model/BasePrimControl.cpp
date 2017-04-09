@@ -268,7 +268,7 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     // TESTING: Disable all but one of the primitives.
     double xarr[8] = {};
     int keep[8] = {-1,-2,-3,-4,-5,-6,-7,-8};
-    int invert_keep = 1; // Will enable all of the negative primitives
+    int invert_keep = -1; // Will enable all of the negative primitives
     static double inc = 0;
     inc =  inc-.5;
     for (int i=0; i<num_prim; i++) {

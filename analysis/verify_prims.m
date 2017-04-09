@@ -4,7 +4,7 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-testname = 'testRevised8';
+testname = 'testBatch3';
 load([testname,'/prims.mat']);
 %load([testname,'/Aref.mat']);
 %doAref = true;

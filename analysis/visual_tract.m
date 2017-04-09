@@ -1,7 +1,9 @@
 % Plot area function and/or pressure function as video
 clear
 %[data1, labels, Fs, data_len_ref] = import_datalog('testThesis4/artword_logs/apa1.log');
-[data2, labels, Fs, data_len] = import_datalog('testRevised8/prim_logs/primlog1.log');
+%[data2, labels, Fs, data_len] = import_datalog('testBatch3/prim_logs/primlog1.log');
+[data2, labels, Fs, data_len] = import_datalog('testNew1/artword_logs/ohh1.log');
+[Snd,fs,duration] = import_sound('testNew1/artword_logs/ohh_sound1.log',true);
 
 sub_sample = 1;
 loops = floor(data_len/sub_sample);

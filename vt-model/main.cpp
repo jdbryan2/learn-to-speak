@@ -34,6 +34,93 @@ Artword apa () {
     return apa;
 }
 
+Artword ahh () {
+    Artword ahh(0.5);
+    ahh.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    ahh.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    ahh.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    ahh.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    ahh.setTarget(kArt_muscle_LUNGS,0,0.2);
+    ahh.setTarget(kArt_muscle_LUNGS,0.1,0);
+    //apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
+    //apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    return ahh;
+}
+
+Artword aaa () {
+    Artword artw(0.5);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    //artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    //artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.2);
+    artw.setTarget(kArt_muscle_LUNGS,0.1,0);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.7);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.7);
+    //artw.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    return artw;
+}
+
+Artword aaa2 () {
+    Artword artw(0.5);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    artw.setTarget(kArt_muscle_CRICOTHYROID,0,1.0);
+    artw.setTarget(kArt_muscle_CRICOTHYROID,0.5,1.0);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.2);
+    artw.setTarget(kArt_muscle_LUNGS,0.1,0);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.7);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.7);
+    //artw.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    return artw;
+}
+
+Artword ohh () {
+    double length = 1;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    artw.setTarget(kArt_muscle_INTERARYTENOID,length,0.5);
+    artw.setTarget(kArt_muscle_CRICOTHYROID,0,1.0);
+    artw.setTarget(kArt_muscle_CRICOTHYROID,length,1.0);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.2);
+    artw.setTarget(kArt_muscle_LUNGS,0.1,0);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.9);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.9);
+    artw.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.0,0.9);
+    artw.setTarget(kArt_muscle_ORBICULARIS_ORIS,length,0.9);
+    return artw;
+}
+
+Artword sss () {
+    double length = 1;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,0,0.5);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,0.5);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,0,1.0);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,length,1.0);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.9);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.9);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.4);
+    artw.setTarget(kArt_muscle_LUNGS,0.3,0);
+    return artw;
+}
+
+Artword khh () {
+    double length = 1;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,0,0.5);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,0.5);
+    artw.setTarget(kArt_muscle_TRANSVERSE_TONGUE,0,1.0);
+    artw.setTarget(kArt_muscle_TRANSVERSE_TONGUE,length,1.0);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.5);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.5);
+    artw.setTarget(kArt_muscle_RISORIUS,0,0.3);
+    artw.setTarget(kArt_muscle_RISORIUS,length,0.3);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.4);
+    artw.setTarget(kArt_muscle_LUNGS,0.3,0);
+    return artw;
+}
+
 // From page 129 of Boersma
 // Doesn't work correctly
 Artword apa2 () {
@@ -365,21 +452,21 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised3/");
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testNew1/");
     int lognum = 1;
-    //double utterance_length = 0.5;
+    double utterance_length = 2;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
-    /*Artword artword = apa2();
-    std::string artword_name = "apa2";
+    Artword artword = khh();
+    std::string artword_name = "khh";
     //Artword artword = unstable2();
     //std::string artword_name = "unstable2_artword";
-    sim_artword(&female, &artword,artword_name,log_period,prefix);*/
+    sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
-    int num_trials1 = 200;
+    /*int num_trials1 = 200;
     double hold_mean1 = 0.2;
     bool end_interp1 = false;
     double utterance_length1 = 0.5;
@@ -414,7 +501,7 @@ int main()
     bool end_interp6 = true;
     double utterance_length6 = 0.3;
     std::string prefix6 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch6/");
-    random_stim_trials(&female,utterance_length6,log_period,hold_mean6,num_trials6,end_interp6,prefix6);
+    random_stim_trials(&female,utterance_length6,log_period,hold_mean6,num_trials6,end_interp6,prefix6);*/
 
     //random_stim_trials(&female,utterance_length,log_period,hold_mean,num_trials,prefix);
     

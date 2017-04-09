@@ -6,25 +6,26 @@ clear
 save_figs = true;
 %save_figs = false;
 % % Human Speech
-% data_type = 'spectrum';
-% testname = 'testSpeech1';
-% filename = 'sample1_30sec';
-% %config = 'simple'; % noisy ish ball with some rotation
-% %config = 'texture';
-% config = 'smooth'; % Super smooth and lots of rotation
+data_type = 'spectrum';
+testname = 'testSpeech1';
+filename = 'sample1_30sec';
+%config = 'simple'; % noisy ish ball with some rotation
+%config = 'texture';
+%config = 'smooth'; % Super smooth and lots of rotation
+config = 'smooth';
 
 % VT-articulatory
-data_type = 'tubart';
-%testname = 'testThesis4';
-%testname = 'testFeatureTrack';
-%testname = 'testFeatureTrack2';
-%testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-%testname = 'testRevised2';
-%testname = 'testRevised3';
-%testname = 'testRevised4';
-testname = 'testRevised8';
-%config = 'long';
-config = 'shortp';
+% data_type = 'tubart';
+% %testname = 'testThesis4';
+% %testname = 'testFeatureTrack';
+% %testname = 'testFeatureTrack2';
+% %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
+% %testname = 'testRevised1';
+% %testname = 'testRevised3';
+% %testname = 'testRevised4';
+% testname = 'testBatch3';
+% %config = 'long';
+% config = 'shortp';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -55,7 +56,7 @@ num_art = 29;
 % Import Data and Preprocess accordingly
 if strcmp(data_type, 'spectrum')
     load([testname,'/',filename,'.mat'])
-    if strcmp(config,'simple') || strcmp(config,'smooth')
+    if strcmp(config,'simple') || strcmp(config,'smooth') || strcmp(config,'smooth2')
         win_time = 20/1000;
     elseif strcmp(config,'texture')
         win_time = 5/1000; %textured one
@@ -67,7 +68,7 @@ if strcmp(data_type, 'spectrum')
 
     % Phrase 1
     fignum = 1;
-    if strcmp(config,'simple') || strcmp(config,'smooth')
+    if strcmp(config,'simple') || strcmp(config,'smooth') || strcmp(config,'smooth2')
         [mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
     elseif strcmp(config,'texture')
         [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum);
@@ -86,6 +87,10 @@ if strcmp(data_type, 'spectrum')
         tlen = 0.3;
         f = round(tlen/dt);
         p = round(tlen/dt);
+    elseif strcmp(config,'smooth2')
+        tlen = 0.3;
+        f = round(tlen/dt);
+        p = 2;
     elseif strcmp(config,'texture')
         f =1*4; %textured one
         p = 29*4; %textured one
@@ -211,10 +216,10 @@ elseif strcmp(data_type, 'tubart')
 %     stdevs(rng3) = mean(stdevs(rng3));
 
     % Scaling tubes and arts by the respective mean stddevs
-    rng1 = 1:num_tubes;
-    rng2 = num_tubes+1:num_vars;
-    stdevs(rng1) = mean(stdevs(rng1));
-    stdevs(rng2) = mean(stdevs(rng2));
+%     rng1 = 1:num_tubes;
+%     rng2 = num_tubes+1:num_vars;
+%     stdevs(rng1) = mean(stdevs(rng1));
+%     stdevs(rng2) = mean(stdevs(rng2));
     
     % Make tube sections with 0 std dev = the mean tube std dev
     % May need to set a tolerance here instead of just 0
@@ -357,7 +362,15 @@ O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
 
 %% View Pimitives
-view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,naming);
+view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[2,3],naming,1:num_vars);
+if strcmp(data_type,'tubart')
+    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[32,33],naming,1:num_tubes);
+    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[34,35],naming,num_tubes+1:num_tubes+num_art);
+elseif strcmp(data_type,'stubart')
+    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[32,33],naming,1:num_tubes);
+    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[34,35],naming,num_tubes+1:num_tubes+num_art);
+    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,num_logs,mk,nk,save_figs,[37,38],naming,num_tubes+num_art+1:num_vars);
+end
 %% View Factors
 figure(4) % Graph common factors vs sample/time
 plot(Factors')

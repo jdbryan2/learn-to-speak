@@ -1,4 +1,4 @@
-function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs,naming);
+function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs,fignums,naming,feats);
     % Graph Input and Output Primitives in subplot form
     % K = Input Prims
     % O = Output Prims
@@ -12,8 +12,11 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
     % mk = number of rows of subplot
     % nk = number of columns in subplot
     % save_figs = Boolean to save figures to .fig and .eps files
+    % fig_nums = 2 element vector with figure numbers for input and outputs
     % naming = {testname,data_type,config} cell array of strings for
     %   filenameing
+    % feats = indicies features that you want plotted in range from
+    %   1-num_vars
     
     % Note: This uses a hacky way to make surf not delete 1 row and 1 col at end of data
     % could use imagesc instead, but I think label editing is harder
@@ -26,25 +29,32 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
     %K.*scalef',O.*scalef
 
     leg = [];
-    figure(2); clf; f2 = gcf;
+    figure(fignums(1)); clf; f2 = gcf;
     [ha2,~] =tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
-    figure(3); clf; f3 = gcf;
+    figure(fignums(2)); clf; f3 = gcf;
     [ha3,~] = tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
-    figure(4); clf; f4 = gcf;
+    KK = reshape(K',[num_vars,k*p]);
+    OO = reshape(O,[num_vars,k*f]);
+    KK = KK(feats,:);
+    OO = OO(feats,:);
+    num_vars = length(feats);
+    lab = lab(feats);
     ylab_ind = 1:floor(num_vars/5):num_vars;
-    Kmin = min(min(K)); Kmax = max(max(K));
-    Omin = min(min(O)); Omax = max(max(O));
+    Kmin = min(min(KK)); Kmax = max(max(KK));
+    Omin = min(min(OO)); Omax = max(max(OO));
     for i=1:k
-        Ps{i} = reshape(K(i,:),[num_vars,p]);
-        Fs{i} = reshape(O(:,i),[num_vars,f]);
+        %Ps{i} = reshape(K(i,:),[num_vars,p]);
+        %Fs{i} = reshape(O(:,i),[num_vars,f]);
+        Ps = KK(:,(i-1)*p+1:i*p);
+        Fs = OO(:,(i-1)*f+1:i*f);
         figure(2) % Graph Input Prims
         axes(ha2(i));
-        surf(((0:p))*dt,(1:num_vars+1)-.5,[[Ps{i}; zeros(1,p)],zeros(num_vars+1,1)],'EdgeColor','none');
+        surf(((0:p))*dt,(1:num_vars+1)-.5,[[Ps; zeros(1,p)],zeros(num_vars+1,1)],'EdgeColor','none');
         axis xy; axis tight; colormap(hot); view(0,90);
 
         figure(3) % Graph Output Prims
         axes(ha3(i));
-        surf((p:p+f)*dt,(1:num_vars+1)-.5,[[Fs{i}; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
+        surf((p:p+f)*dt,(1:num_vars+1)-.5,[[Fs; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
         axis xy; axis tight; colormap(hot); view(0,90);
         if mod(i-1,nk)
             set(ha2(i),'Ytick',[]);
