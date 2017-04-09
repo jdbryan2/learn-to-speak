@@ -43,7 +43,7 @@ naming = {testname,data_type,config};
 % p = 17;
 %mk = ceil(sqrt(k));
 %nk = mk;
-k = 5;
+k = 8;
 mk = ceil(sqrt(k));
 nk = ceil((k-mk)/mk)+1;
 num_tubes = 89;
@@ -416,12 +416,12 @@ if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
     tube_error = errors_scaled(1:num_tubes,:);
     art_error = errors_scaled(num_tubes+1:num_tubes+num_art,:);
     figure(22); imagesc(tube_error)
-    title('Tube Area Xf Prediction Error')
+    title('Tube Area Xf Prediction Error Example')
     colorbar
     % Scale art_error by std dev
     %art_error = ./repmat(arts_std,[1,num_logs*f]);
     figure(23); imagesc(art_error)
-    title('Articulation Xf Prediction Error')
+    title('Articulation Xf Prediction Error Example')
     colorbar
     % pull out part of O matrix that corresponds to generating Area predictions
     % in Xf

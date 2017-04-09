@@ -267,12 +267,12 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     gsl_blas_dgemv(CblasNoTrans, 1, K, Yp, 0, x_past);
     // TESTING: Disable all but one of the primitives.
     double xarr[8] = {};
-    int keep[8] = {-0,-1,-2,-3,-4,-5,-6,-7};
+    int keep[8] = {1,2,3,4,5,6,7,8};
     //static double inc = 0;
     //inc =  inc-.5;
     for (int i=0; i<num_prim; i++) {
         xarr[i] = gsl_vector_get(x_past, i);
-        if (i==keep[i])
+        if (i==keep[i]-1)
         {
             //gsl_vector_set(x, i, 10);
             continue;
