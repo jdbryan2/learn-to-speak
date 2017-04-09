@@ -48,9 +48,9 @@ void RandomStim::CreateArtword() {
             // TODO: Decide if we want to do this or to generate another random sample...
             else if (time >= artword.totalTime) {
                 // What we were doing before
-                //artword.setTarget(art, time, activation(generator));
-                //hold_times[art] = hold_time(generator);
-                //continue;
+                artword.setTarget(art, time, activation(generator));
+                hold_times[art] = hold_time(generator);
+                continue;
                 
                 // Another method. Don't interpolate, just set to constant of previous activation
                 //double last_tar = artword.data[art].targets[artword.data[art].numberOfTargets-2].target_value;

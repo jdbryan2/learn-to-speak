@@ -17,9 +17,11 @@ save_figs = true;
 data_type = 'tubart';
 %testname = 'testThesis4';
 %testname = 'testFeatureTrack';
-testname = 'testFeatureTrack2';
+%testname = 'testFeatureTrack2';
 %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-config = 'long';
+testname = 'testRevised1';
+%config = 'long';
+config = 'shortp';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -42,8 +44,8 @@ naming = {testname,data_type,config};
 %mk = ceil(sqrt(k));
 %nk = mk;
 k = 5;
-mk = floor(sqrt(k));
-nk = ceil(sqrt(k));
+mk = ceil(sqrt(k));
+nk = ceil((k-mk)/mk)+1;
 num_tubes = 89;
 num_art = 29;
 
@@ -132,6 +134,9 @@ elseif strcmp(data_type, 'tubart')
     elseif strcmp(config,'longer')
         f = 15;
         p = 15;
+    elseif strcmp(config,'shortp')
+        f = 13;
+        p = 13;
     end
     L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
@@ -195,18 +200,18 @@ elseif strcmp(data_type, 'tubart')
     % Standard: Do nothing
     stdevs = std(XPF,0,2);
     % Scaling non-lung tubes, lung tubes ish?, and arts differently
-    rng1 = [1:6,19:num_tubes];
-    rng2 = 7:18;
-    rng3 = num_tubes+1:num_vars;
-    stdevs(rng1) = mean(stdevs(rng1));
-    stdevs(rng2) = mean(stdevs(rng2));
-    stdevs(rng3) = mean(stdevs(rng3));
+%     rng1 = [1:6,19:num_tubes];
+%     rng2 = 7:18;
+%     rng3 = num_tubes+1:num_vars;
+%     stdevs(rng1) = mean(stdevs(rng1));
+%     stdevs(rng2) = mean(stdevs(rng2));
+%     stdevs(rng3) = mean(stdevs(rng3));
 
     % Scaling tubes and arts by the respective mean stddevs
-    % rng1 = 1:num_tubes;
-    % rng2 = num_tubes+1:num_vars;
-    % stdevs(rng1) = mean(stdevs(rng1));
-    % stdevs(rng2) = mean(stdevs(rng2));
+    rng1 = 1:num_tubes;
+    rng2 = num_tubes+1:num_vars;
+    stdevs(rng1) = mean(stdevs(rng1));
+    stdevs(rng2) = mean(stdevs(rng2));
     
     % Make tube sections with 0 std dev = the mean tube std dev
     % May need to set a tolerance here instead of just 0
@@ -487,6 +492,10 @@ save([testname,'/prims.mat'],'K','O','Oarea_inv','dmean','stdevs','f','p','samp_
 % title('Log Magnitude Squared Spectrogram')
 % set(gca,'FontSize',12)
 % colorbar
+
+% Trick to print out artword code from mean. Could be useful Later
+xmm = reshape(Xf_mean,[num_vars,f*num_logs]);
+codes = [repmat('artw.setTarget(i, utterance_length,',[29,1]),num2str(xmm(90:end,1)),repmat(');',[29,1])];
 end
 %% Load Area function Reference and Export
 

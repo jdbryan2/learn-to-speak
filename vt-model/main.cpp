@@ -195,6 +195,46 @@ Artword click () {
     return articulation;
 }
 
+// Initialize artword with an articulation then set all articulators to 0.5
+Artword half(Articulation art,double utterance_length) {
+    Artword artw(utterance_length);
+    for (int i=0; i<kArt_muscle_MAX; i++) {
+        artw.setTarget(i, 0.0, art[i]);
+        //artw.setTarget(i, 0.02, 0.5);
+        //artw.setTarget(i, utterance_length, 0.5);
+    }
+    artw.setTarget(0, utterance_length,0.51893);
+    artw.setTarget(1, utterance_length,0.52312);
+    artw.setTarget(2, utterance_length,0.49115);
+    artw.setTarget(3, utterance_length,0.54254);
+    artw.setTarget(4, utterance_length,0.56644);
+    artw.setTarget(5, utterance_length,0.47614);
+    artw.setTarget(6, utterance_length,0.55359);
+    artw.setTarget(7, utterance_length,0.51222);
+    artw.setTarget(8, utterance_length,0.50521);
+    artw.setTarget(9, utterance_length,0.46648);
+    artw.setTarget(10, utterance_length,0.47237);
+    artw.setTarget(10, utterance_length,0.44816);
+    artw.setTarget(12, utterance_length, 0.5365);
+    artw.setTarget(13, utterance_length,0.53544);
+    artw.setTarget(14, utterance_length,0.51018);
+    artw.setTarget(15, utterance_length,0.45486);
+    artw.setTarget(16, utterance_length,0.48739);
+    artw.setTarget(17, utterance_length,0.49523);
+    artw.setTarget(18, utterance_length,0.49068);
+    artw.setTarget(19, utterance_length, 0.5484);
+    artw.setTarget(20, utterance_length,0.54635);
+    artw.setTarget(21, utterance_length,0.49587);
+    artw.setTarget(22, utterance_length,0.49096);
+    artw.setTarget(23, utterance_length,0.50532);
+    artw.setTarget(24, utterance_length,0.51403);
+    artw.setTarget(25, utterance_length,0.48275);
+    artw.setTarget(26, utterance_length,0.49424);
+    artw.setTarget(27, utterance_length,0.51676);
+    artw.setTarget(28, utterance_length,0.48322);
+    return artw;
+}
+
 void simulate(Speaker* speaker, Control* controller) {
     // pass the articulator positions into the speaker BEFORE initializing the simulation
     // otherwise, we just get a strong discontinuity after the first instant
@@ -250,10 +290,10 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
 }
 
 void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
-    std::normal_distribution<double>::param_type hold_time_param(0.1,0.25);
+    std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
     RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 5; trial++)
+    for (int trial=1; trial <= 50; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
@@ -308,9 +348,9 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testFeatureTrack2/");
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised1/");
     int lognum = 1;
-    double utterance_length = 3;
+    double utterance_length = 2;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
@@ -331,6 +371,14 @@ int main()
     
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);
+    
+    // 6.) Testing idea that average of Xf is really making the prim control make sound
+    /*Artword artword_init = apa();
+     Articulation articulation_init;
+     artword_init.intoArt(articulation_init, 0.0);
+     Artword artword = half(articulation_init,utterance_length);
+     std::string artword_name = "half";
+     sim_artword(&female, &artword,artword_name,log_period,prefix);*/
     
     return 0;
 }
