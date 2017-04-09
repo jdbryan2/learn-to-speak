@@ -4,7 +4,7 @@
 % Subspace Method
 %% Load log file and primitives
 clear
-testname = 'testFeatureTrack4';
+testname = 'testRevised8';
 load([testname,'/prims.mat']);
 %load([testname,'/Aref.mat']);
 %doAref = true;
@@ -51,6 +51,7 @@ X = X_past;
 % Initialize PID history vectors
 Ek1 = zeros(k,1);
 I1 = Ek1;
+Art = []; Artlog = [];
 for i=1:samp_len-1
     % Shift feature sample backward by one in Yp_unscaled
     Yp_unscaled(1:end-num_vars) = Yp_unscaled(num_vars+1:end);
@@ -150,7 +151,9 @@ for i=1:samp_len-1
     art = Yf_unscaled(num_tubes+1:num_vars);
     art(art>1) = 1;
     art(art<0) = 0;
+    Art = [Art,art];
     artlog = vt(num_tubes+1:num_vars,i+1);
+    Artlog = [Artlog,artlog];
     artmean_f = dmean(num_vars*p+num_tubes+1:num_vars*(p+1));
     
     errors(i) = sum(abs(art-artlog));
@@ -212,6 +215,13 @@ for i=1:k
     legend(leg)
 end
 hold off
+
+% Plot Factors in 3D
+figure(18);clf;
+col = (1:samp_len-1)*dt;
+xx = X_past(1,:); yy=X_past(2,:);zz = X_past(3,:);
+surface([xx;xx],[yy;yy],[zz;zz],[col;col],'facecol','no','edgecol','interp','linew',2);
+grid on
 
 figure(6);imagesc(vt(90:end,:))
 figure(7);imagesc(log(vt(1:89,:)))

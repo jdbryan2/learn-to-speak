@@ -20,7 +20,7 @@ class RandomStim : public ArtwordControl {
 public:
     RandomStim(double utterance_length, double sample_freq,
                const std::normal_distribution<double>::param_type hold_time_param,
-               const std::uniform_real_distribution<double>::param_type activation_param);
+               const std::uniform_real_distribution<double>::param_type activation_param,bool end_interp_);
     void NewArtword();
     void doControl(Speaker* speaker);
     void InitialArt(Articulation art);
@@ -33,6 +33,7 @@ private:
     std::default_random_engine generator;
     std::normal_distribution<double> hold_time;
     std::uniform_real_distribution<double> activation;
+    bool end_interp;
 };
 
 #endif /* RandomStim_h */

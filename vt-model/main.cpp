@@ -34,6 +34,23 @@ Artword apa () {
     return apa;
 }
 
+// From page 129 of Boersma
+// Doesn't work correctly
+Artword apa2 () {
+    Artword apa(0.5);
+    apa.setTarget(kArt_muscle_LUNGS,0,0.1);
+    apa.setTarget(kArt_muscle_LUNGS,0.1,0);
+    apa.setTarget(kArt_muscle_MASSETER,0.0,-0.4);
+    apa.setTarget(kArt_muscle_MASSETER,0.2,0.3);
+    apa.setTarget(kArt_muscle_MASSETER,0.3,0.3);
+    apa.setTarget(kArt_muscle_MASSETER,0.5,-0.4);
+    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.2,0.7);
+    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.3,0.7);
+    apa.setTarget(kArt_muscle_HYOGLOSSUS, 0.0, 0.4);
+    apa.setTarget(kArt_muscle_HYOGLOSSUS, 0.0, 0.4);
+    return apa;
+}
+
 Artword sigh () {
     Artword articulation(0.5);
     articulation.setTarget(kArt_muscle_LUNGS, 0, 0.1 );
@@ -185,7 +202,7 @@ Artword click () {
 
     articulation.setTarget(kArt_muscle_MASSETER,0.0,0.25);
     articulation.setTarget(kArt_muscle_MASSETER,0.2,0.25);
-    articulation.setTarget(kArt_muscle_MASSETER,0.3,-0.25);
+    articulation.setTarget(kArt_muscle_MASSETER,0.3,-0.25); // TODO: Should these actually be negative or not?
     articulation.setTarget(kArt_muscle_MASSETER,0.5,-0.25);
 
     articulation.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.0,0.75);
@@ -289,11 +306,11 @@ void sim_artword(Speaker* speaker, Artword* artword, std::string artword_name,do
     cout << "Artword Ending-------\n";
 }
 
-void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, std::string prefix) {
-    std::normal_distribution<double>::param_type hold_time_param(0.2,0.25);
+void random_stim_trials(Speaker* speaker,double utterance_length, double log_period, double hold_mean, int num_trials, bool end_interp, std::string prefix) {
+    std::normal_distribution<double>::param_type hold_time_param(hold_mean,0.25);
     std::uniform_real_distribution<double>::param_type activation_param(0.0,1.0);
-    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param);
-    for (int trial=1; trial <= 50; trial++)
+    RandomStim rs(utterance_length, speaker->fsamp, hold_time_param, activation_param,end_interp);
+    for (int trial=1; trial <= num_trials; trial++)
     {
         // Generate a new random artword
         rs.NewArtword();
@@ -348,26 +365,63 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised1/");
+    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised3/");
     int lognum = 1;
-    double utterance_length = 2;
+    //double utterance_length = 0.5;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
-    /*Artword artword = apa();
-    std::string artword_name = "apa";
+    /*Artword artword = apa2();
+    std::string artword_name = "apa2";
     //Artword artword = unstable2();
     //std::string artword_name = "unstable2_artword";
     sim_artword(&female, &artword,artword_name,log_period,prefix);*/
     
     // 2.) Generate Randomly Stimulated data trials
-    //random_stim_trials(&female,utterance_length,log_period,prefix);
+    int num_trials1 = 200;
+    double hold_mean1 = 0.2;
+    bool end_interp1 = false;
+    double utterance_length1 = 0.5;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch1/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);
+    int num_trials2 = 200;
+    double hold_mean2 = 0.1;
+    bool end_interp2 = true;
+    double utterance_length2 = 0.5;
+    std::string prefix2 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch2/");
+    random_stim_trials(&female,utterance_length2,log_period,hold_mean2,num_trials2,end_interp2,prefix2);
+    int num_trials3 = 100;
+    double hold_mean3 = 0.2;
+    bool end_interp3 = false;
+    double utterance_length3 = 1;
+    std::string prefix3 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch3/");
+    random_stim_trials(&female,utterance_length3,log_period,hold_mean3,num_trials3,end_interp3,prefix3);
+    int num_trials4 = 100;
+    double hold_mean4 = 0.1;
+    bool end_interp4 = true;
+    double utterance_length4 = 1;
+    std::string prefix4 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch4/");
+    random_stim_trials(&female,utterance_length4,log_period,hold_mean4,num_trials4,end_interp4,prefix4);
+    int num_trials5 = 200;
+    double hold_mean5 = 0.2;
+    bool end_interp5 = false;
+    double utterance_length5 = 0.3;
+    std::string prefix5 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch5/");
+    random_stim_trials(&female,utterance_length5,log_period,hold_mean5,num_trials5,end_interp5,prefix5);
+    int num_trials6 = 200;
+    double hold_mean6 = 0.1;
+    bool end_interp6 = true;
+    double utterance_length6 = 0.3;
+    std::string prefix6 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch6/");
+    random_stim_trials(&female,utterance_length6,log_period,hold_mean6,num_trials6,end_interp6,prefix6);
+
+    //random_stim_trials(&female,utterance_length,log_period,hold_mean,num_trials,prefix);
     
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
     // 4.) Perform Primitive Control based on IC only
-    prim_control(&female, utterance_length, log_period,prefix,lognum);
+    //prim_control(&female, utterance_length, log_period,prefix,lognum);
     
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);

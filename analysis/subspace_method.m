@@ -19,7 +19,10 @@ data_type = 'tubart';
 %testname = 'testFeatureTrack';
 %testname = 'testFeatureTrack2';
 %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-testname = 'testRevised1';
+%testname = 'testRevised2';
+%testname = 'testRevised3';
+%testname = 'testRevised4';
+testname = 'testRevised8';
 %config = 'long';
 config = 'shortp';
 

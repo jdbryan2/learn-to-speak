@@ -12,7 +12,7 @@
 
 RandomStim::RandomStim(double utterance_length_, double sample_freq_,
                        const std::normal_distribution<double>::param_type hold_time_param,
-                       const std::uniform_real_distribution<double>::param_type activation_param) :
+                       const std::uniform_real_distribution<double>::param_type activation_param,bool end_interp_):
                     ArtwordControl(utterance_length_)
 {
     // Articulators that we want to randomly stimulate
@@ -26,6 +26,7 @@ RandomStim::RandomStim(double utterance_length_, double sample_freq_,
     sample_freq = sample_freq_;
     hold_time.param(hold_time_param);
     activation.param(activation_param);
+    end_interp = end_interp_;
 }
 
 void RandomStim::CreateArtword() {
@@ -47,16 +48,19 @@ void RandomStim::CreateArtword() {
             // Set last art target from default to same as last random generated one
             // TODO: Decide if we want to do this or to generate another random sample...
             else if (time >= artword.totalTime) {
-                // What we were doing before
-                artword.setTarget(art, time, activation(generator));
-                hold_times[art] = hold_time(generator);
-                continue;
+                // What we were doing before. No End interpolation
+                if (!end_interp) {
+                    artword.setTarget(art, time, activation(generator));
+                    hold_times[art] = hold_time(generator);
+                    continue;
+                }
                 
                 // Another method. Don't interpolate, just set to constant of previous activation
                 //double last_tar = artword.data[art].targets[artword.data[art].numberOfTargets-2].target_value;
                 //artword.setTarget(art, time, last_tar);
                 
                 // Set target past end of artword so that articulations can be interpolated up til end of artword
+                // End Interpolation
                 artword.setTarget(art, time+hold_times[art], activation(generator));
                 // hold_times[art] won't be used again for this art because this is the last iteration of ind for loop
                 continue;

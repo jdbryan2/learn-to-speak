@@ -21,6 +21,9 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
     % Or use interpolation which doesn't get rid of values
     %surf((1:p)*dt,1:num_vars,Ps{i},'EdgeColor','none'); %shading interp
     
+    %Could plot scaled with
+    %scalef = repmat(stdevs,[f,k]);
+    %K.*scalef',O.*scalef
 
     leg = [];
     figure(2); clf; f2 = gcf;
