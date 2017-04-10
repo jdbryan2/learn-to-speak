@@ -1,4 +1,4 @@
-function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs,fignums,naming,feats);
+function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,fpath,feats)
     % Graph Input and Output Primitives in subplot form
     % K = Input Prims
     % O = Output Prims
@@ -8,13 +8,11 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
     % num_vars = number of variables in observation vector sample
     % lab = String labels for observation variables
     % dt = Time between samples
-    % num_logs = number of logs used to create Prims
     % mk = number of rows of subplot
     % nk = number of columns in subplot
     % save_figs = Boolean to save figures to .fig and .eps files
     % fig_nums = 2 element vector with figure numbers for input and outputs
-    % naming = {testname,data_type,config} cell array of strings for
-    %   filenameing
+    % fpath = path to folder to save figures with filename prefix
     % feats = indicies features that you want plotted in range from
     %   1-num_vars
     
@@ -101,11 +99,11 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,num_logs,mk,nk,save_figs
     if save_figs == true
         set(f2,'PaperPosition',[.25,1.5,8,5])
         %saveas(f2,[testname,'/',filename,'_in-map_',config],'epsc');
-        print('-f2',[naming{1},'/',naming{2},'_in-map_',naming{3}],'-depsc','-r150');
-        saveas(f2,[naming{1},'/',naming{2},'_in-map_',naming{3}],'fig');
+        print('-f2',[fpath,'in-map'],'-depsc','-r150');
+        saveas(f2,[fpath,'in-map'],'fig');
         set(f3,'PaperPosition',[.25,1.5,8,5])
         %saveas(f3,[testname,'/',filename,'_out-map_',config],'epsc');
-        print('-f3',[naming{1},'/',naming{2},'_out-map_',naming{3}],'-depsc','-r150');
-        saveas(f3,[naming{1},'/',naming{2},'_out-map_',naming{3}],'fig');
+        print('-f3',[fpath,'out-map'],'-depsc','-r150');
+        saveas(f3,[fpath,'out-map'],'fig');
     end
 end
