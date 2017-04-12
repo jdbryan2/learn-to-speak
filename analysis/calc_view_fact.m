@@ -7,8 +7,8 @@ k = 8;
 % Human Speech
 data_type = 'speech';
 testname = 'TestMySpeech1';
-%config = 'original';
-config = 'short';
+config = 'original';
+%config = 'short';
 log_type = 'ipa*.mat';
 
 % log_type = 'datalog*.log'
@@ -59,10 +59,17 @@ for i=1:num_files
 end
 
 num_vars = length(stdevs);
-[ids,~,ic] = unique(log_id);
-markers = ['+';'o';'*';'.';'x';'s';'d';'^'];%;'v';'>';'<';'p';'h'];
-marker_clrs = ['r';'g';'b';'c';'m';'y';'k';'w'];
-n_markers = length(markers);
+[ids,ia,ic] = unique(log_id);
+cats_label = {'Consonants';'Vowels'};
+num_unique_logs = length(ids);
+cats = zeros(num_unique_logs,1);
+c_inds = ids>=100 & ids<=200; v_inds = ids>=300 &ids<=399;
+cats(c_inds) = 1; cats(v_inds) = 2;
+markers_bpa = ['v','*']; %['+';'o';'*';'.';'x';'s';'d';'^'];%;'v';'>';'<';'p';'h'];
+markers_snd = ['+';'o';'.';'x';'s';'d';'^';'>'];
+clrs = ['r';'b';'g';'c';'m';'y';'k';'w'];
+line_styles = {'-','--',':','-.'};
+XX = cell(num_unique_logs,1); YY = cell(num_unique_logs,1); ZZ = cell(num_unique_logs,1);
 %% Cycle through all of the logs computing the factors and plot
 for l=1:num_logs
 % First set Yp_unscaled to have a p long constant history of the inital
@@ -98,27 +105,20 @@ for i=1:num_pts
     YfU(:,i) = Yf_unscaled;
 end
 
-% View Factors
-
-% f4 = figure(4); % Graph common factors vs sample/time
-% plot(X_past')
-% leg = [repmat('Factor ',[k,1]),num2str((1:k)'),repmat('  Factors',[k,1])];
-% if k>=10
-%     leg = [leg; [repmat('Primitive ',[k,1]),num2str((1:k)'),repmat(' Factors',[k,1])]];
-% end
-% legend(leg)
-% title('Latent Variables values over Time/Logs')
-
 % Try a different plot of first 3 factors in 3D
 % Has color vary overtime up to time tt
 f16 = figure(16); hold on;
 tt = floor(num_pts);
 st = 1;%ceil(num_logs*1);
 col = st:st-1+tt;
-fac1 = 1; fac2 = 2; fac3 = 3;
+fac1 = 1; fac2 = 2; fac3 = 4;
 xx = X_past(fac1,col); yy=X_past(fac2,col);zz = X_past(fac3,col);
+
+XX{ic(l)}(end+1:end+log_len(l)+1-f) = xx';
+YY{ic(l)}(end+1:end+log_len(l)+1-f) = yy';
+ZZ{ic(l)}(end+1:end+log_len(l)+1-f) = zz';
 surface([xx;xx],[yy;yy],[zz;zz],[col;col],'facecol','no','edgecol','interp',...
-    'linew',2,'marker',markers(ic(l)));
+    'linew',2,'marker',markers_bpa(cats(ic(l))));
 grid on
 title('3 Latent Variables as 3D Trajectory')
 xlabel(['Factor ',num2str(fac1)]);
@@ -126,15 +126,21 @@ ylabel(['Factor ',num2str(fac2)]);
 zlabel(['Factor ',num2str(fac3)]);
 hold off;
 
-% And plot them as 3D scatter plot
-f17 = figure(17); hold on;
-plot3(xx,yy,zz,[markers(ic(l)),marker_clrs(ic(l))])
+% View Factors vs time in 2d plot
+if ~mod(l-1,1)
+f4 = figure(4); % Graph common factors vs sample/time
+hold on;
+pl = plot3(t(p:end),X_past(1,:),X_past(3,:),'-','Color',clrs(cats(ic(l))));
+title('Latent Variables values over Time/Logs')
 grid on
-title('3 Latent Variables as 3D Scatter Plot')
-xlabel(['Factor ',num2str(fac1)]);
-ylabel(['Factor ',num2str(fac2)]);
-zlabel(['Factor ',num2str(fac3)]);
 hold off;
+%for j = 1:k
+    %pl = plot(X_past(j,:),['-',markers(cats(ic(l)))],'Color',line_clrs(ic(l)));%,...
+                     %'MarkerFaceColor',marker_clrs(j));%,...
+                     %markers(cats(j)));
+    %pl = plot(X_past(j,:),'-','Color',line_clrs(cats(ic(l))));
+%end
+end
 
 % if save_figs
 %     set(f4,'PaperPosition',[.25,1.5,8,5])
@@ -148,5 +154,21 @@ hold off;
 %     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
 % end
 end
+for i=1:num_unique_logs
+    % And plot them as 3D scatter plot
+    f17 = figure(17); hold on;
+    pl=plot3(XX{i},YY{i},ZZ{i},[markers_bpa(cats(i)),clrs(i)]);
+    if strcmp(clrs(i),'w')
+        set(pl,'Color',[.7 .7 .7]);
+    end
+    grid on
+    title('3 Latent Variables as 3D Scatter Plot')
+    xlabel(['Factor ',num2str(fac1)]);
+    ylabel(['Factor ',num2str(fac2)]);
+    zlabel(['Factor ',num2str(fac3)]);
+    hold off;
+end
 %Put in legends
+%figure(4); legend(leg);
+figure(17); legend([repmat('IPA # ',[num_unique_logs,1]),num2str(ids)])
 %figure(16); legend(num2str(ids(ic)))

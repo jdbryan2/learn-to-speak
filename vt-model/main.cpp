@@ -410,11 +410,11 @@ void random_stim_trials(Speaker* speaker,double utterance_length, double log_per
     }
 }
 
-void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix,int lognum) {
+void prim_control(Speaker* speaker,double utterance_length, double log_period, std::string prefix, std::string config,int lognum) {
     Artword artw = apa();
     Articulation art = {};
     artw.intoArt(art, 0.0);
-    BasePrimControl prim(utterance_length,log_period,art,prefix);
+    BasePrimControl prim(utterance_length,log_period,art,prefix+config+"/");
     // Initialize the data logger
     speaker->ConfigDataLogger(prefix + "prim_logs/primlog" + to_string(lognum)+ ".log",log_period);
     simulate(speaker, &prim);
@@ -452,20 +452,27 @@ int main()
     int oversamp = 70;
     int number_of_glottal_masses = 2;
     Speaker female("Female",number_of_glottal_masses, sample_freq, oversamp);
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testNew1/");
-    int lognum = 1;
-    double utterance_length = 2;
+    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/test____/");
+    //int lognum = 1;
+    //double utterance_length = 2;
     double desired_log_freq = 50;
     int log_period = floor(sample_freq/desired_log_freq);
     double log_freq = sample_freq/log_period;
     // 1.) Create Artword to track
-    Artword artword = khh();
+    /*Artword artword = khh();
     std::string artword_name = "khh";
     //Artword artword = unstable2();
     //std::string artword_name = "unstable2_artword";
-    sim_artword(&female, &artword,artword_name,log_period,prefix);
+    sim_artword(&female, &artword,artword_name,log_period,prefix);*/
     
     // 2.) Generate Randomly Stimulated data trials
+    /*int num_trials1 = 30;
+    double hold_mean1 = 0.1;
+    bool end_interp1 = true;
+    double utterance_length1 = 2;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);*/
+    
     /*int num_trials1 = 200;
     double hold_mean1 = 0.2;
     bool end_interp1 = false;
@@ -508,7 +515,32 @@ int main()
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
     // 4.) Perform Primitive Control based on IC only
-    //prim_control(&female, utterance_length, log_period,prefix,lognum);
+    int lognum = 8;
+    double utterance_length = 2;
+    std::string config = "scale_fix8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
+    // Move prim_logs inside of config directory
+    prim_control(&female, utterance_length, log_period,prefix,config,lognum);
+    /*int lognum = 8;
+    double utterance_length = 2;
+    std::string config = "short_lung_scale8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
+    // Move prim_logs inside of config directory
+    prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
+
+    /*int lognum = 0;
+    double utterance_length = 2;
+    std::string config = "short8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
+    // Move prim_logs inside of config directory
+    prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
+    
+    /*int lognum = 0;
+    double utterance_length = 2;
+    std::string config = "original8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised1/");
+    // Move prim_logs inside of config directory
+    prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
     
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);

@@ -1,4 +1,4 @@
-function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,fpath,feats)
+function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,fpath,feats,stdevs,dmean)
     % Graph Input and Output Primitives in subplot form
     % K = Input Prims
     % O = Output Prims
@@ -15,6 +15,8 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,
     % fpath = path to folder to save figures with filename prefix
     % feats = indicies features that you want plotted in range from
     %   1-num_vars
+    % stdevs  = feature scaling vector
+    % dmean = mean vector over all features over samples f+p
     
     % Note: This uses a hacky way to make surf not delete 1 row and 1 col at end of data
     % could use imagesc instead, but I think label editing is harder
@@ -31,6 +33,13 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,
     [ha2,~] =tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
     figure(fignums(2)); clf; f3 = gcf;
     [ha3,~] = tight_subplot(mk,nk,[.01 .03],[.1 .05],[.1 .2]);
+    % Scale primitives and add back mean for visualization
+    % x = K*(Yp-dmean_p)./stdev_p = (K./stdev_p)(Yp-dmean_p)
+    % To get K to reflect mapping of 
+    %(Yf-Yfmean)./stdef_f = O*K*(Yp-Ypmean)./stdef_p;
+    %(Yf-Yfmean)./stdef_f = O*K*(Yp-Ypmean)./stdef_p;
+    %KK = K.*repmat(stdevs',[k,p]);%+ones(k,1)*dmean(1:num_vars*p)';
+    %OO = O.*repmat(stdevs,[f,k]);%+dmean(num_vars*p+1:end)*ones(1,k);
     KK = reshape(K',[num_vars,k*p]);
     OO = reshape(O,[num_vars,k*f]);
     KK = KK(feats,:);
@@ -54,14 +63,14 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,
         axes(ha3(i));
         surf((p:p+f)*dt,(1:num_vars+1)-.5,[[Fs; zeros(1,f)],zeros(num_vars+1,1)],'EdgeColor','none');
         axis xy; axis tight; colormap(hot); view(0,90);
+        set(ha2(i),'clim',[Kmin,Kmax])
+        set(ha3(i),'clim',[Omin,Omax])
         if mod(i-1,nk)
             set(ha2(i),'Ytick',[]);
             set(ha3(i),'Ytick',[]);
         else
-            set(ha2(i),'clim',[Kmin,Kmax])
             set(ha2(i),'YTick',ylab_ind,'YTickLabel',lab(ylab_ind),...
                 'YTickLabelRotation',45)
-            set(ha3(i),'clim',[Omin,Omax])
             set(ha3(i),'YTick',ylab_ind,'YTickLabel',lab(ylab_ind),...
                 'YTickLabelRotation',45)
         end

@@ -249,16 +249,26 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     
     // Scale the Area and Articulatory features by their respective standard deviations
     for (int i=0; i<NUM_FEAT; i++) {
-        double inv_std = 1/gsl_vector_get(stddev, i);
+        double std = gsl_vector_get(stddev, i);
         for (int j=0; j<f_p[1]; j++) {
-            gsl_vector_view Yp_ij = gsl_vector_subvector(Yp, j*NUM_FEAT+i, 1);
-            gsl_blas_dscal(inv_std, &Yp_ij.vector);
+            if (std==0) {
+                gsl_vector_view Yp_ij = gsl_vector_subvector(Yp, j*NUM_FEAT+i, 1);
+                gsl_blas_dscal(0, &Yp_ij.vector);
+            } else{
+                gsl_vector_view Yp_ij = gsl_vector_subvector(Yp, j*NUM_FEAT+i, 1);
+                gsl_blas_dscal(1/std, &Yp_ij.vector);
+            }
         }
         if (doArefControl && i<MAX_NUMBER_OF_TUBES) {
             for (int j=0; j<f_p[0]; j++) {
                 // Scale Afref by its standard deviation
-                gsl_vector_view Afref_ij = gsl_vector_subvector(Afref, j*MAX_NUMBER_OF_TUBES+i, 1);
-                gsl_blas_dscal(inv_std, &Afref_ij.vector);
+                if (std==0) {
+                    gsl_vector_view Afref_ij = gsl_vector_subvector(Afref, j*MAX_NUMBER_OF_TUBES+i, 1);
+                    gsl_blas_dscal(0, &Afref_ij.vector);
+                } else {
+                    gsl_vector_view Afref_ij = gsl_vector_subvector(Afref, j*MAX_NUMBER_OF_TUBES+i, 1);
+                    gsl_blas_dscal(1/std, &Afref_ij.vector);
+                }
             }
         }
     }

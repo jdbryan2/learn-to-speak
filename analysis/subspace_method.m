@@ -17,29 +17,36 @@ clear
 k = 8;
 
 % Save figures or not
-save_figs = true;
+save_figs = false;
 
 % Human Speech
-data_type = 'speech';
-testname = 'TestMySpeech1';
-%config = 'simple'; % noisy ish ball with some rotation
-%config = 'texture';
-%config = 'original'; % Super smooth and lots of rotation
-config = 'short';
-%config = 'smooth2';
+% data_type = 'speech';
+% testname = 'TestMySpeech1';
+% %config = 'simple'; % noisy ish ball with some rotation
+% %config = 'texture';
+% %config = 'original'; % Super smooth and lots of rotation
+% config = 'short';
+% %config = 'smooth2';
 
 % VT-articulatory
-% data_type = 'tubart';
-% %testname = 'testThesis4';
-% %testname = 'testFeatureTrack';
-% %testname = 'testFeatureTrack2';
-% %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-% %testname = 'testRevised1';
-% %testname = 'testRevised3';
-% %testname = 'testRevised4';
-% testname = 'testBatch3';
-% %config = 'long';
-% config = 'shortp';
+data_type = 'tubart';
+%testname = 'testThesis4';
+%testname = 'testFeatureTrack';
+%testname = 'testFeatureTrack2';
+%testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
+%testname = 'testRevised1'; %original sound maker
+%testname = 'testRevised3';
+%testname = 'testRevised4';
+%testname = 'testBatch3';
+testname = 'testRandArt1';
+%config = 'original';
+%config = 'original_no_zeros';
+%config = 'long';
+%config = 'short';
+%config = 'short_lung_scale';
+%config = 'short_no_zeros';
+config = 'scale_fix_perm';
+%config = 'scale_fix_long';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -150,15 +157,18 @@ if strcmp(data_type, 'speech')
     Xp = Xp./repmat(stdevs,[p,num_logs]);
     Xf = Xf./repmat(stdevs,[f,num_logs]);
 elseif strcmp(data_type, 'tubart')
-    if strcmp(config,'long')
+    if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')
+        f = 13;
+        p = 13;
+    elseif strcmp(config,'original') || strcmp(config,'original_no_zeros')
         f = 13;
         p = 13;
     elseif strcmp(config,'longer')
         f = 15;
         p = 15;
-    elseif strcmp(config,'shortp')
-        f = 13;
-        p = 13;
+    elseif strcmp(config,'short') || strcmp(config,'short_lung_scale') || strcmp(config,'short_no_zeros') || strcmp(config,'scale_fix')
+        f = 2;
+        p = 2;
     end
     L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
@@ -219,32 +229,52 @@ elseif strcmp(data_type, 'tubart')
     % Scale features
     stdevs = std(XPF,0,2);
     % Scaling tubes and arts by the respective mean stddevs
-    if strcmp(config,'')
+    if strcmp(config,'original') || strcmp(config,'short')
         rng1 = 1:num_tubes;
         rng2 = num_tubes+1:num_vars;
         stdevs(rng1) = mean(stdevs(rng1));
         stdevs(rng2) = mean(stdevs(rng2));
-    elseif strcmp(config,'')
-        Scaling non-lung tubes, lung tubes ish?, and arts differently
-        rng1 = [1:6,19:num_tubes];
-        rng2 = 7:18;
+    elseif strcmp(config,'short_lung_scale')
+        %Scaling non-lung tubes, lung tubes ish?, and arts differently
+        rng1 = [1:6,22:num_tubes];
+        rng2 = 7:21; % technically lungs are 1:23/22?, but first 6 aren't used
         rng3 = num_tubes+1:num_vars;
         stdevs(rng1) = mean(stdevs(rng1));
         stdevs(rng2) = mean(stdevs(rng2));
         stdevs(rng3) = mean(stdevs(rng3));
     %else % Scaling by individual feature variance
+    elseif strcmp(config,'scale_fix') ||strcmp(config,'scale_fix_long')
+        % Currenlty just change it so that non-zero features are weighted
+        % very low for the DFA.
+        % TODO:Change code to only output non_zero features, but that
+        % requires editing the primitive math in the simulator.
+%         non_zero_feats = stdevs>=1e-6;
+%         stdevs(~non_zero_feats) = max(stdevs)*10;
+%         non_zero_p = repmat(non_zero_feats,[p,1]);
+%         non_zero_f = repmat(non_zero_feats,[f,1]);
+%         %Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
+%         %Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
     end
-    
+        
+    non_zero_feats = stdevs>=1e-6;
+    stdevs(~non_zero_feats) = max(stdevs)*10;
+    non_zero_p = repmat(non_zero_feats,[p,1]);
+    non_zero_f = repmat(non_zero_feats,[f,1]);
+    Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
+    Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
     % Make tube sections with 0 std dev = the mean tube std dev
+    % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!BAD IDEA POTENTIALLY bc still could be
+    % fairly small. Maybe make it really big so we don't care about it or
+    % not bc xp for those values is zero anyway
     % May need to set a tolerance here instead of just 0
-    tub_stds = stdevs(1:num_tubes);
-    ztubs = tub_stds~=0;
-    z_std = mean(tub_stds(ztubs));
-    tub_stds(tub_stds==0) = z_std;
-    stdevs(1:num_tubes) = tub_stds;
+%     tub_stds = stdevs(1:num_tubes);
+%     ztubs = tub_stds~=0;
+%     z_std = mean(tub_stds(ztubs));
+%     tub_stds(tub_stds==0) = z_std;
+%     stdevs(1:num_tubes) = tub_stds;
     
-    Xp = Xp./repmat(stdevs,[p,num_logs]);
-    Xf = Xf./repmat(stdevs,[f,num_logs]);
+%     Xp = Xp./repmat(stdevs,[p,num_logs]);
+%     Xf = Xf./repmat(stdevs,[f,num_logs]);
 elseif strcmp(data_type, 'stubart') %FIX THIS!!!!!!!!!!!!!!!!
     % Keep f+p<=samp_len-1
     p = 13;
@@ -371,6 +401,10 @@ zs = Xf == 0;
 Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
+% Re-order the Columns of Xf and Xp
+perm = randperm(num_logs);
+Xp = Xp(:,perm);
+Xf = Xf(:,perm);
 %% Perform Least Squares Regression
 skip = 0;
 prms = skip+1:k+skip;
@@ -389,16 +423,25 @@ Uk = U(:,prms);
 K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
-
+%%
+Kz = zeros(k,num_vars*p);
+Oz = zeros(num_vars*f,k);
+Xpz = zeros(num_vars*p,num_logs);
+Xfz = zeros(num_vars*f,num_logs);
+Kz(:,non_zero_p) = K;
+Oz(non_zero_f,:) = O;
+Xpz(non_zero_p,:) = Xp;
+Xfz(non_zero_f,:) = Xf;
 %% View Pimitives
-view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[2,3],testdir,1:num_vars);
+view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
+%view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[2,3],testdir,1:num_vars,stdevs,dmean);
 if strcmp(data_type,'tubart')
-    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes);
-    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
 elseif strcmp(data_type,'stubart')
-    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes);
-    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art);
-    view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[37,38],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars);
+    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
+    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[37,38],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars,stdevs,dmean);
 end
 %% View Factors
 f4 = figure(4); % Graph common factors vs sample/time
@@ -445,12 +488,29 @@ if save_figs
     print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
 end
+%%
+KKs = Kz.*repmat(stdevs',[k,p]);
+OOs = Oz.*repmat(stdevs,[f,k]);
+FFs = OOs*KKs;
+mfps = dmean(num_vars*p+1:end)-FFs*dmean(1:num_vars*p);
+%mfs = (dmean(num_vars*p+1:end)*ones(1,k)).*repmat(stdevs,[f,k]);
+%mps = O*K*dmean(1:num_vars*p).*repmat(stdevs,[f,1]);
+ffs(FFs>1) = 1;
+ffs(FFs<-1) = -1;
+imagesc(ffs)
+figure(39);plot(mfps)
+figure(38);imagesc(abs(log(FFs)))
+ffs = FFs;
+ffs(abs(FFs)<1) = mean(ffs(abs(FFs)<1));
+ffs(FFs<-1) = mean(ffs(FFs<-1));
+ffs(FFs>1) = mean(ffs(FFs>1));
+%figure(38);imagesc(ffs)
 %% Compute Errors
 % Scale Yf back to correct units
-Xf_pred = O*K*Xp;
+Xf_pred = Oz*Kz*Xpz;
 Xf_mean = dmean(p*(num_vars)+1:end)*ones(1,num_logs);
 Xf_unscaled_pred = Xf_pred.*repmat(stdevs,[f,num_logs])+Xf_mean;
-Xf_unscaled = Xf.*repmat(stdevs,[f,num_logs])+Xf_mean;
+Xf_unscaled = Xfz.*repmat(stdevs,[f,num_logs])+Xf_mean;
 %Xf_unscaled(zs) = 0;
 % Limit predictions to max and min articulator activations as the sim does
 % Should technically pull out just art values and test them not look at
@@ -460,17 +520,18 @@ Xf_unscaled = Xf.*repmat(stdevs,[f,num_logs])+Xf_mean;
 % Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
 
 if strcmp(data_type,'tubart') || strcmp(data_type,'stubart')
-    nzero_f_inds = repmat([ztubs;logical(ones(num_vars-num_tubes,1))],[f,1]);
+    %nzero_f_inds = repmat([ztubs;logical(ones(num_vars-num_tubes,1))],[f,1]);
+    %nzero_f_inds = repmat(non_zero_f,[1,num_logs]);
 elseif strcmp(data_type,'speech')
     nzero_f_inds = logical(ones(num_vars*f,1));
     ztubs = 1;
 end
 
-errors_scaled = (Xf_pred-Xf);
+errors_scaled = (Xf_pred-Xfz);
 %errors_scaled = errors_scaled(nzero_f_inds,:);
 errors = (Xf_unscaled-Xf_unscaled_pred);
-errors = errors(nzero_f_inds,:);
-errors = reshape(errors,[(num_vars-sum(~ztubs))*f,num_logs]);
+errors = errors(non_zero_f,:);
+errors = reshape(errors,[(num_vars-sum(~non_zero_feats))*f,num_logs]);
 figure(20); imagesc(errors);
 title('Combined Unscaled Xf Prediction Error')
 colorbar
@@ -495,7 +556,7 @@ if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
     Oarea = zeros(f*num_tubes,k);
     for i=0:f-1
             ind = i*num_vars;
-            Oarea(i*num_tubes+1:(i+1)*num_tubes,:) = O(ind+1:ind+num_tubes,:);
+            Oarea(i*num_tubes+1:(i+1)*num_tubes,:) = Oz(ind+1:ind+num_tubes,:);
     end
     Oarea_inv = pinv(Oarea);
 end
@@ -513,39 +574,39 @@ end
 % using binary or hex values in the log files
 % TODO: Use hex or binary log files
 if strcmp(data_type, 'tubart')
-kt = K';
-fid=fopen([testname,'/',config,'/K_mat.prim'],'wt');
+kt = Kz';
+fid=fopen([testdir,'K_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',kt);
 fclose(fid);
 
-ot = O';
-fid=fopen([testname,'/',config,'/O_mat.prim'],'wt');
+ot = Oz';
+fid=fopen([testdir,'O_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',ot);
 fclose(fid);
 
 oait = Oarea_inv';
-fid=fopen([testname,'/',config,'/Oa_inv_mat.prim'],'wt');
+fid=fopen([testdir,'Oa_inv_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',oait);
 fclose(fid);
 
-fid=fopen([testname,'/',config,'/mean_mat.prim'],'wt');
+fid=fopen([testdir,'mean_mat.prim'],'wt');
 fprintf(fid,'%.32e\n',dmean);
 fclose(fid);
 
-fid=fopen(['/config/',testname,'/stddev.prim'],'wt');
+fid=fopen([testdir,'stddev.prim'],'wt');
 fprintf(fid,'%.32e\n',stdevs);
 fclose(fid);
 
 fp = [f,p];
-fid=fopen([testname,'/',config,'/f_p_mat.prim'],'wt');
+fid=fopen([testdir,'f_p_mat.prim'],'wt');
 fprintf(fid,'%d\n',fp);
 fclose(fid);
 
-fid=fopen([testname,'/',config,'/samp_freq.prim'],'wt');
+fid=fopen([testdir,'samp_freq.prim'],'wt');
 fprintf(fid,'%.32e\n',samp_freq);
 fclose(fid);
 
-fid=fopen([testname,'/',config,'/num_prim.prim'],'wt');
+fid=fopen([testdir,'num_prim.prim'],'wt');
 fprintf(fid,'%d\n',k);
 fclose(fid);
 
