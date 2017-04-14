@@ -466,6 +466,13 @@ int main()
     sim_artword(&female, &artword,artword_name,log_period,prefix);*/
     
     // 2.) Generate Randomly Stimulated data trials
+    int num_trials1 = 1000;
+    double hold_mean1 = 0.1;
+    bool end_interp1 = true;
+    double utterance_length1 = 0.5;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch1000/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);
+    
     /*int num_trials1 = 30;
     double hold_mean1 = 0.1;
     bool end_interp1 = true;
@@ -515,16 +522,16 @@ int main()
     // 3.) Perform MATLAB DFA to find primitives and generate Aref of 1.)
     
     // 4.) Perform Primitive Control based on IC only
-    int lognum = 8;
+    /*int lognum = 8;
     double utterance_length = 2;
     std::string config = "scale_fix8";
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
     // Move prim_logs inside of config directory
-    prim_control(&female, utterance_length, log_period,prefix,config,lognum);
-    /*int lognum = 8;
-    double utterance_length = 2;
-    std::string config = "short_lung_scale8";
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRandArt1/");
+    prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
+    /*int lognum = 4;
+    double utterance_length = 4;
+    std::string config = "scale_fix_perm_no_smooth8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch2/");
     // Move prim_logs inside of config directory
     prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
 

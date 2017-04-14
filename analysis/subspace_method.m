@@ -13,6 +13,7 @@ clear
 %   the synergies/primitives. Must line up with if statements in data
 %   import
 
+
 % Model Parameters
 k = 8;
 
@@ -30,6 +31,7 @@ save_figs = false;
 
 % VT-articulatory
 data_type = 'tubart';
+smooth = false;
 %testname = 'testThesis4';
 %testname = 'testFeatureTrack';
 %testname = 'testFeatureTrack2';
@@ -38,14 +40,15 @@ data_type = 'tubart';
 %testname = 'testRevised3';
 %testname = 'testRevised4';
 %testname = 'testBatch3';
-testname = 'testRandArt1';
+%testname = 'testBatch2';
+testname = 'testBatch1000';
 %config = 'original';
 %config = 'original_no_zeros';
 %config = 'long';
 %config = 'short';
 %config = 'short_lung_scale';
 %config = 'short_no_zeros';
-config = 'scale_fix_perm';
+config = 'scale_fix_perm_no_smooth';
 %config = 'scale_fix_long';
 
 % VT-acoustic-articulatory
@@ -157,7 +160,7 @@ if strcmp(data_type, 'speech')
     Xp = Xp./repmat(stdevs,[p,num_logs]);
     Xf = Xf./repmat(stdevs,[f,num_logs]);
 elseif strcmp(data_type, 'tubart')
-    if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')
+    if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')% || strcmp(config,'scale_fix_perm_no_smooth')
         f = 13;
         p = 13;
     elseif strcmp(config,'original') || strcmp(config,'original_no_zeros')
@@ -169,10 +172,14 @@ elseif strcmp(data_type, 'tubart')
     elseif strcmp(config,'short') || strcmp(config,'short_lung_scale') || strcmp(config,'short_no_zeros') || strcmp(config,'scale_fix')
         f = 2;
         p = 2;
+    elseif strcmp(config,'scale_fix_perm_no_smooth')
+        f=13;
+        p=13;
     end
     L = f+p;
     logs = dir([testname, '/logs/datalog*.log']);
-    num_files = length(logs);
+    num_files = length(logs);%!!!!!!!!!!!!!!!!!!!!!!!!!-------
+    num_files = 200;
     Xp_ = [];
     Xf_ = [];
     XPF = [];
@@ -200,7 +207,12 @@ elseif strcmp(data_type, 'tubart')
             num_vars = length(D_lab);
         end
         vt = vt(zinds,:);
-        length_fact = samp_len+1-L;
+        if strcmp(config,'scale_fix_perm_no_smooth')
+            % Cut off sample to length L
+            length_fact = 1;
+        else
+            length_fact = samp_len+1-L;
+        end
         xpf = zeros(num_vars,L*length_fact);
         XP_ = zeros(num_vars*p,length_fact);
         XF_ = zeros(num_vars*f,length_fact);
@@ -257,7 +269,8 @@ elseif strcmp(data_type, 'tubart')
     end
         
     non_zero_feats = stdevs>=1e-6;
-    stdevs(~non_zero_feats) = max(stdevs)*10;
+    %stdevs(~non_zero_feats) = max(stdevs)*10;
+    stdevs(~non_zero_feats) = 0;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!---
     non_zero_p = repmat(non_zero_feats,[p,1]);
     non_zero_f = repmat(non_zero_feats,[f,1]);
     Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
@@ -402,9 +415,9 @@ Xf(zs) = 1e-10;
 %Xp = log10(Xp.^2);
 %Xf = log10(Xf.^2);
 % Re-order the Columns of Xf and Xp
-perm = randperm(num_logs);
-Xp = Xp(:,perm);
-Xf = Xf(:,perm);
+%perm = randperm(num_logs); %!!!!!!!!!!!!!!!!!!!!!!!!!-------
+%Xp = Xp(:,perm);
+%Xf = Xf(:,perm);
 %% Perform Least Squares Regression
 skip = 0;
 prms = skip+1:k+skip;

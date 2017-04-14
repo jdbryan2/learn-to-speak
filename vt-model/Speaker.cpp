@@ -510,7 +510,7 @@ void Speaker::InitSim(double totalTime, Articulation initialArt)
 		printf("Starting volume: %f liters.\n", totalVolume * 1000);
         // Set up log counters and write headers
         if(log_data == true) {
-            InitDataLogger();
+            InitDataLogger(); //ISSUE WITH TUBES 6-17 for the first timestep. mean is not zero. maybe wait till second step?
         }
 
 	} catch (int e) {
