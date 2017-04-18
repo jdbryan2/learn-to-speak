@@ -84,12 +84,12 @@ public:
 public:
     Speaker(std::string kindOfSpeaker, int numberOfVocalCordMasses, double samplefreq, int oversample_multiplier);
     ~Speaker() { delete result;  delete log_stream;  }
-    void InitSim(double totalTime, Articulation initialArt);
+    void InitSim(double totalTime, Articulation initialArt); // sets loop_count=0
     int ConfigDataLogger(std::string filepath,int _log_period);
     void IterateSim();
     bool NotDone() {return (sample < numberOfSamples);}
     double NowSeconds(){return (sample)/fsamp;}
-    double NowSecondsLooped(){return (numberOfSamples+sample)/fsamp;}
+    double NowSecondsLooped(){return (loop_count*numberOfSamples+sample)/fsamp;}
     long Now() {return sample;}
     void setMuscle(int muscle, double position) {art[muscle] = position;}// muscle 0-28, position 0-1
     double getMuscle(int muscle) const {return art[muscle];}
@@ -137,14 +137,16 @@ BOOST_PYTHON_MODULE(PyRAAT) // tells boost where to look
     boost::python::class_<Speaker>("Speaker", boost::python::init<std::string, int, double, int>())
        .def("InitSim", &Speaker::py_InitSim)
        .def("IterateSim", &Speaker::IterateSim)
-       .def("getAreaFcn", &Speaker::py_getAreaFcn)
+       .def("GetAreaFcn", &Speaker::py_getAreaFcn)
        .def("Now", &Speaker::Now)
        .def("NowSeconds", &Speaker::NowSeconds)
-       .def("getLastSample", &Speaker::getLastSample)
+       .def("NowSecondsLooped", &Speaker::NowSecondsLooped)
+       .def("GetLastSample", &Speaker::getLastSample)
        .def("NotDone", &Speaker::NotDone)
-       .def("setMuscle", &Speaker::setMuscle)
-       .def("getMuscle", &Speaker::getMuscle)
-       .def("setArticulation", &Speaker::py_setArticulation)
+       .def("SetMuscle", &Speaker::setMuscle)
+       .def("GetMuscle", &Speaker::getMuscle)
+       .def("SetArticulation", &Speaker::py_setArticulation)
+       .def("LoopBack", &Speaker::LoopBack)
        .def("SaveSound", &Speaker::SaveSound)
     ;
 }
