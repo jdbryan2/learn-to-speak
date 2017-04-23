@@ -7,8 +7,8 @@ k = 8;
 % Human Speech
 data_type = 'speech';
 testname = 'TestMySpeech1';
-config = 'original';
-%config = 'short';
+%config = 'original';
+config = 'short';
 log_type = 'ipa*.mat';
 
 % log_type = 'datalog*.log'
@@ -19,6 +19,7 @@ num_art = 29;
 % Load Primitives
 testdir = [testname,'/',config,num2str(k),'/'];
 load([testdir,'prims.mat']);
+load([testdir,'speech_preprocess.mat']);
 
 % Load Logs
 logs = dir([testname, '/logs/',log_type]);

@@ -14,9 +14,6 @@ clear
 %   import
 
 
-% Model Parameters
-k = 8;
-
 % Save figures or not
 save_figs = false;
 
@@ -30,37 +27,212 @@ save_figs = false;
 % %config = 'smooth2';
 
 % VT-articulatory
-data_type = 'tubart';
-smooth = false;
-%testname = 'testThesis4';
-%testname = 'testFeatureTrack';
-%testname = 'testFeatureTrack2';
-%testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-%testname = 'testRevised1'; %original sound maker
-%testname = 'testRevised3';
-%testname = 'testRevised4';
-%testname = 'testBatch3';
-%testname = 'testBatch2';
-testname = 'testBatch1000';
-%config = 'original';
-%config = 'original_no_zeros';
-%config = 'long';
-%config = 'short';
-%config = 'short_lung_scale';
-%config = 'short_no_zeros';
-config = 'scale_fix_perm_no_smooth';
-%config = 'scale_fix_long';
+% data_type = 'tubart';
+% smooth = false;
+% %testname = 'testThesis4';
+% %testname = 'testFeatureTrack';
+% %testname = 'testFeatureTrack2';
+% %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
+% %testname = 'testRevised1'; %original sound maker
+% %testname = 'testRevised3';
+% %testname = 'testRevised4';
+% %testname = 'testBatch3';
+% %testname = 'testBatch2';
+% testname = 'testBatch1000';
+% %config = 'original';
+% %config = 'original_no_zeros';
+% %config = 'long';
+% %config = 'short';
+% %config = 'short_lung_scale';
+% %config = 'short_no_zeros';
+% %config = 'scale_fix_perm_no_smooth';
+% config = 'scale_fix';
+% %config = 'scale_fix_long';
 
 % VT-acoustic-articulatory
-% data_type = 'stubart';
-% %testname = 'testThesis4';
-% testname = 'testFeatureTrack'; %smooth ish ball with a lot of rotation (.1,.25) 10 sec 5 logs
-% %testname = 'testFeatureTrack2'; %smooth ish ball with some rotation (.25,.25) 10 sec 5 logs
-% %testname = 'testFeatureTrack3'; % smooth ish Ball, no rotation (.25,.25) 10 sec 10 logs
-% %testname = 'testFeatureTrack4'; %smooth ish ball with some rotation (.1,.25) 10 sec 5 logs
-% config = 'long'; % Long random stim trials
-% %config = 'longer'; % longer f and p
+data_type = 'stubart';
+%testname = 'testThesis4';
+%testname = 'testFeatureTrack'; %smooth ish ball with a lot of rotation (.1,.25) 10 sec 5 logs
+%testname = 'testFeatureTrack2'; %smooth ish ball with some rotation (.25,.25) 10 sec 5 logs
+%testname = 'testFeatureTrack3'; % smooth ish Ball, no rotation (.25,.25) 10 sec 10 logs
+%testname = 'testFeatureTrack4'; %smooth ish ball with some rotation (.1,.25) 10 sec 5 logs
+testname = 'testBatch1000';
+config = 'long'; % Long random stim trials
+%config = 'longer'; % longer f and p
+%config = 'default';
 
+% DFA Configuration Settings
+if strcmp(config,'default')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 3; % Number of timesteps in the future
+    p = 3; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = true; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'individual'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'original_594')
+    tlen = 0.3;
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = round(tlen/win_time); % Number of timesteps in the future
+    p = round(tlen/win_time); % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+elseif strcmp(config,'textured_input')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 4; % Number of timesteps in the future
+    p = 116; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 6; % Maximum length of sample in seconds
+    win_time = 5/1000; % Width of FFT window in seconds
+elseif strcmp(config,'broad_phonetic_cat')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 2; % Number of timesteps in the future
+    p = 2; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+elseif strcmp(config,'long')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 12; % Number of timesteps in the future
+    p = 13; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'individual'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+end
+
+% if strcmp(data_type,'speech');
+%     if strcmp(config,'simple')
+%         tlen = 0.15;
+%         win_time = 20/1000;
+%         max_length = 30;
+%         f = round(tlen/win_time);
+%         p = round(tlen/win_time);
+%     elseif strcmp(config,'original')
+%         tlen = 0.3;
+%         win_time = 20/1000;
+%         max_length = 30;
+%         f = round(tlen/win_time);
+%         p = round(tlen/win_time);
+%     elseif strcmp(config,'smooth2')
+%         win_time = 20/1000;
+%         max_length = 30;
+%         tlen = 0.3;
+%         f = round(tlen/win_time);
+%         p = 2;
+%     elseif strcmp(config,'texture')
+%         win_time = 5/1000; %textured one
+%         max_length = 6;
+%         f =1*4; %textured one
+%         p = 29*4; %textured one
+%     elseif strcmp(config,'short')
+%         win_time = 20/1000;
+%         max_length = 30;
+%         f = 2;
+%         p = 2;
+%     end
+% elseif strcmp(data_type,'tubart')
+%     if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')% || strcmp(config,'scale_fix_perm_no_smooth')
+%         f = 13;
+%         p = 13;
+%         smooth = true;
+%         max_num_files = 1000;
+%         scaling = 'individual';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'original') || strcmp(config,'original_no_zeros')
+%         f = 13;
+%         p = 13;
+%         smooth = true;
+%         max_num_files = 50;
+%         scaling = 'original';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'longer')
+%         f = 15;
+%         p = 15;
+%         smooth = true;
+%         max_num_files = 1000;
+%         scaling = 'individual';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'short')
+%         f = 3;
+%         p = 3;
+%         smooth = true;
+%         max_num_files = 200;
+%         scaling = 'original';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'short_lung_scale') 
+%         f = 3;
+%         p = 3;
+%         smooth = true;
+%         max_num_files = 1000;
+%         scaling = 'short_lung_scale';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'short_no_zeros')
+%         f = 3;
+%         p = 3;
+%         smooth = true;
+%         max_num_files = 1000;
+%         scaling = 'individual';
+%         skip_first_samp = false;
+%     elseif strcmp(config,'scale_fix')
+%         f = 3;
+%         p = 3;
+%         smooth = false;
+%         max_num_files = 200;
+%         scaling = 'individual';
+%         skip_first_samp = true;
+%     elseif strcmp(config,'scale_fix_perm_no_smooth')
+%         f=13;
+%         p=13;
+%         smooth = false;
+%         max_num_files = 200;
+%         scaling = 'individual';
+%         skip_first_samp = false;
+%     end
+% elseif strcmp(data_type,'stubart')
+%     if strcmp(config, 'long')
+%         % Keep f+p<=samp_len-1
+%         p = 13;
+%         f = 12;
+%         max_num_files = 200;
+%         scaling = 'individual';
+%         smooth = false;
+%     elseif strcmp(config,'longer')
+%         % Keep f+p<=samp_len-1
+%         p = 15;
+%         f = 15;
+%         max_num_files = 200;
+%         scaling = 'individual';
+%         smooth = false;
+%     end
+% else
+%     error('Unsupported Data Type')
+% end
 % VT Definitions
 num_tubes = 89;
 num_art = 29;
@@ -70,342 +242,36 @@ mk = ceil(sqrt(k));
 nk = ceil((k-mk)/mk)+1;
 
 % Create directory for this specific test
-testdir = [testname,'/',config,num2str(k),'/'];
+testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 mkdir(testdir);
 
 % Import Data and Preprocess accordingly
 if strcmp(data_type, 'speech')
-    load([testname,'/logs/sample1_30sec.mat']) % Hardcoded filename
-    if strcmp(config,'simple') || strcmp(config,'original') || strcmp(config,'smooth2') ||strcmp(config,'short')
-        win_time = 20/1000;
-    elseif strcmp(config,'texture')
-        win_time = 5/1000; %textured one
-    end
-    nfft = fs*win_time; % To get x ms long window
-    %noverlap = nfft-round(nfft/2);
-    noverlap = 0;
-    win = hamming(nfft,'symmetric'); % Might need to be 'periodic' not sure
-
-    % Phrase 1
-    fignum = 1;
-    if strcmp(config,'simple') || strcmp(config,'original') || strcmp(config,'smooth2')||strcmp(config,'short')
-        [mag_spect, freq, t] = my_spectrogram(y(1:length(y)),win,noverlap,nfft,fs,fignum);
-    elseif strcmp(config,'texture')
-        [mag_spect, freq, t] = my_spectrogram(y(1:length(y)/5),win,noverlap,nfft,fs,fignum);
-    end
-    if save_figs == true
-        saveas(fignum,[testdir,'spectrogram'],'epsc');
-        saveas(fignum,[testdir,'spectrogram'],'fig');
-    end
-    dt = t(2)-t(1);
-    
-    if strcmp(config,'simple')
-        tlen = 0.15;
-        f = round(tlen/dt);
-        p = round(tlen/dt);
-    elseif strcmp(config,'original')
-        tlen = 0.3;
-        f = round(tlen/dt);
-        p = round(tlen/dt);
-    elseif strcmp(config,'smooth2')
-        tlen = 0.3;
-        f = round(tlen/dt);
-        p = 2;
-    elseif strcmp(config,'texture')
-        f =1*4; %textured one
-        p = 29*4; %textured one
-    elseif strcmp(config,'short')
-        f = 2;
-        p = 2;
-    end
-    L = f+p;
-    [num_f,num_samp] = size(mag_spect);
-    %Remove any zeros and replace with small value to not mess up svd
-    zs = mag_spect==0;
-    mag_spect(zs) = 1e-10;
-    logmag = log10(mag_spect.^2);
-    f_ind = 1:5:num_f;
-    freqs = freq(f_ind);
-    num_freqs = length(freqs);
-    length_fact = length(t)-L;
-    XPF = zeros(length(f_ind),L*length_fact);
-    Xp_ = zeros(length(f_ind)*p,length_fact);
-    Xf_ = zeros(length(f_ind)*f,length_fact);
-    for n=1:length_fact
-        xp = logmag(f_ind,n:n+p-1);
-        xf = logmag(f_ind,n+p:n+p+f-1);
-        XPF(:,1+(n-1)*L:n*L) = [xp,xf];
-        Xp_(:,n) = xp(:);
-        Xf_(:,n) = xf(:);
-    end
-%     XPM = mean(XP,2);
-%     XFM = mean(XF,2);
-%     Xp = Xp_ - repmat(XPM,p,length_fact);
-%     Xf = Xf_ - repmat(XFM,f,length_fact);
-    
-    Xpm = mean(Xp_')';
-    Xfm = mean(Xf_')';
-    Xp = Xp_-Xpm*ones(1,length_fact);
-    Xf = Xf_-Xfm*ones(1,length_fact);
-    
-    % Translation from old spectrogram variable names to D names
-    num_vars = num_freqs;
-    num_logs = length_fact;
-    samp_freq = 1/dt;
-    % Round frequencies for labels
-    D_lab = num2cell(floor(freqs));
-    dmean = [Xpm;Xfm];
-    stdevs = std(XPF,0,2);
-    % Was Not scaling Spectrogram features!
-    Xp = Xp./repmat(stdevs,[p,num_logs]);
-    Xf = Xf./repmat(stdevs,[f,num_logs]);
+    [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
+        DFA_preprocess_speech(testname,testdir,win_time,max_length,f,p,save_figs);
 elseif strcmp(data_type, 'tubart')
-    if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')% || strcmp(config,'scale_fix_perm_no_smooth')
-        f = 13;
-        p = 13;
-    elseif strcmp(config,'original') || strcmp(config,'original_no_zeros')
-        f = 13;
-        p = 13;
-    elseif strcmp(config,'longer')
-        f = 15;
-        p = 15;
-    elseif strcmp(config,'short') || strcmp(config,'short_lung_scale') || strcmp(config,'short_no_zeros') || strcmp(config,'scale_fix')
-        f = 2;
-        p = 2;
-    elseif strcmp(config,'scale_fix_perm_no_smooth')
-        f=13;
-        p=13;
-    end
-    L = f+p;
-    logs = dir([testname, '/logs/datalog*.log']);
-    num_files = length(logs);%!!!!!!!!!!!!!!!!!!!!!!!!!-------
-    num_files = 200;
-    Xp_ = [];
-    Xf_ = [];
-    XPF = [];
-    nan_inds = [];
-    for i=1:num_files
-        [VT_log, VT_lab, samp_freq, samp_len] = ...
-            import_datalog([testname,'/logs/',logs(i).name]);
-        % Flip matrix to make more similar to how the spectrogram was processed
-        % in earlier code.
-        vt = VT_log(:,1:end-1)'; %remove sound
-        if sum(sum(isnan(vt)))
-            nan_inds = [nan_inds, i];
-            continue
-        end
-        if i==1
-%              zinds = find(mean(vt,2)~=0);
-%             num_vars = length(VT_lab);
-%             if(length(intersect(zinds,1:num_vars))>length(zinds))
-%                 error('Zero average for variable other than tubes')
-%             end
-%             num_tubes = num_tubes - length(zinds);
-%             zinds = intersect(1:num_vars-1,zinds);
-            zinds = 1:length(VT_lab)-1;
-            D_lab = VT_lab(zinds);
-            num_vars = length(D_lab);
-        end
-        vt = vt(zinds,:);
-        if strcmp(config,'scale_fix_perm_no_smooth')
-            % Cut off sample to length L
-            length_fact = 1;
-        else
-            length_fact = samp_len+1-L;
-        end
-        xpf = zeros(num_vars,L*length_fact);
-        XP_ = zeros(num_vars*p,length_fact);
-        XF_ = zeros(num_vars*f,length_fact);
-        for n=1:length_fact
-            xp = vt(:,n:n+p-1);
-            xf = vt(:,n+p:n+p+f-1);
-            xpf(:,1+(n-1)*L:n*L) = [xp,xf];
-            XP_(:,n) = xp(:);
-            XF_(:,n) = xf(:);
-        end
-        Xp_ = [Xp_,XP_];
-        Xf_ = [Xf_,XF_];
-        XPF = [XPF,xpf];
-    end
-    [~,num_logs] = size(Xp_);
-    dt = 1/samp_freq;
-    
-    %Remove mean of time-varying features. i.e. mean computed over time and
-    %feature space
-    Xpm = mean(Xp_,2);
-    Xfm = mean(Xf_,2);
-    dmean = [Xpm;Xfm];
-    Xp = Xp_-Xpm*ones(1,num_logs);
-    Xf = Xf_-Xfm*ones(1,num_logs);
-    
-    % Scale features
-    stdevs = std(XPF,0,2);
-    % Scaling tubes and arts by the respective mean stddevs
-    if strcmp(config,'original') || strcmp(config,'short')
-        rng1 = 1:num_tubes;
-        rng2 = num_tubes+1:num_vars;
-        stdevs(rng1) = mean(stdevs(rng1));
-        stdevs(rng2) = mean(stdevs(rng2));
-    elseif strcmp(config,'short_lung_scale')
-        %Scaling non-lung tubes, lung tubes ish?, and arts differently
-        rng1 = [1:6,22:num_tubes];
-        rng2 = 7:21; % technically lungs are 1:23/22?, but first 6 aren't used
-        rng3 = num_tubes+1:num_vars;
-        stdevs(rng1) = mean(stdevs(rng1));
-        stdevs(rng2) = mean(stdevs(rng2));
-        stdevs(rng3) = mean(stdevs(rng3));
-    %else % Scaling by individual feature variance
-    elseif strcmp(config,'scale_fix') ||strcmp(config,'scale_fix_long')
-        % Currenlty just change it so that non-zero features are weighted
-        % very low for the DFA.
-        % TODO:Change code to only output non_zero features, but that
-        % requires editing the primitive math in the simulator.
-%         non_zero_feats = stdevs>=1e-6;
-%         stdevs(~non_zero_feats) = max(stdevs)*10;
-%         non_zero_p = repmat(non_zero_feats,[p,1]);
-%         non_zero_f = repmat(non_zero_feats,[f,1]);
-%         %Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
-%         %Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
-    end
-        
-    non_zero_feats = stdevs>=1e-6;
-    %stdevs(~non_zero_feats) = max(stdevs)*10;
-    stdevs(~non_zero_feats) = 0;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!---
-    non_zero_p = repmat(non_zero_feats,[p,1]);
-    non_zero_f = repmat(non_zero_feats,[f,1]);
-    Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
-    Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
-    % Make tube sections with 0 std dev = the mean tube std dev
-    % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!BAD IDEA POTENTIALLY bc still could be
-    % fairly small. Maybe make it really big so we don't care about it or
-    % not bc xp for those values is zero anyway
-    % May need to set a tolerance here instead of just 0
-%     tub_stds = stdevs(1:num_tubes);
-%     ztubs = tub_stds~=0;
-%     z_std = mean(tub_stds(ztubs));
-%     tub_stds(tub_stds==0) = z_std;
-%     stdevs(1:num_tubes) = tub_stds;
-    
-%     Xp = Xp./repmat(stdevs,[p,num_logs]);
-%     Xf = Xf./repmat(stdevs,[f,num_logs]);
-elseif strcmp(data_type, 'stubart') %FIX THIS!!!!!!!!!!!!!!!!
-    % Keep f+p<=samp_len-1
-    p = 13;
-    f = 12;
-    L = f+p;
-    logs = dir([testname, '/logs/datalog*.log']);
-    snd_logs = dir([testname, '/logs/sound*.log']);
-    num_files = length(logs);
-    assert(num_files == length(snd_logs));
-    dvec = [];
-    dmat = [];
-    nan_inds = [];
-    for i=1:num_files
-        %Import Datalog
-        [VT_log, VT_lab, samp_freq, samp_len] = ...
-            import_datalog([testname,'/logs/',logs(i).name]);
-        % Flip matrix to make more similar to how the spectrogram was processed
-        % in earlier code.
-        vt = VT_log(:,1:end-1)'; %remove sound
-        if sum(sum(isnan(vt)))
-            nan_inds = [nan_inds, i];
-            continue
-        end
-        if i==1
-%              zinds = find(mean(vt,2)~=0);
-%             num_vars = length(VT_lab);
-%             if(length(intersect(zinds,1:num_vars))>length(zinds))
-%                 error('Zero average for variable other than tubes')
-%             end
-%             num_tubes = num_tubes - length(zinds);
-%             zinds = intersect(1:num_vars-1,zinds);
-            zinds = 1:length(VT_lab)-1; %From removing sound
-            VT_lab = VT_lab(zinds);
-            num_vt_vars = length(VT_lab);
-        end
-        % Remove first sample to line up data with STFT
-        vt = vt(zinds,2:end);
-        %samp_time = (samp_len-1)/samp_freq;
-        
-        %Import Sound
-        [snd, fs, duration] = import_sound([testname,'/logs/',snd_logs(i).name],false);
-        %Perform Spectrogram
-        %win_time = (samp_time)/L;
-        win_time = 1/(floor(0.02*samp_freq)*samp_freq);
-        nfft = floor(fs*win_time); % To get x ms long window
-        assert(mod(nfft,1)==0)
-        %noverlap = nfft-round(nfft/2);
-        noverlap = 0;
-        win = hamming(nfft,'symmetric'); % Might need to be 'periodic' not sure
-        fignum = 1;
-        [mag_spect, freq, t] = my_spectrogram(snd,win,noverlap,nfft,fs,fignum);
-        dt = t(2)-t(1);
-        [num_f,num_samp] = size(mag_spect);
-        %Remove any zeros and replace with small value to not mess up svd
-        zs = mag_spect==0;
-        mag_spect(zs) = 1e-10;
-        logmag = log10(mag_spect.^2);
-        % Pull out every 5th frequency for analysis
-        f_ind = 1:5:num_f;
-        freqs = freq(f_ind);
-        num_freqs = length(freqs);
-        spect = logmag(f_ind,:);
-        
-        num_vars = num_freqs+num_vt_vars;
-        length_fact = samp_len-L;
-        Xpf = zeros(num_vars,L*length_fact);
-        xpf = zeros(num_vars*L,length_fact);
-        for n=1:length_fact
-            xp = [vt(:,n:n+p-1);spect(:,n:n+p-1)];
-            xf = [vt(:,n+p:n+p+f-1);spect(:,n+p:n+p+f-1)];
-            Xpf(:,1+(n-1)*L:n*L) = [xp,xf];
-            xpf(:,n) = [xp(:);xf(:)];
-        end
-        
-        dmat = [dmat,Xpf];
-        dvec = [dvec,xpf];
-    end
-    num_logs = length_fact*num_files;
-    %Round labels
-    D_lab = [VT_lab,num2cell(floor(freqs))];
-    % Remove mean of each feature at each timestep from data
-    dmean = mean(dvec,2);
-    % Assuming all file lengths are the same currently
-    Dmat = (dmat - repmat(reshape(dmean,[num_vars,L]),[1,num_files*length_fact]));
-    % Scaling
-    stdevs = std(Dmat,0,2);
-    
-    % Scaling tubes and arts by the respective mean stddevs
-    if strcmp(config,'')
-        rng1 = 1:num_tubes;
-        rng2 = num_tubes+1:num_vars;
-        stdevs(rng1) = mean(stdevs(rng1));
-        stdevs(rng2) = mean(stdevs(rng2));
-    % Scaling non-lung tubes, lung tubes ish?, and arts differently
-    elseif strcmp(config,'')
-        rng1 = [1:6,19:num_tubes];
-        rng2 = 7:18;
-        rng3 = num_tubes+1:num_vars;
-        stdevs(rng1) = mean(stdevs(rng1));
-        stdevs(rng2) = mean(stdevs(rng2));
-        stdevs(rng3) = mean(stdevs(rng3));
-    %else % Scaling by individual feature variance
-    end
-
-    % First remove zero std devs from tube sections that don't move
-    tub_stds = stdevs(1:num_tubes);
-    ztubs = tub_stds~=0;
-    z_std = mean(tub_stds(ztubs));
-    tub_stds(tub_stds==0) = z_std;
-    stdevs(1:num_tubes) = tub_stds;
-    
-    Dmat = Dmat./repmat(stdevs,[1,L*num_logs]);
-    D = reshape(Dmat,[L*num_vars,num_logs]);
-    Xp = D(1:p*num_vars,:);
-    Xf = D(p*num_vars+1:end,:);
+    [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
+        DFA_preprocess_tubart(testname,smooth,max_num_files,scaling,f,p,skip_first_samp);
+    samp_freq = 1/dt;
+elseif strcmp(data_type, 'stubart')
+    [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
+        DFA_preprocess_stubart(testname,smooth,max_num_files,scaling,f,p);
+    samp_freq = 1/dt;
 else
     error('Not a supported Data Type');
 end
+
+non_zero_feats = stdevs>=1e-6;
+%stdevs(~non_zero_feats) = max(stdevs)*10;
+stdevs(~non_zero_feats) = 0;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!---
+non_zero_p = repmat(non_zero_feats,[p,1]);
+non_zero_f = repmat(non_zero_feats,[f,1]);
+Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
+Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
+% Make tube sections with 0 std dev = the mean tube std dev
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!BAD IDEA POTENTIALLY bc still could be
+% fairly small. Maybe make it really big so we don't care about it or
+% not bc xp for those values is zero anyway
 
 %Remove any zeros and replace with small value to not mess up svd
 zs = Xp ==0;
@@ -452,9 +318,9 @@ if strcmp(data_type,'tubart')
     view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
     view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
 elseif strcmp(data_type,'stubart')
-    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
-    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
-    view_prim_image(Kz,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[37,38],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[36,37],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars,stdevs,dmean);
 end
 %% View Factors
 f4 = figure(4); % Graph common factors vs sample/time
@@ -506,13 +372,15 @@ KKs = Kz.*repmat(stdevs',[k,p]);
 OOs = Oz.*repmat(stdevs,[f,k]);
 FFs = OOs*KKs;
 mfps = dmean(num_vars*p+1:end)-FFs*dmean(1:num_vars*p);
+% figure(42);imagesc(abs(log(reshape(OOs(:,1),[num_vars,f]))))
+% figure(41);imagesc(abs(log(reshape(KKs(1,:),[num_vars,p]))))
 %mfs = (dmean(num_vars*p+1:end)*ones(1,k)).*repmat(stdevs,[f,k]);
 %mps = O*K*dmean(1:num_vars*p).*repmat(stdevs,[f,1]);
 ffs(FFs>1) = 1;
 ffs(FFs<-1) = -1;
-imagesc(ffs)
-figure(39);plot(mfps)
-figure(38);imagesc(abs(log(FFs)))
+%imagesc(ffs)
+figure(38);plot(mfps)
+figure(39);imagesc(abs(log(FFs)))
 ffs = FFs;
 ffs(abs(FFs)<1) = mean(ffs(abs(FFs)<1));
 ffs(FFs<-1) = mean(ffs(FFs<-1));
@@ -629,9 +497,7 @@ fclose(fid);
 end
 
 if strcmp(data_type,'speech')
-    fs_ = fs;
-    save([testdir,'prims.mat'],'K','O','dmean','stdevs','f','p','samp_freq','k',...
-        'noverlap','nfft','fs_');
+    save([testdir,'prims.mat'],'K','O','dmean','stdevs','f','p','k');
 else
     save([testdir,'prims.mat'],'K','O','dmean','stdevs','f','p','samp_freq','k');
 end
