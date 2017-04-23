@@ -8,7 +8,7 @@ k = 8;
 data_type = 'speech';
 testname = 'TestMySpeech1';
 %config = 'original';
-config = 'short';
+config = 'broad_phonetic_cat';
 log_type = 'ipa*.mat';
 
 % log_type = 'datalog*.log'
@@ -17,7 +17,7 @@ num_tubes = 89;
 num_art = 29;
 
 % Load Primitives
-testdir = [testname,'/',config,num2str(k),'/'];
+testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 load([testdir,'prims.mat']);
 load([testdir,'speech_preprocess.mat']);
 

@@ -18,48 +18,23 @@ clear
 save_figs = false;
 
 % Human Speech
-% data_type = 'speech';
-% testname = 'TestMySpeech1';
-% %config = 'simple'; % noisy ish ball with some rotation
-% %config = 'texture';
-% %config = 'original'; % Super smooth and lots of rotation
-% config = 'short';
-% %config = 'smooth2';
+data_type = 'speech';
+testname = 'TestMySpeech1';
+%config = 'original_594';
+%config = 'textured_input';
+config = 'broad_phonetic_cat';
 
 % VT-articulatory
 % data_type = 'tubart';
-% smooth = false;
-% %testname = 'testThesis4';
-% %testname = 'testFeatureTrack';
-% %testname = 'testFeatureTrack2';
-% %testname = 'testFeatureTrack4'; noisy oblong spheriod broken up wrt time
-% %testname = 'testRevised1'; %original sound maker
-% %testname = 'testRevised3';
-% %testname = 'testRevised4';
-% %testname = 'testBatch3';
-% %testname = 'testBatch2';
 % testname = 'testBatch1000';
-% %config = 'original';
-% %config = 'original_no_zeros';
+% config = 'default';
 % %config = 'long';
-% %config = 'short';
-% %config = 'short_lung_scale';
-% %config = 'short_no_zeros';
-% %config = 'scale_fix_perm_no_smooth';
-% config = 'scale_fix';
-% %config = 'scale_fix_long';
 
 % VT-acoustic-articulatory
-data_type = 'stubart';
-%testname = 'testThesis4';
-%testname = 'testFeatureTrack'; %smooth ish ball with a lot of rotation (.1,.25) 10 sec 5 logs
-%testname = 'testFeatureTrack2'; %smooth ish ball with some rotation (.25,.25) 10 sec 5 logs
-%testname = 'testFeatureTrack3'; % smooth ish Ball, no rotation (.25,.25) 10 sec 10 logs
-%testname = 'testFeatureTrack4'; %smooth ish ball with some rotation (.1,.25) 10 sec 5 logs
-testname = 'testBatch1000';
-config = 'long'; % Long random stim trials
-%config = 'longer'; % longer f and p
-%config = 'default';
+% data_type = 'stubart';
+% testname = 'testBatch1000';
+% config = 'default';
+% %config = 'long';
 
 % DFA Configuration Settings
 if strcmp(config,'default')
@@ -126,113 +101,6 @@ elseif strcmp(config,'long')
     max_num_files = 200; % Max number of log files to analyze
 end
 
-% if strcmp(data_type,'speech');
-%     if strcmp(config,'simple')
-%         tlen = 0.15;
-%         win_time = 20/1000;
-%         max_length = 30;
-%         f = round(tlen/win_time);
-%         p = round(tlen/win_time);
-%     elseif strcmp(config,'original')
-%         tlen = 0.3;
-%         win_time = 20/1000;
-%         max_length = 30;
-%         f = round(tlen/win_time);
-%         p = round(tlen/win_time);
-%     elseif strcmp(config,'smooth2')
-%         win_time = 20/1000;
-%         max_length = 30;
-%         tlen = 0.3;
-%         f = round(tlen/win_time);
-%         p = 2;
-%     elseif strcmp(config,'texture')
-%         win_time = 5/1000; %textured one
-%         max_length = 6;
-%         f =1*4; %textured one
-%         p = 29*4; %textured one
-%     elseif strcmp(config,'short')
-%         win_time = 20/1000;
-%         max_length = 30;
-%         f = 2;
-%         p = 2;
-%     end
-% elseif strcmp(data_type,'tubart')
-%     if strcmp(config,'long') || strcmp(config,'scale_fix_long') || strcmp(config,'scale_fix_perm')% || strcmp(config,'scale_fix_perm_no_smooth')
-%         f = 13;
-%         p = 13;
-%         smooth = true;
-%         max_num_files = 1000;
-%         scaling = 'individual';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'original') || strcmp(config,'original_no_zeros')
-%         f = 13;
-%         p = 13;
-%         smooth = true;
-%         max_num_files = 50;
-%         scaling = 'original';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'longer')
-%         f = 15;
-%         p = 15;
-%         smooth = true;
-%         max_num_files = 1000;
-%         scaling = 'individual';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'short')
-%         f = 3;
-%         p = 3;
-%         smooth = true;
-%         max_num_files = 200;
-%         scaling = 'original';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'short_lung_scale') 
-%         f = 3;
-%         p = 3;
-%         smooth = true;
-%         max_num_files = 1000;
-%         scaling = 'short_lung_scale';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'short_no_zeros')
-%         f = 3;
-%         p = 3;
-%         smooth = true;
-%         max_num_files = 1000;
-%         scaling = 'individual';
-%         skip_first_samp = false;
-%     elseif strcmp(config,'scale_fix')
-%         f = 3;
-%         p = 3;
-%         smooth = false;
-%         max_num_files = 200;
-%         scaling = 'individual';
-%         skip_first_samp = true;
-%     elseif strcmp(config,'scale_fix_perm_no_smooth')
-%         f=13;
-%         p=13;
-%         smooth = false;
-%         max_num_files = 200;
-%         scaling = 'individual';
-%         skip_first_samp = false;
-%     end
-% elseif strcmp(data_type,'stubart')
-%     if strcmp(config, 'long')
-%         % Keep f+p<=samp_len-1
-%         p = 13;
-%         f = 12;
-%         max_num_files = 200;
-%         scaling = 'individual';
-%         smooth = false;
-%     elseif strcmp(config,'longer')
-%         % Keep f+p<=samp_len-1
-%         p = 15;
-%         f = 15;
-%         max_num_files = 200;
-%         scaling = 'individual';
-%         smooth = false;
-%     end
-% else
-%     error('Unsupported Data Type')
-% end
 % VT Definitions
 num_tubes = 89;
 num_art = 29;
@@ -261,29 +129,22 @@ else
     error('Not a supported Data Type');
 end
 
+% Set stdevs below a tolerance equal to zero and don't include those 
+% featuresin primitive discovery.
 non_zero_feats = stdevs>=1e-6;
 %stdevs(~non_zero_feats) = max(stdevs)*10;
-stdevs(~non_zero_feats) = 0;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!---
+stdevs(~non_zero_feats) = 0;
 non_zero_p = repmat(non_zero_feats,[p,1]);
 non_zero_f = repmat(non_zero_feats,[f,1]);
 Xp = Xp(non_zero_p,:)./repmat(stdevs(non_zero_feats),[p,num_logs]);
 Xf = Xf(non_zero_f,:)./repmat(stdevs(non_zero_feats),[f,num_logs]);
-% Make tube sections with 0 std dev = the mean tube std dev
-% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!BAD IDEA POTENTIALLY bc still could be
-% fairly small. Maybe make it really big so we don't care about it or
-% not bc xp for those values is zero anyway
 
-%Remove any zeros and replace with small value to not mess up svd
+% Remove any zeros and replace with small value to not mess up svd
+% Shouldn't me necessary, but leave just in case.
 zs = Xp ==0;
 Xp(zs) = 1e-10;
 zs = Xf == 0;
 Xf(zs) = 1e-10;
-%Xp = log10(Xp.^2);
-%Xf = log10(Xf.^2);
-% Re-order the Columns of Xf and Xp
-%perm = randperm(num_logs); %!!!!!!!!!!!!!!!!!!!!!!!!!-------
-%Xp = Xp(:,perm);
-%Xf = Xf(:,perm);
 %% Perform Least Squares Regression
 skip = 0;
 prms = skip+1:k+skip;
@@ -302,7 +163,7 @@ Uk = U(:,prms);
 K = Sk^(1/2)*Vk'*real(Qp_^(-.5));
 O = real(Qf_^(.5))*Uk*Sk^(1/2);
 Factors = K*Xp;
-%%
+%% Add back in zero features
 Kz = zeros(k,num_vars*p);
 Oz = zeros(num_vars*f,k);
 Xpz = zeros(num_vars*p,num_logs);
@@ -367,7 +228,7 @@ if save_figs
     print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
 end
-%%
+%% Plotting of the past to future transformation
 KKs = Kz.*repmat(stdevs',[k,p]);
 OOs = Oz.*repmat(stdevs,[f,k]);
 FFs = OOs*KKs;
