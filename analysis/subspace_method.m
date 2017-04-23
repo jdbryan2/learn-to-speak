@@ -18,17 +18,23 @@ clear
 save_figs = false;
 
 % Human Speech
-data_type = 'speech';
-testname = 'TestMySpeech1';
-%config = 'original_594';
-%config = 'textured_input';
-config = 'broad_phonetic_cat';
+% data_type = 'speech';
+% testname = 'TestMySpeech1';
+% %config = 'original_594';
+% %config = 'textured_input';
+% config = 'broad_phonetic_cat';
+
+% VT-tube
+% data_type = 'tub';
+% testname = 'testBatch1000';
+% %config = 'default';
+% config = 'long';
 
 % VT-articulatory
-% data_type = 'tubart';
-% testname = 'testBatch1000';
-% config = 'default';
-% %config = 'long';
+data_type = 'tubart';
+testname = 'testBatch1000';
+%config = 'default';
+config = 'long';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -117,6 +123,10 @@ mkdir(testdir);
 if strcmp(data_type, 'speech')
     [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
         DFA_preprocess_speech(testname,testdir,win_time,max_length,f,p,save_figs);
+elseif strcmp(data_type, 'tub')
+    [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
+        DFA_preprocess_tub(testname,smooth,max_num_files,scaling,f,p,skip_first_samp);
+    samp_freq = 1/dt;
 elseif strcmp(data_type, 'tubart')
     [Xp,Xf,stdevs,dmean,D_lab,num_vars,num_logs,dt] = ...
         DFA_preprocess_tubart(testname,smooth,max_num_files,scaling,f,p,skip_first_samp);
@@ -175,7 +185,9 @@ Xfz(non_zero_f,:) = Xf;
 %% View Pimitives
 view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
 %view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[2,3],testdir,1:num_vars,stdevs,dmean);
-if strcmp(data_type,'tubart')
+if strcmp(data_type,'tub')
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+elseif strcmp(data_type,'tubart')
     view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
     view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
 elseif strcmp(data_type,'stubart')
@@ -261,16 +273,7 @@ Xf_unscaled = Xfz.*repmat(stdevs,[f,num_logs])+Xf_mean;
 % Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
 % Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
 
-if strcmp(data_type,'tubart') || strcmp(data_type,'stubart')
-    %nzero_f_inds = repmat([ztubs;logical(ones(num_vars-num_tubes,1))],[f,1]);
-    %nzero_f_inds = repmat(non_zero_f,[1,num_logs]);
-elseif strcmp(data_type,'speech')
-    nzero_f_inds = logical(ones(num_vars*f,1));
-    ztubs = 1;
-end
-
 errors_scaled = (Xf_pred-Xfz);
-%errors_scaled = errors_scaled(nzero_f_inds,:);
 errors = (Xf_unscaled-Xf_unscaled_pred);
 errors = errors(non_zero_f,:);
 errors = reshape(errors,[(num_vars-sum(~non_zero_feats))*f,num_logs]);
@@ -282,17 +285,19 @@ title('Combined Xf Prediction Error')
 colorbar
 
 % Plot an example error from each component
-if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart')
+if strcmp(data_type,'tubart') || strcmp(data_type, 'stubart') || strcmp(data_type,'tub')
     tube_error = errors_scaled(1:num_tubes,:);
     art_error = errors_scaled(num_tubes+1:num_tubes+num_art,:);
     figure(22); imagesc(tube_error)
     title('Tube Area Xf Prediction Error Example')
     colorbar
-    % Scale art_error by std dev
-    %art_error = ./repmat(arts_std,[1,num_logs*f]);
-    figure(23); imagesc(art_error)
-    title('Articulation Xf Prediction Error Example')
-    colorbar
+    if ~strcmp(data_type,'tub')
+        % Scale art_error by std dev
+        %art_error = ./repmat(arts_std,[1,num_logs*f]);
+        figure(23); imagesc(art_error)
+        title('Articulation Xf Prediction Error Example')
+        colorbar
+    end
     % pull out part of O matrix that corresponds to generating Area predictions
     % in Xf
     Oarea = zeros(f*num_tubes,k);
