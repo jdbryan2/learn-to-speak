@@ -249,7 +249,7 @@ void VocalTract::ArticulateUpper (Articulation art)
     
     /* Lower lip. */
     
-    lowerLip.dx = this->lowerLip.dx + art [kArt_muscle_ORBICULARIS_ORIS] * 0.02 - 5e-3;
+    lowerLip.dx = this->lowerLip.dx + art [kArt_muscle_ORBICULARIS_ORIS] * 0.02 - 5e-3; // Should this be risorius?
     lowerLip.dy = this->lowerLip.dy + art [kArt_muscle_ORBICULARIS_ORIS] * 0.01;
     intX [12] = teeth.x;
     intY [12] = teeth.y + lowerLip.dy;

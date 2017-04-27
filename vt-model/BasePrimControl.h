@@ -16,7 +16,7 @@
 
 class BasePrimControl : public Control {
 public:
-    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix, const gsl_vector * Aref_ = nullptr);
+    BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix, int prim_enabled_, const gsl_vector * Aref_ = nullptr);
     ~BasePrimControl();
     void doControl(Speaker * speaker);
     void InitialArt(Articulation art);
@@ -30,6 +30,7 @@ private:
     // Primitive Parameters to Read in
     int f_p[2];
     int num_prim;
+    int prim_enabled;
     double sample_freq;
     gsl_matrix * O;
     gsl_matrix * K;

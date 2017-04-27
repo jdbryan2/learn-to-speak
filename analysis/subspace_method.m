@@ -32,9 +32,11 @@ save_figs = false;
 
 % VT-articulatory
 data_type = 'tubart';
-testname = 'testBatch1000';
+%testname = 'testBatch1000';
+testname = 'testRevised1';
 %config = 'default';
-config = 'long';
+%config = 'long';
+config = 'original_50noisemaker';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -105,6 +107,40 @@ elseif strcmp(config,'long')
     smooth = false; % Boolean determining use of multiple samples from same log for training
     scaling = 'individual'; % String specifying feature scaling method
     max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'original_noisemaker')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 13; % Number of timesteps in the future
+    p = 13; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    %max_length = 30; % Maximum length of sample in seconds
+    %win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'original'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'original_50noisemaker')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 13; % Number of timesteps in the future
+    p = 13; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    %max_length = 30; % Maximum length of sample in seconds
+    %win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'original'; % String specifying feature scaling method
+    max_num_files = 50; % Max number of log files to analyze
 end
 
 % VT Definitions

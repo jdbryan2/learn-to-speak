@@ -85,10 +85,11 @@ int BasePrimControl::LoadPrims() {
     return 0;
 }
 
-BasePrimControl::BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix,const gsl_vector * Aref_):
+BasePrimControl::BasePrimControl(double utterance_length_, int _control_period, Articulation initial_art, std::string prim_file_prefix,int prim_enabled_,const gsl_vector * Aref_):
                 Control(utterance_length_),
                 control_period(_control_period)
 {
+    prim_enabled = prim_enabled_;
     file_prefix = prim_file_prefix;
     LoadPrims();
     if (Aref_ != nullptr) {
@@ -279,6 +280,13 @@ void BasePrimControl::StepDFA(const gsl_vector * Yp_unscaled_){
     double xarr[8] = {};
     int keep[8] = {-1,-2,-3,-4,-5,-6,-7,-8};
     int invert_keep = -1; // Will enable all of the negative primitives
+    if (prim_enabled==0) {
+        invert_keep=-1;
+    }
+    else {
+        keep[prim_enabled-1] = prim_enabled;
+        invert_keep = 1;
+    }
     static double inc = 0;
     inc =  inc-.5;
     for (int i=0; i<num_prim; i++) {

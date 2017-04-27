@@ -114,11 +114,11 @@ elseif strcmp(scaling,'individual')
 end
 
 % First remove zero std devs from tube sections that don't move
-tub_stds = stdevs(1:num_tubes);
-ztubs = tub_stds~=0;
-z_std = mean(tub_stds(ztubs));
-tub_stds(tub_stds==0) = z_std;
-stdevs(1:num_tubes) = tub_stds;
+%tub_stds = stdevs(1:num_tubes);
+%ztubs = tub_stds~=0;
+%z_std = mean(tub_stds(ztubs));
+%tub_stds(tub_stds==0) = z_std;
+%stdevs(1:num_tubes) = tub_stds;
 
 %Dmat = Dmat./repmat(stdevs,[1,L*num_logs]);
 D = reshape(Dmat,[L*num_vars,num_logs]);
