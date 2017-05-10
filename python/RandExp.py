@@ -40,6 +40,9 @@ class RandExp:
         self.initial_art = np.zeros(aw.kArt_muscle.MAX,
                                     dtype=np.dtype('double'))
 
+        self.manual_targets = {}
+        self.manual_times = {}
+
         self.InitializeParams(**kwargs)
 
     def InitializeParams(self, **kwargs):
@@ -127,9 +130,28 @@ class RandExp:
 
         self.speaker.InitSim(self.utterance_length, self.initial_art)
 
+    def SetManualSequence(self, muscle, targets, times):
+        if muscle > aw.kArt_muscle.MAX or muscle < 0:
+            print "Invalid muscle ID: " + str(muscle)
+            return 0
+        if targets.shape[0] != times.shape[0]:
+            print "Invalid targets/times for muscle ID: " + str(muscle)
+
+        if muscle in self.manual_targets:
+            self.manual_targets[muscle] = np.append(self.manual_targets[muscle],
+                                                    targets)
+        else:
+            self.manual_targets[muscle] = targets
+
+        if muscle in self.manual_times:
+            self.manual_times[muscle] = np.append(self.manual_times[muscle],
+                                                  times)
+        else:
+            self.manual_times[muscle] = times
+
     def GenerateGestureSequence(self, **kwargs):
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+        # if len(kwargs.keys()):
+        #     self.InitializeParams(**kwargs)
         ########################################################################
         # Generate random target sequences
         ########################################################################
@@ -140,48 +162,62 @@ class RandExp:
         self.randart = aw.Artword(total_length)
 
         for k in range(aw.kArt_muscle.MAX):
-            time = 0.0
-            target = self.initial_art[k]  # np.random.random()
-            self.randart.setTarget(k, time, target)
-            time_hist = np.array([time])
-            target_hist = np.array([target])
-            while True:
-                delta = (np.random.random()-0.5)*self.max_delta_target
-                increment = np.random.random() * \
-                    (self.max_increment-self.min_increment)+self.min_increment
+            # check if manually defined
+            if k in self.manual_targets:
+                for t in range(len(self.manual_targets[k])):
+                    self.randart.setTarget(k,
+                                           self.manual_times[k][t],
+                                           self.manual_targets[k][t])
+                time_hist = self.manual_times[k][:]
+                target_hist = self.manual_targets[k][:]
 
-                if target + delta > 1.0:
-                    increment = (1.0-target) * increment / delta
-                    delta = 1.0-target
+            # random gestures if not
+            else:
+                # generate manual sequence!
+                time = 0.0
+                target = self.initial_art[k]  # np.random.random()
+                self.randart.setTarget(k, time, target)
+                time_hist = np.array([time])
+                target_hist = np.array([target])
+                while True:
+                    delta = (np.random.random()-0.5)*self.max_delta_target
+                    increment = np.random.random() * \
+                        (self.max_increment-self.min_increment) + \
+                        self.min_increment
 
-                elif target + delta < 0.0:
-                    increment = (0.0-target) * increment / delta
-                    delta = 0.0-target
+                    if target + delta > 1.0:
+                        increment = (1.0-target) * increment / delta
+                        delta = 1.0-target
 
-                # set target if it's still in the utterance duration
-                if time+increment < total_length:
-                    time = time+increment
-                    target = target+delta
-                    self.randart.setTarget(k, time, target)
-                    time_hist = np.append(time_hist, time)
-                    target_hist = np.append(target_hist, target)
+                    elif target + delta < 0.0:
+                        increment = (0.0-target) * increment / delta
+                        delta = 0.0-target
 
-                # interp between current and next target at end of utterance
-                else:
-                    self.randart.setTarget(
-                            k,
-                            total_length,
-                            np.interp(total_length,
-                                      [time, time+increment],
-                                      [target, target+delta]))
+                    # set target if it's still in the utterance duration
+                    if time+increment < total_length:
+                        time = time+increment
+                        target = target+delta
+                        self.randart.setTarget(k, time, target)
+                        time_hist = np.append(time_hist, time)
+                        target_hist = np.append(target_hist, target)
 
-                    time_hist = np.append(time_hist, total_length)
-                    target_hist = np.append(target_hist,
-                                            np.interp(total_length,
-                                                      [time, time+increment],
-                                                      [target, target+delta]))
+                    # interp between current and next target at end of utterance
+                    else:
+                        self.randart.setTarget(
+                                k,
+                                total_length,
+                                np.interp(total_length,
+                                          [time, time+increment],
+                                          [target, target+delta]))
 
-                    break  # we've already hit the end of the utterance
+                        time_hist = np.append(time_hist, total_length)
+                        target_hist = np.append(target_hist,
+                                                np.interp(
+                                                    total_length,
+                                                    [time, time+increment],
+                                                    [target, target+delta]))
+
+                        break  # we've already hit the end of the utterance
             plt.plot(time_hist, target_hist)
             plt.hold(True)
         plt.show()
@@ -270,11 +306,16 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=2,
+                    loops=10,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
-    rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
-    rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
-              initial_art=np.zeros(aw.kArt_muscle.MAX))
-    rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.3)
-    rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.3)
+    # manually pump the lungs
+    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+                            np.array([0.4, 0.0]),  # targets
+                            np.array([0.0, 0.5]))  # times
+
+    # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
+    # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
+    #           initial_art=np.zeros(aw.kArt_muscle.MAX))
+    # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.3)
+    rando.Run(max_increment=0.3, min_increment=0.05, max_delta_target=0.3)
