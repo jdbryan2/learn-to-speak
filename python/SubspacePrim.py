@@ -1,4 +1,5 @@
 import numpy as np
+#import os
 x = np.array([])
 
 
@@ -13,20 +14,26 @@ class PrimLearn:
         self.O = np.array([])
         self.K = np.array([])
 
-        self.data = {}
+        self.data = np.array([])  # {}
+
+        self.home_dir = kwargs.get("home_dir", "data")
 
     def LoadDataFile(self, fname):
-        print "LoadDataFile stub"
-        return 0
+        # load the data from fname, store in class variable
+        self.data = np.load(fname)
 
-    def LoadAudioFile(self, fname):
-        print "LoadAudioFile stub"
+        # is there any value in having this function?
+        # this function should load the data and attach it to Xp & Xf
+        # through whatever windowing method is prescribed
+
+        # extract tubes of interest, compute spectrogram, downsample
+        # this should all happen here.
+        print "LoadDataFile stub"
         return 0
 
     def LoadDataDir(self, dirname):
         print "LoadDataDir stub"
         # open directory, walk files and call LoadDataFile on each
-        # may also call LoadAudioFile with this
         # is the audio saved in the numpy data? ---> Yes
 
         # data in one directory is assumed to be continuous across files
