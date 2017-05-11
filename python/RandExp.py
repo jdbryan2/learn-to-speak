@@ -187,10 +187,17 @@ class RandExp:
                         (self.max_increment-self.min_increment) + \
                         self.min_increment
 
+                    # if we're at the boundary, force delta to drive inward
+                    if target == 1.0:
+                        delta = -1.0 * abs(delta)
+                    elif target == 0.0:
+                        delta = abs(delta)
+
+                    # if delta pushed past boundaries, interpolate to the
+                    # boundary and place target there
                     if target + delta > 1.0:
                         increment = (1.0-target) * increment / delta
                         delta = 1.0-target
-
                     elif target + delta < 0.0:
                         increment = (0.0-target) * increment / delta
                         delta = 0.0-target
