@@ -315,16 +315,18 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=10,
+                    loops=100,
+                    utterance_length=1.0,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
     # manually pump the lungs
-    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-                            np.array([0.4, 0.0]),  # targets
-                            np.array([0.0, 0.5]))  # times
+    # rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+    #                         np.array([0.4, 0.0]),  # targets
+    #                         np.array([0.0, 0.5]))  # times
 
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
     # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
     #           initial_art=np.zeros(aw.kArt_muscle.MAX))
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.3)
-    rando.Run(max_increment=0.3, min_increment=0.05, max_delta_target=0.3)
+    rando.Run(max_increment=0.3, min_increment=0.05, max_delta_target=0.3,
+              initial_art=np.random.random((aw.kArt_muscle.MAX, )))
