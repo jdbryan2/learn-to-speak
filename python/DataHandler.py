@@ -2,30 +2,36 @@ import numpy as np
 # import numpy.linalg as ln
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+# import scipy.signal as signal
 import os
 x = np.array([])
 
 # TODO: create simple class that loads data files, use as parent for prim class
 
+
 class DataHandler:
 
     def __init__(self, **kwargs):
         # define tube sections from PRAAT
-        self.lungs = np.arange(6, 23)
-        self.bronchi = np.arange(23, 29)
-        self.trachea = np.arange(29, 35)
-        self.glottis = np.arange(35,37)
-        self.tract = np.arange(37, 64)
-        self.nose = np.arange(64, 78)
+        self.tubes = {}
+        self.tubes['lungs'] = np.append(np.arange(6, 17), 23)
+        self.tubes['full_lungs'] = np.arange(6, 23)
+        self.tubes['bronchi'] = np.arange(23, 29)
+        self.tubes['trachea'] = np.arange(29, 35)
+        self.tubes['glottis'] = np.arange(35, 37)
+        self.tubes['tract'] = np.arange(37, 64)
+        self.tubes['nose'] = np.arange(64, 78)
+        self.tubes['all'] = np.arange(6, 64)  # exclude nasal cavity
+        self.tubes['all_no_lungs'] = np.arange(23, 64)  # exclude nasal cavity
 
-        self.all_tubes = self.lungs[:]
-        self.all_tubes = np.append(self.all_tubes, self.bronchi)
-        self.all_tubes = np.append(self.all_tubes, self.trachea)
-        self.all_tubes = np.append(self.all_tubes, self.glottis)
-        self.all_tubes = np.append(self.all_tubes, self.tract)
-        # nose may only need to be the nasopharangeal port
-        self.all_tubes = np.append(self.all_tubes, 64)
-        #self.all_tubes = np.append(self.all_tubes, self.nose)
+        # self.all_tubes = self.lungs[:]
+        # self.all_tubes = np.append(self.all_tubes, self.bronchi)
+        # self.all_tubes = np.append(self.all_tubes, self.trachea)
+        # self.all_tubes = np.append(self.all_tubes, self.glottis)
+        # self.all_tubes = np.append(self.all_tubes, self.tract)
+        # # nose may only need to be the nasopharangeal port
+        # self.all_tubes = np.append(self.all_tubes, 64)
+        # #self.all_tubes = np.append(self.all_tubes, self.nose)
 
         # initialize the variables
         self.data = {}
@@ -40,14 +46,11 @@ class DataHandler:
         # dictionary
         for key, value in file_data.iteritems():
             if key in self.data:
-                print key, value.shape
                 if len(value.shape) < 2:
                     # reshape if it's audio
                     self.data[key] = np.append(self.data[key], value.reshape((1, -1)), axis=1)
                 else:
-                    self.data[key] = value
                     self.data[key] = np.append(self.data[key], value, axis=1)
-                print key, self.data[key].shape
             else:
                 if len(value.shape) < 2:
                     # reshape if it's audio
@@ -75,39 +78,78 @@ class DataHandler:
             print os.path.join(dirname, 'data'+str(index)+'.npz')
             self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
 
+        # load up data parameters
+        self.params = {}
+        params = np.load(os.path.join(dirname, 'params.npz'))
+        self.params['gender'] = params['gender'].item()
+        self.params['sample_freq'] = params['sample_freq'].item()
+        self.params['glottal_masses'] = params['glottal_masses'].item()
+        self.params['method'] = params['method'].item()
+        self.params['loops'] = params['loops'].item()
+        self.params['initial_art'] = params['initial_art']
+        self.params['max_increment'] = params['max_increment'].item()
+        self.params['min_increment'] = params['min_increment'].item()
+        self.params['max_delta_target'] = params['max_delta_target'].item()
+
         if not self.data:
             print "No data has been loaded."
             return 0
 
     def SaveAnimation(self, **kwargs):
         fname = kwargs.get('fname', 'video')
-        lung_scale = 0.01
+        dirname = kwargs.get('dirname', '')
+        dirname = os.path.join(self.home_dir, dirname)
+        fname = os.path.join(dirname, fname)
+        lung_scale = 0.010
 
         fig = plt.figure()
         vt, = plt.plot([], [], 'b-')
+        _vt, = plt.plot([], [], 'b-')
         lungs, = plt.plot([], [], 'r-')
+        _lungs, = plt.plot([], [], 'r-')
+        nose, = plt.plot([], [], 'g-')
+        _nose, = plt.plot([], [], 'g-')
 
+        # cheap downsample, might be better to implement decimate function
+        area_function = self.data['area_function'][:, ::100]
 
-        plt.xlim(0, self.data['area_function'].shape[0])
-        plt.ylim(0, 1.1*lung_scale*np.amax(self.data['area_function']))
-        #ax = plt.axes(xlim=(0, self.data['area_function'].shape[0]), ylim=(0, np.amax(self.data['area_function'])))
+        nasal_offset = np.amax(area_function[self.tubes['nose'], :])*1.5
 
-        writer = animation.FFMpegWriter(fps=100,
+        # scale the lungs down to something reasonable
+        area_function[self.tubes['lungs'][:-1]] *= lung_scale
+
+        # set some limits
+        plt.xlim(0, self.tubes['all'][-1]+5)
+        plt.ylim(-np.amax(area_function[self.tubes['all_no_lungs'], :]),
+                 np.amax(area_function[self.tubes['all_no_lungs'], :]) +
+                 2*nasal_offset)
+
+        writer = animation.FFMpegWriter(fps=80,
                                         metadata=dict(artist='PyRAAT'),
                                         bitrate=1800)
 
-        def update_figure(num, data, vt, lungs):
-            lungs.set_data(self.lungs,lung_scale*data[self.lungs, num*100])
-            #vt[0].set_data(np.arange(data.shape[0]),data[:, num*100])
-            vt.set_data(self.all_tubes[self.lungs.size:], data[self.all_tubes[self.lungs.size:], num*100])
-            #return vt,
-            return vt, lungs
+        def update_figure(num, data, vt, _vt, lungs, _lungs, nose, _nose):
+
+            lungs.set_data(self.tubes['lungs'],
+                           data[self.tubes['lungs'], num])
+            _lungs.set_data(self.tubes['lungs'],
+                           -data[self.tubes['lungs'], num])
+            vt.set_data(self.tubes['all_no_lungs'],
+                        data[self.tubes['all_no_lungs'], num])
+            _vt.set_data(self.tubes['all_no_lungs'],
+                        -data[self.tubes['all_no_lungs'], num])
+            nose.set_data(self.tubes['nose'] - 15,
+                          data[self.tubes['nose'], num]+2*nasal_offset)
+            _nose.set_data(self.tubes['nose'] - 15,
+                          -data[self.tubes['nose'], num]+2*nasal_offset)
+
+            return vt, _vt, lungs, _lungs, nose, _nose
 
         line_ani = animation.FuncAnimation(
             fig,
             update_figure,
-            self.data['area_function'].shape[1]/100,
-            fargs=(self.data['area_function'], vt, lungs),
+            area_function.shape[1],
+            fargs=(area_function, vt, _vt, lungs, _lungs, nose, _nose),
             interval=10,
             blit=True)
 
@@ -121,6 +163,8 @@ class DataHandler:
 if __name__ == "__main__":
     print "Do stuff"
 
+    # directory = 'gesture_2017-05-10-20-16-18'
+    directory = 'gesture_2017-05-19-20-55-19'
     dh = DataHandler()
-    dh.LoadDataDir('gesture_2017-05-10-20-16-18')
-    dh.SaveAnimation()
+    dh.LoadDataDir(directory)
+    dh.SaveAnimation(dirname=directory)
