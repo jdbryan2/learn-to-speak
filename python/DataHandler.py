@@ -96,13 +96,19 @@ class DataHandler:
             return 0
 
     def SaveAnimation(self, **kwargs):
+        # should probably clean this up...
         fname = kwargs.get('fname', 'video')
         dirname = kwargs.get('dirname', '')
         dirname = os.path.join(self.home_dir, dirname)
         fname = os.path.join(dirname, fname)
+
+        # lungs are far larger than the rest of the apparatus
+        # scale them by this factor to make the animation look better
         lung_scale = 0.010
 
-        fig = plt.figure()
+        # variables to pass to animation callback
+        fig = plt.figure() # figure handle
+        # evidently the hold function is obsolete, default is hold(on)
         vt, = plt.plot([], [], 'b-')
         _vt, = plt.plot([], [], 'b-')
         lungs, = plt.plot([], [], 'r-')
@@ -113,6 +119,7 @@ class DataHandler:
         # cheap downsample, might be better to implement decimate function
         area_function = self.data['area_function'][:, ::100]
 
+        # vertical offset for nasal tubes
         nasal_offset = np.amax(area_function[self.tubes['nose'], :])*1.5
 
         # scale the lungs down to something reasonable
@@ -124,35 +131,39 @@ class DataHandler:
                  np.amax(area_function[self.tubes['all_no_lungs'], :]) +
                  2*nasal_offset)
 
+        # ffmpeg animation writter
         writer = animation.FFMpegWriter(fps=80,
                                         metadata=dict(artist='PyRAAT'),
                                         bitrate=1800)
 
+        # callback function for updating plots
         def update_figure(num, data, vt, _vt, lungs, _lungs, nose, _nose):
 
             lungs.set_data(self.tubes['lungs'],
                            data[self.tubes['lungs'], num])
             _lungs.set_data(self.tubes['lungs'],
-                           -data[self.tubes['lungs'], num])
+                            -data[self.tubes['lungs'], num])
             vt.set_data(self.tubes['all_no_lungs'],
                         data[self.tubes['all_no_lungs'], num])
             _vt.set_data(self.tubes['all_no_lungs'],
-                        -data[self.tubes['all_no_lungs'], num])
+                         -data[self.tubes['all_no_lungs'], num])
             nose.set_data(self.tubes['nose'] - 15,
                           data[self.tubes['nose'], num]+2*nasal_offset)
             _nose.set_data(self.tubes['nose'] - 15,
-                          -data[self.tubes['nose'], num]+2*nasal_offset)
+                           -data[self.tubes['nose'], num]+2*nasal_offset)
 
             return vt, _vt, lungs, _lungs, nose, _nose
 
+        # define animation function
         line_ani = animation.FuncAnimation(
-            fig,
-            update_figure,
-            area_function.shape[1],
-            fargs=(area_function, vt, _vt, lungs, _lungs, nose, _nose),
-            interval=10,
-            blit=True)
+            fig,  # figure
+            update_figure,  # call back
+            area_function.shape[1],  # first arg
+            fargs=(area_function, vt, _vt, lungs, _lungs, nose, _nose),  # args
+            interval=10,  # not sure what this does
+            blit=True)  # blit is a form of video optimization
 
+        # save in the same folder as data was loaded from (see top of function)
         line_ani.save(fname+'.mp4', writer=writer)
 
 
