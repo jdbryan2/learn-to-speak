@@ -5,37 +5,52 @@ num_tubes = 89;
 num_art = 29;
 
 % Log definitions
+% {Speech IPA, Artword Logs or Primlogs, IPA Artword Logs}
 log_type_id = [1,2,3]; % Need to fix this
 log_types = {'ipa*.mat'; '*.log';'ipa*.log'};
 log_expr = {'ipa\d\d\d_ex';'^((?!sound).)*.log$';'^ipa*((?!sound).)*.log$'};
 
 save_figs = false;
 fac1 = 1; fac2 = 2; fac3 = 3;
-
+%fac1 = 4; fac2 = 5; fac3 = 6;
+%fac1 = 1; fac2 = 4; fac3 = 8;
 % Human Speech
-% data_type = 'speech';
-% testname = 'TestMySpeech1';
-% log_fldr = '/logs/';
-% log_type = 1;
-% %config = 'original';
-% config = 'broad_phonetic_cat';
-% k = 8;
-% testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
-% % Load Speech specific preprocessing parameters
-% load([testdir,'speech_preprocess.mat']);
+data_type = 'speech';
+testname = 'TestMySpeech1';
+log_fldr = '/logs/';
+log_type = 1;
+%config = 'original';
+config = 'broad_phonetic_cat';
+%config = 'medium';
+%config = 'long';
+%config = 'default';
+k = 8;
+testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
+% Load Speech specific preprocessing parameters
+load([testdir,'speech_preprocess.mat']);
 
 % VT Tubes Artwords
-data_type = 'tubart';
-
-%testname = 'testBatch1000';
-%config = 'original_noisemaker';
-
-%testname = 'testRevised1';
-%config = 'original_50noisemaker';
-log_type = 3;
-testname = 'testBatch1000';
-config = 'default';
-%config = 'long';
+% %data_type = 'tubart';
+% data_type = 'stubart';
+% 
+% %testname = 'testBatch1000';
+% testname = 'testStim3Batch300';
+% %config = 'original_noisemaker';
+% 
+% %testname = 'testRevised1';
+% %config = 'original_noisemaker';
+% log_type = 3;
+% %testname = 'testBatch300';
+% %config = 'original_50noisemaker';
+% %testname = 'testBatch1000';
+% %testname = 'testStim1Batch50';
+% %config = 'default';
+% %config = 'medium_original_scale';
+% %config = 'short_original_scale';
+% %config = 'long_original_scale';
+% %config = 'default';
+% config = 'medium';
+% %config = 'long';
 k = 8;
 testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 if log_type == 3
@@ -115,7 +130,7 @@ for i=1:num_files
                 same = regexp(snd_logs{j},fname(1:6));
                 if ~isempty(same)
                     n_ind = j;
-                    continue;
+                    break;
                 end
             end
             %Import Sound
@@ -174,8 +189,9 @@ else
     error('Unsupported Data Type')
 end
 markers = ['v','*','+','o','.','x','s','d','^'];%;'v';'>';'<';'p';'h'];
-clrs = ['r';'b';'g';'c';'m';'y';'k';'w';'r';'b'];
+clrs = ['r';'b';'g';'c';'m';'y';'k';'w'];
 XX = cell(num_unique_logs,1); YY = cell(num_unique_logs,1); ZZ = cell(num_unique_logs,1);
+xpast_mean = zeros(k,num_logs);
 %% Cycle through all of the logs computing the factors and plot
 for l=1:num_logs
 % First set Yp_unscaled to have a p long constant history of the inital
@@ -222,6 +238,7 @@ tt = floor(num_pts);
 st = 1;%ceil(num_logs*1);
 col = st:st-1+tt;
 xx = X_past(fac1,col); yy=X_past(fac2,col);zz = X_past(fac3,col);
+xpast_mean(:,l) = mean(X_past,2);
 
 XX{log_class_nums(l)}(end+1:end+num_pts) = xx';
 YY{log_class_nums(l)}(end+1:end+num_pts) = yy';
@@ -244,7 +261,17 @@ if log_type == 1
 elseif log_type == 2 || log_type==3
     tt = ((1:num_pts)+p)*1/samp_freq;
 end
-pl = plot3(tt,X_past(fac1,:),X_past(fac2,:),'-','Color',clrs(cats(log_class_nums(l))));
+clr_len = length(clrs);
+if cats(log_class_nums(l))>clr_len
+    clr_ind = mod(cats(log_class_nums(l)),clr_len);
+    if clr_ind == 0
+        clr_ind = clr_len;
+    end
+    clr = clrs(clr_ind);
+else
+    clr = clrs(cats(log_class_nums(l)));
+end
+pl = plot3(tt,X_past(fac1,:),X_past(fac2,:),'-','Color',clr);
 title('Latent Variables values over Time/Logs')
 ylabel(['Factor ',num2str(fac1)]);
 zlabel(['Factor ',num2str(fac2)]);
@@ -271,11 +298,34 @@ end
 %     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
 % end
 end
+facts = 1:k;%[1,2,3];
+Dist_mat = zeros(num_logs);
+for i=1:num_logs
+    for j=1:num_logs
+        Dist_mat(i,j) = norm(xpast_mean(facts,i)-xpast_mean(facts,j));
+    end
+end
+figure(51);imagesc(Dist_mat)
+n_class_logs = num_logs/2;
+c_norm = mean(mean(Dist_mat(1:n_class_logs,1:n_class_logs)))
+v_norm = mean(mean(Dist_mat(n_class_logs+1:end,n_class_logs+1:end)))
+vc_norm = mean(mean(Dist_mat(1:n_class_logs,n_class_logs+1:end)))
+
 for i=1:num_unique_logs
     % And plot them as 3D scatter plot
     f17 = figure(17); hold on;
-    pl=plot3(XX{i},YY{i},ZZ{i},[markers(cats(i)),clrs(i)]);
-    if strcmp(clrs(i),'w')
+    clr_len = length(clrs);
+    if i>clr_len
+        clr_ind = mod(i,clr_len);
+        if clr_ind == 0
+            clr_ind = clr_len;
+        end
+        clr = clrs(clr_ind);
+    else
+        clr = clrs(i);
+    end
+    pl=plot3(XX{i},YY{i},ZZ{i},[markers(cats(i)),clr]);
+    if strcmp(clr,'w')
         set(pl,'Color',[.7 .7 .7]);
     end
     grid on

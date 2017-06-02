@@ -18,11 +18,14 @@ clear
 save_figs = false;
 
 % Human Speech
-% data_type = 'speech';
-% testname = 'TestMySpeech1';
-% %config = 'original_594';
-% %config = 'textured_input';
-% config = 'broad_phonetic_cat';
+data_type = 'speech';
+testname = 'TestMySpeech1';
+%config = 'original_594';
+%config = 'textured_input';
+%config = 'broad_phonetic_cat';
+%config = 'medium';
+%config = 'long';
+config = 'default';
 
 % VT-tube
 % data_type = 'tub';
@@ -31,12 +34,20 @@ save_figs = false;
 % config = 'long';
 
 % VT-articulatory
-data_type = 'tubart';
-%testname = 'testBatch1000';
-testname = 'testRevised1';
-%config = 'default';
-%config = 'long';
-config = 'original_50noisemaker';
+% data_type = 'tubart';
+% %testname = 'testBatch1000';
+% testname = 'testStim3Batch300';
+% %testname = 'testRevised1';
+% %testname = 'testStim3Batch300';
+% %testname = 'testStim1Batch50';
+% %testname = 'testStim1BatchNoRand300';
+% %config = 'default';
+% config = 'medium';
+% %config = 'long';
+% %config = 'medium_original_scale';
+% %config = 'long_original_scale';
+% %config = 'short_original_scale';
+% %config = 'original_50noisemaker';
 
 % VT-acoustic-articulatory
 % data_type = 'stubart';
@@ -106,6 +117,74 @@ elseif strcmp(config,'long')
     % Specific to tubart or stubart
     smooth = false; % Boolean determining use of multiple samples from same log for training
     scaling = 'individual'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'medium')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 6; % Number of timesteps in the future
+    p = 6; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'individual'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'medium_original_scale')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 6; % Number of timesteps in the future
+    p = 6; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'original'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'long_original_scale')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 12; % Number of timesteps in the future
+    p = 13; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'original'; % String specifying feature scaling method
+    max_num_files = 200; % Max number of log files to analyze
+elseif strcmp(config,'short_original_scale')
+    % General Model Parameters
+    k = 8; % Number of hidden state/primitives
+    f = 3; % Number of timesteps in the future
+    p = 3; % Number of timesteps in the past
+    
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
+    
+    % Specific to tubart datatype
+    skip_first_samp = false; % Boolean determining discarding of first log sample
+    
+    % Specific to tubart or stubart
+    smooth = false; % Boolean determining use of multiple samples from same log for training
+    scaling = 'original'; % String specifying feature scaling method
     max_num_files = 200; % Max number of log files to analyze
 elseif strcmp(config,'original_noisemaker')
     % General Model Parameters

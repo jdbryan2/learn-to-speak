@@ -34,6 +34,19 @@ Artword apa () {
     return apa;
 }
 
+Artword ipa101 () { // Same as apa
+    Artword apa(0.5);
+    apa.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
+    apa.setTarget(kArt_muscle_INTERARYTENOID,0.5,0.5);
+    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1.0);
+    apa.setTarget(kArt_muscle_LEVATOR_PALATINI,0.5,1.0);
+    apa.setTarget(kArt_muscle_LUNGS,0,0.2);
+    apa.setTarget(kArt_muscle_LUNGS,0.1,0);
+    apa.setTarget(kArt_muscle_MASSETER,0.25,0.7);
+    apa.setTarget(kArt_muscle_ORBICULARIS_ORIS,0.25,0.2);
+    return apa;
+}
+
 Artword ahh () {
     Artword ahh(0.5);
     ahh.setTarget(kArt_muscle_INTERARYTENOID,0,0.5);
@@ -358,6 +371,24 @@ Artword ipa109 () {
     return artw;
 }
 
+Artword ipa140 () {
+    double length = 0.5;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.3);
+    artw.setTarget(kArt_muscle_LUNGS,0.05,0.2);
+    artw.setTarget(kArt_muscle_LUNGS,length,0.2);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,length,1);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.3);
+    artw.setTarget(kArt_muscle_MASSETER,length,0.3);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.5);
+    //artw.setTarget(kArt_muscle_STYLOGLOSSUS,0.1,0.3);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,0.5);
+    //artw.setTarget(kArt_muscle_TRANSVERSE_TONGUE,0,0.2);
+    //artw.setTarget(kArt_muscle_TRANSVERSE_TONGUE,length,0.2);
+    return artw;
+}
+
 Artword ipa114 () {
     double length = 0.5;
     Artword artw(length);
@@ -378,6 +409,23 @@ Artword ipa114 () {
     //artw.setTarget(kArt_muscle_UPPER_TONGUE,length,1);
     artw.setTarget(kArt_muscle_LOWER_TONGUE,0,1);
     artw.setTarget(kArt_muscle_LOWER_TONGUE,length,1);
+    return artw;
+}
+
+Artword ipa134 () {
+    double length = 0.5;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.3);
+    artw.setTarget(kArt_muscle_LUNGS,0.05,0.2);
+    artw.setTarget(kArt_muscle_LUNGS,length,0.2);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,length,1);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.35);
+    artw.setTarget(kArt_muscle_MASSETER,length,0.35);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,0.0,0.6);
+    artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,0.6);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,0,0.2);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,length,0.2);
     return artw;
 }
 
@@ -418,10 +466,10 @@ Artword ipa132 () {
     artw.setTarget(kArt_muscle_LUNGS,length,0.3);
     artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1);
     artw.setTarget(kArt_muscle_LEVATOR_PALATINI,length,1);
-    artw.setTarget(kArt_muscle_MASSETER,0.0,0.2);
-    artw.setTarget(kArt_muscle_MASSETER,length,0.2);
-    artw.setTarget(kArt_muscle_GENIOGLOSSUS,0,1);
-    artw.setTarget(kArt_muscle_GENIOGLOSSUS,length,1);
+    artw.setTarget(kArt_muscle_MASSETER,0.0,0.35);
+    artw.setTarget(kArt_muscle_MASSETER,length,0.35);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,0,.8);
+    artw.setTarget(kArt_muscle_GENIOGLOSSUS,length,.8);
     artw.setTarget(kArt_muscle_STYLOGLOSSUS,0,1);
     artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,1);
     return artw;
@@ -445,6 +493,29 @@ Artword ipa133 () {
     artw.setTarget(kArt_muscle_UPPER_TONGUE,length,.1);
     artw.setTarget(kArt_muscle_STYLOGLOSSUS,0,1);
     artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,1);
+    return artw;
+}
+
+Artword ipa142 () {
+    double length = 0.5;
+    Artword artw(length);
+    artw.setTarget(kArt_muscle_LUNGS,0,0.3);
+    artw.setTarget(kArt_muscle_LUNGS,0.05,.25);
+    artw.setTarget(kArt_muscle_LUNGS,length,0.22);
+    //artw.setTarget(kArt_muscle_INTERARYTENOID,0.0,0.5);
+    //artw.setTarget(kArt_muscle_INTERARYTENOID,length,0.5);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,0,1);
+    artw.setTarget(kArt_muscle_LEVATOR_PALATINI,length,1);
+    artw.setTarget(kArt_muscle_MYLOHYOID,0.0,0.2);
+    artw.setTarget(kArt_muscle_MYLOHYOID,length,0.2);
+    //artw.setTarget(kArt_muscle_GENIOGLOSSUS,0,1);
+    //artw.setTarget(kArt_muscle_GENIOGLOSSUS,length,1);
+    //artw.setTarget(kArt_muscle_UPPER_TONGUE,0.0,.1);
+    //artw.setTarget(kArt_muscle_UPPER_TONGUE,length,.1);
+    artw.setTarget(kArt_muscle_SPHINCTER,0.0,.6);
+    artw.setTarget(kArt_muscle_SPHINCTER,length,.6);
+    //artw.setTarget(kArt_muscle_STYLOGLOSSUS,0,1);
+    //artw.setTarget(kArt_muscle_STYLOGLOSSUS,length,1);
     return artw;
 }
 
@@ -706,10 +777,19 @@ int main()
     //std::string artword_name = "ipa305_ex";
     //Artword artword = ipa316();
     //std::string artword_name = "ipa316_ex";
-    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch1000/");
-    //sim_artword(&female, &artword,artword_name,log_period,prefix);
+    //Artword artword = ipa140();
+    //std::string artword_name = "ipa140_ex";
+    //Artword artword = ipa134();
+    //std::string artword_name = "ipa134_ex";
+    //Artword artword = ipa142();
+    //std::string artword_name = "ipa142_ex";
+    Artword artword = ipa101();
+    std::string artword_name = "ipa101_ex";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim3Batch300/");
+    sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
+    
     /*int num_trials1 = 1000;
     double hold_mean1 = 0.1;
     bool end_interp1 = true;
@@ -717,7 +797,28 @@ int main()
     std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch1000/");
     random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);*/
     
-    int num_trials1 = 300;
+    /*int num_trials1 = 50;
+    double hold_mean1 = 0.2;
+    bool end_interp1 = false;
+    double utterance_length1 = 0.5;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim1BatchNoRand50/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);*/
+    
+    /*int num_trials1 = 300;
+    double hold_mean1 = 0.2;
+    bool end_interp1 = false;
+    double utterance_length1 = 0.5;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim1BatchNoRand300/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);*/
+    
+    /*int num_trials1 = 50;
+    double hold_mean1 = 0.2;
+    bool end_interp1 = false;
+    double utterance_length1 = 0.5;
+    std::string prefix1 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim1Batch50/");
+    random_stim_trials(&female,utterance_length1,log_period,hold_mean1,num_trials1,end_interp1,prefix1);*/
+    
+    /*int num_trials1 = 300;
     double hold_mean1 = 0.2;
     bool end_interp1 = false;
     double utterance_length1 = 0.5;
@@ -736,7 +837,7 @@ int main()
     bool end_interp3 = true;
     double utterance_length3 = 0.5;
     std::string prefix3 ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim3Batch300/");
-    random_stim_trials(&female,utterance_length3,log_period,hold_mean3,num_trials3,end_interp3,prefix3);
+    random_stim_trials(&female,utterance_length3,log_period,hold_mean3,num_trials3,end_interp3,prefix3);*/
     
     /*int num_trials1 = 30;
     double hold_mean1 = 0.1;
@@ -790,8 +891,8 @@ int main()
     //int lognum = 8;
     
     /*double utterance_length = 2;
-    std::string config = "tubart-original_50noisemaker8";
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised1/");
+    std::string config = "tubart-medium_original_scale8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testBatch1000/");
     // Move prim_logs inside of config directory
     for (int i=0; i<=8; i++) {
         prim_control(&female, utterance_length, log_period,prefix,config,i);

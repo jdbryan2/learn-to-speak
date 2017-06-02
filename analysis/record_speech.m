@@ -5,7 +5,7 @@ T = 1; % Number of seconds to record for
 fs = 9000;
 recObj = audiorecorder(fs,16,1,0);
 
-ipa_num = num2str(133);
+ipa_num = num2str(142);
 num_examples = 5;
 ex = 1;
 while ex <= num_examples
