@@ -4,8 +4,8 @@ clear
 %[data2, labels, Fs, data_len] = import_datalog('testBatch1000/tubart-default8/prim_logs/primlog2.log');
 % 1 is solid, 2 is dotted
 
-[data1, labels, Fs, data_len_ref] = import_datalog('testBatch1000/artword_logs/ipa134_ex1.log');
-[data2, labels, Fs, data_len] = import_datalog('testBatch1000/artword_logs/ipa134_ex1.log');
+[data1, labels, Fs, data_len_ref] = import_datalog('testStim3Batch300/artword_logs/ipa101_ex1.log');
+[data2, labels, Fs, data_len] = import_datalog('testStim3Batch300/artword_logs/ipa101_ex1.log');
 %[data2, labels, Fs, data_len] = import_datalog('testNew1/artword_logs/ohh1.log';
 %[Snd,fs,duration] = import_sound('testNew1/artword_logs/ohh_sound1.log',true);
 %[data1, labels, Fs, data_len_ref] = import_datalog('testRandArt1/prim_logs/primlog1.log');

@@ -15,42 +15,42 @@ fac1 = 1; fac2 = 2; fac3 = 3;
 %fac1 = 4; fac2 = 5; fac3 = 6;
 %fac1 = 1; fac2 = 4; fac3 = 8;
 % Human Speech
-data_type = 'speech';
-testname = 'TestMySpeech1';
-log_fldr = '/logs/';
-log_type = 1;
-%config = 'original';
-config = 'broad_phonetic_cat';
-%config = 'medium';
-%config = 'long';
-%config = 'default';
-k = 8;
-testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
-% Load Speech specific preprocessing parameters
-load([testdir,'speech_preprocess.mat']);
+% data_type = 'speech';
+% testname = 'TestMySpeech1';
+% log_fldr = '/logs/';
+% log_type = 1;
+% %config = 'original';
+% config = 'broad_phonetic_cat';
+% %config = 'medium';
+% %config = 'long';
+% %config = 'default';
+% k = 8;
+% testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
+% % Load Speech specific preprocessing parameters
+% load([testdir,'speech_preprocess.mat']);
 
 % VT Tubes Artwords
-% %data_type = 'tubart';
-% data_type = 'stubart';
-% 
-% %testname = 'testBatch1000';
-% testname = 'testStim3Batch300';
-% %config = 'original_noisemaker';
-% 
-% %testname = 'testRevised1';
-% %config = 'original_noisemaker';
-% log_type = 3;
-% %testname = 'testBatch300';
-% %config = 'original_50noisemaker';
-% %testname = 'testBatch1000';
-% %testname = 'testStim1Batch50';
-% %config = 'default';
-% %config = 'medium_original_scale';
-% %config = 'short_original_scale';
-% %config = 'long_original_scale';
-% %config = 'default';
-% config = 'medium';
-% %config = 'long';
+%data_type = 'tubart';
+data_type = 'stubart';
+
+%testname = 'testBatch1000';
+testname = 'testStim3Batch300';
+%config = 'original_noisemaker';
+
+%testname = 'testRevised1';
+%config = 'original_noisemaker';
+log_type = 3;
+%testname = 'testBatch300';
+%config = 'original_50noisemaker';
+%testname = 'testBatch1000';
+%testname = 'testStim1Batch50';
+%config = 'default';
+%config = 'medium_original_scale';
+%config = 'short_original_scale';
+%config = 'long_original_scale';
+%config = 'default';
+config = 'medium';
+%config = 'long';
 k = 8;
 testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 if log_type == 3

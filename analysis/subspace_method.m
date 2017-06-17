@@ -15,17 +15,17 @@ clear
 
 
 % Save figures or not
-save_figs = false;
+save_figs = true;
 
 % Human Speech
 data_type = 'speech';
 testname = 'TestMySpeech1';
 %config = 'original_594';
 %config = 'textured_input';
-%config = 'broad_phonetic_cat';
+config = 'broad_phonetic_cat';
 %config = 'medium';
 %config = 'long';
-config = 'default';
+%config = 'default';
 
 % VT-tube
 % data_type = 'tub';
