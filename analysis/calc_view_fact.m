@@ -11,25 +11,29 @@ log_types = {'ipa*.mat'; '*.log';'ipa*.log'};
 log_expr = {'ipa\d\d\d_ex';'^((?!sound).)*.log$';'^ipa*((?!sound).)*.log$'};
 
 save_figs = false;
-fac1 = 1; fac2 = 2; fac3 = 3;
+%fac1 = 1; fac2 = 2; fac3 = 3;
 %fac1 = 4; fac2 = 5; fac3 = 6;
-%fac1 = 1; fac2 = 4; fac3 = 8;
+fac1 = 6; fac2 = 7; fac3 = 8;
+
 % Human Speech
 % data_type = 'speech';
 % testname = 'TestMySpeech1';
 % log_fldr = '/logs/';
 % log_type = 1;
 % %config = 'original';
-% config = 'broad_phonetic_cat';
-% %config = 'medium';
+% %config = 'broad_phonetic_cat';
+% config = 'medium';
 % %config = 'long';
 % %config = 'default';
+% %config = 'textured_input';
+% %config = 'original_594';
 % k = 8;
 % testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 % % Load Speech specific preprocessing parameters
 % load([testdir,'speech_preprocess.mat']);
 
 % VT Tubes Artwords
+%data_type = 'tub';
 %data_type = 'tubart';
 data_type = 'stubart';
 
@@ -49,8 +53,8 @@ log_type = 3;
 %config = 'short_original_scale';
 %config = 'long_original_scale';
 %config = 'default';
-config = 'medium';
-%config = 'long';
+%config = 'medium';
+config = 'long';
 k = 8;
 testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 if log_type == 3
@@ -250,6 +254,7 @@ title('3 Latent Variables as 3D Trajectory')
 xlabel(['Factor ',num2str(fac1)]);
 ylabel(['Factor ',num2str(fac2)]);
 zlabel(['Factor ',num2str(fac3)]);
+set(gca,'FontSize',12);
 hold off;
 
 % View Factors vs time in 2d plot
@@ -277,6 +282,7 @@ ylabel(['Factor ',num2str(fac1)]);
 zlabel(['Factor ',num2str(fac2)]);
 xlabel('Time');
 grid on
+set(gca,'FontSize',12);
 hold off;
 %for j = 1:k
     %pl = plot(X_past(j,:),['-',markers(cats(ic(l)))],'Color',line_clrs(ic(l)));%,...
@@ -286,17 +292,17 @@ hold off;
 %end
 end
 
-% if save_figs
+if save_figs
 %     set(f4,'PaperPosition',[.25,1.5,8,5])
 %     print('-f4',[testdir,'factor_v_time'],'-depsc','-r150');
 %     saveas(f4,[testdir,'factor_v_time'],'fig');
 %     set(f16,'PaperPosition',[.25,1.5,8,5])
 %     print('-f16',[testdir,'factor_3d_traj'],'-depsc','-r150');
 %     saveas(f16,[testdir,'factor_3d_traj'],'fig');
-%     set(f17,'PaperPosition',[.25,1.5,8,5])
-%     print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
-%     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
-% end
+    set(f17,'PaperPosition',[.25,1.5,8,5])
+    print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
+    saveas(f17,[testdir,'factor_3d_scatter'],'fig');
+end
 end
 facts = 1:k;%[1,2,3];
 Dist_mat = zeros(num_logs);
@@ -329,10 +335,11 @@ for i=1:num_unique_logs
         set(pl,'Color',[.7 .7 .7]);
     end
     grid on
-    title('3 Latent Variables as 3D Scatter Plot')
+    title('Latent Variables Scatter Plot')
     xlabel(['Factor ',num2str(fac1)]);
     ylabel(['Factor ',num2str(fac2)]);
     zlabel(['Factor ',num2str(fac3)]);
+    set(gca,'FontSize',12);
     hold off;
 end
 %Put in legends

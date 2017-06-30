@@ -1,10 +1,20 @@
-clear; %#ok<CLALL>
+clear;
 close all;
 
-for trial = 1:1
+ipa_snds = [132,134,140,142,301,304,305,316];
+testdir = 'testStim3Batch300/artword_logs/';
+
+psize = [8,5];
+fsize = psize./[8.5,11];
+xsz = fsize(1)*0.4221;
+ysz = fsize(2)*0.8923;
+%xsz=1;ysz=1;
+
+for snd = 1:length(ipa_snds)
     % Plot area function and/or pressure function as video
 
-    [data, labels, Fs, data_len] = import_datalog(sprintf('testStim3Batch300/artword_logs/ipa132_ex%i.log', trial));
+    fname = sprintf([testdir,'ipa%i_ex1'], ipa_snds(snd));
+    [data, labels, Fs, data_len] = import_datalog([fname, '.log']);
     %data(1, :) = []; % remove first row because its shitty. JB Why is it bad? JW
     %data_len = data_len-1;
     sub_sample = 1;
@@ -23,13 +33,13 @@ for trial = 1:1
     audio = data(:, end);
     audio = audio/max(abs(audio));
 
-    audiowrite(sprintf('testStim3Batch300/artword_logs/ipa101_ex%i.wav', trial), audio, Fs, 'BitsPerSample', 64)
+    %audiowrite([fname,'.wav'], audio, Fs, 'BitsPerSample', 64)
 
-    v = VideoWriter(sprintf('testStim3Batch300/artword_logs/ipa101_ex%i.avi', trial),'Uncompressed AVI'); %#ok<TNMLP>
+    v = VideoWriter([fname,'.avi'],'Uncompressed AVI'); %#ok<TNMLP>
     v.FrameRate = Fs/sub_sample;
     open(v);
 
-    t = 1:64+1;
+    t = 0:63+1;
     %t = t-1;
     lungs = (6:22)+1;
     bronchi = (23:28)+1;
@@ -46,59 +56,63 @@ for trial = 1:1
     
     lmax = max(max(area(:,lower_resp)));
 
-    glott_vert = -5.1526e-04;%(max(max(area(:,upper_tract)))+30*max(max(area(:,glottis))))/1;
+    glott_vert = -5.25e-04;%(max(max(area(:,upper_tract)))+30*max(max(area(:,glottis))))/1;
     
     nasal_vert = (max(max(area(:, upper_tract)))+max(max(area(:, nasal))))/1.9;
-    nasal_hor = -13-1;
+    nasal_hor = -13-1; % makes first nasal tube match up with tube 50 which is where they diverge
     
     % full screen figure
     f1 = figure(1);
     f1.Units = 'normalized';
-    f1.Position = [0 0 1 1];
+    f1.Position = [0, 0,xsz,ysz];
     
     for j = 1:loops
-        tb = annotation('textbox',[0.8,0.2,0.1,0.1],'String',['Scaling:' char(10),'Blue - 1:1' char(10),'Red - 1:20' char(10),'Green - 5:1']);
+        tb = annotation('textbox',[0.75-.01,0.2,0.1,0.1],'String',['Scaling:' char(10),'Blue - 1:1' char(10),'Red - 1:20' char(10),'Green - 5:1'],'FitBoxToText','on');
         %tb.Color = 'magenta';
-        tb.FontSize = 16;
+        tb.FontSize = 12;
         
-        plot(t(7:end),zeros(1,65-6),'k--','LineWidth',1.5);
-        title(sprintf('Vocal Tract Area Function: Trial %i', trial),'FontSize',16);
-        ylabel('Area in cm^3')
+        plot(t(6:end),zeros(1,length(t)-5),'k--','LineWidth',1.5);
+        title(sprintf('Vocal Tract Area Function: IPA %i', ipa_snds(snd)),'FontSize',12);
+        ylabel('Area cm^3')
+        xlabel('Tube Section # (Does not correspond exactly to tube length)');
         ylim([-1.2*lmax*l_scale/2,1.2*lmax*l_scale/2]);
-        set(gca,'fontsize',18)
-        set(gca,'XTickLabel','')
+        set(gca,'fontsize',12)
+        %set(gca,'XTickLabel','')
+        set(gca,'YLim',[-0.00104,0.00104]);
         hold on
         l_area = [area(j*sub_sample, lower_resp),area(j*sub_sample, lower_resp(end))];
         l_t = [t(lower_resp),t(lower_resp(end)+1)];
         stairs(l_t, 0.5*l_scale*l_area, '-r','LineWidth',1.5)
         stairs(l_t,-0.5*l_scale*l_area, '-r','LineWidth',1.5)
-        la = annotation('textbox',[0.25,0.1,0.1,0.05],'String','Lungs','FitBoxToText','on');
+        la = annotation('textbox',[0.23-.01,0.42,0.1,0.05],'String','Lungs','FitBoxToText','on');
         la.Color = 'red';
-        la.FontSize = 16;
+        la.FontSize = 12;
         la.LineStyle = 'none';
         
-        ba = annotation('textbox',[0.39,0.43,0.1,0.05],'String','Bronchi','FitBoxToText','on');
+        ba = annotation('textbox',[0.37-.01,0.43,0.1,0.05],'String','Bronchi','FitBoxToText','on');
         ba.Color = 'red';
-        ba.FontSize = 16;
+        ba.FontSize = 12;
         ba.LineStyle = 'none';
         %%%plot(t(lungs)+1, pressure(j*sub_sample, lungs+1), '.c')
 
-        stairs(t(tract), 0.5*t_scale*area(j*sub_sample, tract), '-b','LineWidth',1.5)
-        stairs(t(tract), -0.5*t_scale*area(j*sub_sample, tract), '-b','LineWidth',1.5)
+        t_a = [area(j*sub_sample, tract),area(j*sub_sample, tract(end))];
+        t_t = [t(tract),t(tract(end)+1)];
+        stairs(t_t, 0.5*t_scale*t_a, '-b','LineWidth',1.5)
+        stairs(t_t, -0.5*t_scale*t_a, '-b','LineWidth',1.5)
         
-        ta = annotation('textbox',[0.47,0.58,0.1,0.05],'String','Trachea','FitBoxToText','on');
+        ta = annotation('textbox',[0.45-.01,0.58,0.1,0.05],'String','Trachea','FitBoxToText','on');
         ta.Color = 'Blue';
-        ta.FontSize = 16;
+        ta.FontSize = 12;
         ta.LineStyle = 'none';
         
-        pa = annotation('textbox',[.58,0.39,0.1,0.05],'String','Pharynx','FitBoxToText','on');
+        pa = annotation('textbox',[.56-.01,0.39,0.1,0.05],'String','Pharynx','FitBoxToText','on');
         pa.Color = 'Blue';
-        pa.FontSize = 16;
+        pa.FontSize = 12;
         pa.LineStyle = 'none';
         
-        oca = annotation('textbox',[.69,0.39,0.1,0.05],'String','Oral Cavity','FitBoxToText','on');
+        oca = annotation('textbox',[.67-.01,0.39,0.1,0.05],'String','Oral Cavity','FitBoxToText','on');
         oca.Color = 'Blue';
-        oca.FontSize = 16;
+        oca.FontSize = 12;
         oca.LineStyle = 'none';
         %%%plot(t(trachea), pressure(j*sub_sample, trachea), '.c')
 
@@ -106,19 +120,19 @@ for trial = 1:1
         g_t = [t(glottis),t(glottis(end)+1)];
         %stairs(g_t, 0.5*t_scale*g_area, '--g','LineWidth',1.5)
         %stairs(g_t, -0.5*t_scale*g_area, '--g','LineWidth',1.5)
-        plot(g_t,zeros(size(g_t))+glott_vert,'k--');
+        plot(g_t,zeros(size(g_t))+glott_vert,'k:');
         stairs(g_t, 0.5*g_scale*g_area+glott_vert, '-g','LineWidth',1.5)
         stairs(g_t, -0.5*g_scale*g_area+glott_vert, '-g','LineWidth',1.5)
         
-        ga = annotation('textbox',[0.52,0.16,0.1,0.05],'String','Glottis','FitBoxToText','on');
+        ga = annotation('textbox',[0.50,0.16,0.1,0.05],'String','Glottis','FitBoxToText','on');
         ga.Color = 'green';
-        ga.FontSize = 16;
+        ga.FontSize = 12;
         ga.LineStyle = 'none';
         
-        annotation('ellipse',[.527 .49 .025 .05])
-        annotation('ellipse',[.49 .23 .1 .2])
+        annotation('ellipse',[.527-.01, .495 .025 .0425])
+        annotation('ellipse',[.49-.012, .23 .1 .17])
         
-        annotation('textarrow',[0.54,0.54],[0.485,0.44]);
+        annotation('textarrow',[0.54-.01,0.54-.01],[0.485,0.41]);
         
         
         %%%plot(t(glottis), pressure(j*sub_sample, glottis), '.c')
@@ -135,9 +149,9 @@ for trial = 1:1
         stairs(n_t, 0.5*n_scale*n_area+nasal_vert, '-b','LineWidth',1.5)
         stairs(n_t, -0.5*n_scale*n_area+nasal_vert, '-b','LineWidth',1.5)
         
-        na = annotation('textbox',[.74,0.80,0.1,0.05],'String','Nasal Cavity','FitBoxToText','on');
+        na = annotation('textbox',[.72-.01,0.8,0.1,0.05],'String','Nasal Cavity','FitBoxToText','on');
         na.Color = 'Blue';
-        na.FontSize = 16;
+        na.FontSize = 12;
         na.LineStyle = 'none';
 
         %%%plot(t(nasal+nasal_hor), pressure(j*sub_sample, nasal)+nasal_vert, '.c')
@@ -147,8 +161,13 @@ for trial = 1:1
         writeVideo(v, getframe(gcf));
         if j==loops
             break;
+        elseif j==round(loops/2)
+            set(f1,'PaperPosition',[.25,1.5,psize])
+            print('-f1',[fname,'_snapshot'],'-depsc','-r150');
+            saveas(f1,[fname,'_snapshot'],'fig');
         end
         clf;
     end
     close(v);
+    clf;
 end

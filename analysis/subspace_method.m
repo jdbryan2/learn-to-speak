@@ -18,19 +18,21 @@ clear
 save_figs = true;
 
 % Human Speech
-data_type = 'speech';
-testname = 'TestMySpeech1';
-%config = 'original_594';
-%config = 'textured_input';
-config = 'broad_phonetic_cat';
-%config = 'medium';
-%config = 'long';
-%config = 'default';
+% data_type = 'speech';
+% testname = 'TestMySpeech1';
+% %config = 'original_594';
+% %config = 'textured_input';
+% %config = 'broad_phonetic_cat';
+% config = 'medium';
+% %config = 'long';
+% %config = 'default';
 
 % VT-tube
 % data_type = 'tub';
-% testname = 'testBatch1000';
+% %testname = 'testBatch1000';
+% testname = 'testStim3Batch300';
 % %config = 'default';
+% %config = 'medium';
 % config = 'long';
 
 % VT-articulatory
@@ -42,18 +44,20 @@ config = 'broad_phonetic_cat';
 % %testname = 'testStim1Batch50';
 % %testname = 'testStim1BatchNoRand300';
 % %config = 'default';
-% config = 'medium';
-% %config = 'long';
+% %config = 'medium';
+% config = 'long';
 % %config = 'medium_original_scale';
 % %config = 'long_original_scale';
 % %config = 'short_original_scale';
 % %config = 'original_50noisemaker';
 
 % VT-acoustic-articulatory
-% data_type = 'stubart';
-% testname = 'testBatch1000';
-% config = 'default';
-% %config = 'long';
+data_type = 'stubart';
+testname = 'testStim3Batch300';
+%testname = 'testBatch1000';
+%config = 'default';
+%config = 'medium';
+config = 'long';
 
 % DFA Configuration Settings
 if strcmp(config,'default')
@@ -74,15 +78,15 @@ if strcmp(config,'default')
     scaling = 'individual'; % String specifying feature scaling method
     max_num_files = 200; % Max number of log files to analyze
 elseif strcmp(config,'original_594')
+    % Specific to Speech data type
+    max_length = 30; % Maximum length of sample in seconds
+    win_time = 20/1000; % Width of FFT window in seconds
     tlen = 0.3;
+    
     % General Model Parameters
     k = 8; % Number of hidden state/primitives
     f = round(tlen/win_time); % Number of timesteps in the future
     p = round(tlen/win_time); % Number of timesteps in the past
-    
-    % Specific to Speech data type
-    max_length = 30; % Maximum length of sample in seconds
-    win_time = 20/1000; % Width of FFT window in seconds
 elseif strcmp(config,'textured_input')
     % General Model Parameters
     k = 8; % Number of hidden state/primitives
@@ -105,7 +109,7 @@ elseif strcmp(config,'long')
     % General Model Parameters
     k = 8; % Number of hidden state/primitives
     f = 12; % Number of timesteps in the future
-    p = 13; % Number of timesteps in the past
+    p = 12; % Number of timesteps in the past
     
     % Specific to Speech data type
     max_length = 30; % Maximum length of sample in seconds
@@ -256,7 +260,7 @@ end
 
 % Set stdevs below a tolerance equal to zero and don't include those 
 % featuresin primitive discovery.
-non_zero_feats = stdevs>=1e-6;
+non_zero_feats = stdevs>= 1e-6;
 %stdevs(~non_zero_feats) = max(stdevs)*10;
 stdevs(~non_zero_feats) = 0;
 non_zero_p = repmat(non_zero_feats,[p,1]);
@@ -298,17 +302,22 @@ Oz(non_zero_f,:) = O;
 Xpz(non_zero_p,:) = Xp;
 Xfz(non_zero_f,:) = Xf;
 %% View Pimitives
-view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
 %view_prim_image(K,O,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[2,3],testdir,1:num_vars,stdevs,dmean);
-if strcmp(data_type,'tub')
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+if strcmp(data_type,'speech')
+    view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,'Frequency (Hz)',[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
+elseif strcmp(data_type,'tub')
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,'Tube Section #',[2,3],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
 elseif strcmp(data_type,'tubart')
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
+    %view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,'Combined',[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,'Combined',[2,3],testdir,1:num_vars,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,'Tube Section #',[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,'Articulatory Activations',[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
 elseif strcmp(data_type,'stubart')
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
-    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,[36,37],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars,stdevs,dmean);
+    %view_prim_image(K,O,p,f,k,sum(non_zero_feats),D_lab(non_zero_feats),dt,mk,nk,save_figs,'Combined',[2,3],testdir,1:sum(non_zero_feats),stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs,'Combined',[2,3],testdir,1:num_vars,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs, 'Tube Section #',[32,33],[testdir,'tube_'],1:num_tubes,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs, 'Articulator #',[34,35],[testdir,'art_'],num_tubes+1:num_tubes+num_art,stdevs,dmean);
+    view_prim_image(Kz,Oz,p,f,k,num_vars,D_lab,dt,mk,nk,save_figs, 'Frequency (Hz)',[36,37],[testdir,'spectrogram_'],num_tubes+num_art+1:num_vars,stdevs,dmean);
 end
 %% View Factors
 f4 = figure(4); % Graph common factors vs sample/time
@@ -344,17 +353,17 @@ xlabel(['Factor ',num2str(fac1)]);
 ylabel(['Factor ',num2str(fac2)]);
 zlabel(['Factor ',num2str(fac3)]);
 
-if save_figs
-    set(f4,'PaperPosition',[.25,1.5,8,5])
-    print('-f4',[testdir,'factor_v_time'],'-depsc','-r150');
-    saveas(f4,[testdir,'factor_v_time'],'fig');
-    set(f16,'PaperPosition',[.25,1.5,8,5])
-    print('-f16',[testdir,'factor_3d_traj'],'-depsc','-r150');
-    saveas(f16,[testdir,'factor_3d_traj'],'fig');
-    set(f17,'PaperPosition',[.25,1.5,8,5])
-    print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
-    saveas(f17,[testdir,'factor_3d_scatter'],'fig');
-end
+% if save_figs
+%     set(f4,'PaperPosition',[.25,1.5,8,5])
+%     print('-f4',[testdir,'factor_v_time'],'-depsc','-r150');
+%     saveas(f4,[testdir,'factor_v_time'],'fig');
+%     set(f16,'PaperPosition',[.25,1.5,8,5])
+%     print('-f16',[testdir,'factor_3d_traj'],'-depsc','-r150');
+%     saveas(f16,[testdir,'factor_3d_traj'],'fig');
+%     set(f17,'PaperPosition',[.25,1.5,8,5])
+%     print('-f17',[testdir,'factor_3d_scatter'],'-depsc','-r150');
+%     saveas(f17,[testdir,'factor_3d_scatter'],'fig');
+% end
 %% Plotting of the past to future transformation
 KKs = Kz.*repmat(stdevs',[k,p]);
 OOs = Oz.*repmat(stdevs,[f,k]);
@@ -387,6 +396,17 @@ Xf_unscaled = Xfz.*repmat(stdevs,[f,num_logs])+Xf_mean;
 %  The two lines below need fixed if we are actually going to limit them
 % Xf_unscaled_pred(Xf_unscaled_pred>1) = 1;
 % Xf_unscaled_pred(Xf_unscaled_pred<0) = 0;
+
+Rsq = mean((Xf_pred).*(Xfz),2)./(std(Xf_pred')'.*std(Xfz')');
+rsqm = mean(Rsq(non_zero_f))
+rsqd = std(Rsq(non_zero_f))
+% Give same result
+%  Rsq2 = mean((Xf_unscaled_pred-Xf_mean).*(Xf_unscaled-Xf_mean),2)./(std(Xf_unscaled_pred')'.*std(Xf_unscaled')');
+%  rsq2m = mean(Rsq2(non_zero_f));
+%  rsq2d = std(Rsq2(non_zero_f));
+% Rsq3 = mean((Xf_unscaled_pred-mean(Xf_unscaled_pred,2)*ones(1,num_logs)).*(Xf_unscaled-mean(Xf_unscaled,2)*ones(1,num_logs)),2)./(std(Xf_unscaled_pred')'.*std(Xf_unscaled')');
+% rsq3m = mean(Rsq3);
+% rsq3d = std(Rsq3);
 
 errors_scaled = (Xf_pred-Xfz);
 errors = (Xf_unscaled-Xf_unscaled_pred);

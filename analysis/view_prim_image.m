@@ -1,4 +1,4 @@
-function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,fpath,feats,stdevs,dmean)
+function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,Ylab,fignums,fpath,feats,stdevs,dmean)
     % Graph Input and Output Primitives in subplot form
     % K = Input Prims
     % O = Output Prims
@@ -92,7 +92,7 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,
     h2 = mtit(f2,'Input Primitives','yoff',0.02);
     xl = xlabel(h2.ah,'Time (sec)','Visible','on');
     set(xl,'position',xl.Position+[0,-0.02,0]);
-    ylabel(h2.ah,'Frequency (Hz)','Visible','on')
+    ylabel(h2.ah,Ylab,'Visible','on')
     set(h2.ah,'FontSize',14)
     set(h2.ah,'clim',[Kmin,Kmax])
     colorbar(h2.ah)
@@ -100,7 +100,7 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,fignums,
     h3 = mtit(f3,'Output Primitives','yoff',0.02);
     xl = xlabel(h3.ah,'Time (sec)','Visible','on');
     set(xl,'position',xl.Position+[0,-0.02,0]);
-    ylabel(h3.ah,'Frequency (Hz)','Visible','on')
+    ylabel(h3.ah,Ylab,'Visible','on')
     set(h3.ah,'FontSize',14)
     set(h3.ah,'clim',[Omin,Omax])
     colorbar(h3.ah)
