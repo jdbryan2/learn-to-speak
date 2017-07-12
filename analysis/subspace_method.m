@@ -52,12 +52,13 @@ save_figs = true;
 % %config = 'original_50noisemaker';
 
 % VT-acoustic-articulatory
-data_type = 'stubart';
+data_type = 'tubart';
 testname = 'testStim3Batch300';
 %testname = 'testBatch1000';
 %config = 'default';
 %config = 'medium';
-config = 'long';
+%config = 'long';
+config = 'original_noisemaker';
 
 % DFA Configuration Settings
 if strcmp(config,'default')
@@ -193,7 +194,8 @@ elseif strcmp(config,'short_original_scale')
 elseif strcmp(config,'original_noisemaker')
     % General Model Parameters
     k = 8; % Number of hidden state/primitives
-    f = 13; % Number of timesteps in the future
+    %f = 13; % Number of timesteps in the future %original....
+    f = 12; % Number of timesteps in the future
     p = 13; % Number of timesteps in the past
     
     % Specific to Speech data type
@@ -237,6 +239,7 @@ nk = ceil((k-mk)/mk)+1;
 % Create directory for this specific test
 testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 mkdir(testdir);
+mkdir([testdir,'/prim_logs']);
 
 % Import Data and Preprocess accordingly
 if strcmp(data_type, 'speech')

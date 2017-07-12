@@ -11,9 +11,9 @@ log_types = {'ipa*.mat'; '*.log';'ipa*.log'};
 log_expr = {'ipa\d\d\d_ex';'^((?!sound).)*.log$';'^ipa*((?!sound).)*.log$'};
 
 save_figs = false;
-%fac1 = 1; fac2 = 2; fac3 = 3;
+fac1 = 1; fac2 = 2; fac3 = 3;
 %fac1 = 4; fac2 = 5; fac3 = 6;
-fac1 = 6; fac2 = 7; fac3 = 8;
+%fac1 = 6; fac2 = 7; fac3 = 8;
 
 % Human Speech
 % data_type = 'speech';
@@ -35,7 +35,7 @@ fac1 = 6; fac2 = 7; fac3 = 8;
 % VT Tubes Artwords
 %data_type = 'tub';
 %data_type = 'tubart';
-data_type = 'stubart';
+data_type = 'tubart';
 
 %testname = 'testBatch1000';
 testname = 'testStim3Batch300';
@@ -43,7 +43,7 @@ testname = 'testStim3Batch300';
 
 %testname = 'testRevised1';
 %config = 'original_noisemaker';
-log_type = 3;
+log_type = 2;
 %testname = 'testBatch300';
 %config = 'original_50noisemaker';
 %testname = 'testBatch1000';
@@ -52,9 +52,9 @@ log_type = 3;
 %config = 'medium_original_scale';
 %config = 'short_original_scale';
 %config = 'long_original_scale';
-%config = 'default';
+config = 'default';
 %config = 'medium';
-config = 'long';
+%config = 'long';
 k = 8;
 testdir = [testname,'/',data_type,'-',config,num2str(k),'/'];
 if log_type == 3

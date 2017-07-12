@@ -783,10 +783,10 @@ int main()
     //std::string artword_name = "ipa134_ex";
     //Artword artword = ipa142();
     //std::string artword_name = "ipa142_ex";
-    Artword artword = ipa101();
-    std::string artword_name = "ipa101_ex";
-    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim3Batch300/");
-    sim_artword(&female, &artword,artword_name,log_period,prefix);
+    //Artword artword = ipa101();
+    //std::string artword_name = "ipa101_ex";
+    //std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim3Batch300/");
+    //sim_artword(&female, &artword,artword_name,log_period,prefix);
     
     // 2.) Generate Randomly Stimulated data trials
     
@@ -918,6 +918,15 @@ int main()
     std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testRevised1/");
     // Move prim_logs inside of config directory
     prim_control(&female, utterance_length, log_period,prefix,config,lognum);*/
+    
+    // Tests For Thesis
+    double utterance_length = 2;
+    std::string config = "tubart-original_noisemaker8";
+    std::string prefix ("/Users/JacobWagner/Documents/Repositories/learn-to-speak/analysis/testStim3Batch300/");
+    // Move prim_logs inside of config directory
+    for (int i=0; i<=8; i++) {
+        prim_control(&female, utterance_length, log_period,prefix,config,i);
+    }
     
     // 5.) Perform Area Function Tracking of 1.)
     //AreaRefControl(&female, log_freq, log_period,prefix);
