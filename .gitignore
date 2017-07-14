@@ -15,7 +15,8 @@ build/*
 data/*
 bin/*
 python/data/*
-python/.ropeproject/*
+*/.ropeproject/*
+
 
 # vim swap files
 ################
