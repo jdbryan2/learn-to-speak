@@ -18,14 +18,14 @@ clear
 save_figs = true;
 
 % Human Speech
-% data_type = 'speech';
-% testname = 'TestMySpeech1';
-% %config = 'original_594';
-% %config = 'textured_input';
-% %config = 'broad_phonetic_cat';
-% config = 'medium';
-% %config = 'long';
-% %config = 'default';
+data_type = 'speech';
+testname = 'TestMySpeech1';
+%config = 'original_594';
+config = 'textured_input';
+%config = 'broad_phonetic_cat';
+%config = 'medium';
+%config = 'long';
+%config = 'default';
 
 % VT-tube
 % data_type = 'tub';
@@ -52,13 +52,13 @@ save_figs = true;
 % %config = 'original_50noisemaker';
 
 % VT-acoustic-articulatory
-data_type = 'tubart';
-testname = 'testStim3Batch300';
-%testname = 'testBatch1000';
-%config = 'default';
-%config = 'medium';
-%config = 'long';
-config = 'original_noisemaker';
+% data_type = 'tubart';
+% testname = 'testStim3Batch300';
+% %testname = 'testBatch1000';
+% %config = 'default';
+% %config = 'medium';
+% config = 'long';
+% %config = 'original_noisemaker';
 
 % DFA Configuration Settings
 if strcmp(config,'default')

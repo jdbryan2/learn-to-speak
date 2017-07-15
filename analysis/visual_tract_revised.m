@@ -2,24 +2,25 @@ clear;
 close all;
 
 % For plotting IPA figures
-% trial_ids = [132,134,140,142,301,304,305,316];
-% testdir = 'testStim3Batch300/artword_logs/';
-% filename_fmt = 'ipa%i_ex1,log';
-% logtype = 'IPA';
+trial_ids = [132,134,140,142,301,304,305,316];
+testdir = 'testStim3Batch300/artword_logs/';
+filename_fmt = 'ipa%i_ex1.log';
+logtype = 'IPA %i';
+snd_fmt = 'ipa%i_ex_sound1.log';
+take_snapshot = true;
 
 % For plotting Primlogs
-trial_ids = [0,1,2,3,4,5,6,7,8];
-%testname = 'testStim3Batch300';
-testname = 'testStim1Batch50';
-data_type = 'tubart';
-config = 'original_50noisemaker';
-k = 8;
-testdir = [testname,'/',data_type,'-',config,num2str(k),'/prim_logs/'];
-filename_fmt = 'primlog%i.log';
-snd_fmt = 'sound%i.log';
-logtype = 'Primitive %i Controller';
-
-take_snapshot = false;
+% trial_ids = [0,1,2,3,4,5,6,7,8];
+% %testname = 'testStim3Batch300';
+% testname = 'testStim1Batch50';
+% data_type = 'tubart';
+% config = 'original_50noisemaker';
+% k = 8;
+% testdir = [testname,'/',data_type,'-',config,num2str(k),'/prim_logs/'];
+% filename_fmt = 'primlog%i.log';
+% snd_fmt = 'sound%i.log';
+% logtype = 'Primitive %i Controller';
+%take_snapshot = false;
 
 psize = [8,5];
 fsize = psize./[8.5,11];
@@ -47,8 +48,8 @@ for trial = 1:length(trial_ids)
     %%%pressure = pressure/max(max(abs(pressure(:, 7:77))));
     %%%pressure = pressure*1e-3;
 
-    area= data(:, 1:89);
-
+    area= data(:, 1:89)*1e4; %to convert from meters^2 to cm^2
+    
     audiowrite([fname(1:end-4),'.wav'], Snd, fs, 'BitsPerSample', 64)
 
     samp_rate = Fs*sub_sample;
@@ -74,7 +75,7 @@ for trial = 1:length(trial_ids)
     
     lmax = max(max(area(:,lower_resp)));
 
-    glott_vert = -5.25e-04;%(max(max(area(:,upper_tract)))+30*max(max(area(:,glottis))))/1;
+    glott_vert = -5.7;%(max(max(area(:,upper_tract)))+30*max(max(area(:,glottis))))/1;
     
     nasal_vert = (max(max(area(:, upper_tract)))+max(max(area(:, nasal))))/1.9;
     nasal_hor = -13-1; % makes first nasal tube match up with tube 50 which is where they diverge
@@ -92,12 +93,12 @@ for trial = 1:length(trial_ids)
         
         plot(t(6:end),zeros(1,length(t)-5),'k--','LineWidth',1.5);
         title(sprintf(['Vocal Tract Area Function: ',logtype], trial_ids(trial)),'FontSize',12);
-        ylabel('Area cm^3')
+        ylabel('Area cm^2')
         xlabel('Tube Section # (Does not correspond exactly to tube length)');
-        ylim([-1.2*lmax*l_scale/2,1.2*lmax*l_scale/2]);
+        %ylim([-1.2*lmax*l_scale/2,1.2*lmax*l_scale/2]);
         set(gca,'fontsize',12)
         %set(gca,'XTickLabel','')
-        set(gca,'YLim',[-0.00104,0.00104]);
+        set(gca,'YLim',[-11.5,11.5]);
         hold on
         l_area = [area(vt_ind, lower_resp),area(vt_ind, lower_resp(end))];
         l_t = [t(lower_resp),t(lower_resp(end)+1)];
@@ -184,8 +185,8 @@ for trial = 1:length(trial_ids)
             break;
         elseif (take_snapshot== true) && j==round(loops/2)
             set(f1,'PaperPosition',[.25,1.5,psize])
-            print('-f1',[fname,'_snapshot'],'-depsc','-r150');
-            saveas(f1,[fname,'_snapshot'],'fig');
+            print('-f1',[fname(1:end-4),'_snapshot'],'-depsc','-r150');
+            saveas(f1,[fname(1:end-4),'_snapshot'],'fig');
         end
         clf;
     end

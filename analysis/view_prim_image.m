@@ -89,17 +89,17 @@ function [] = view_prim_image(K,O,p,f,k,num_vars,lab,dt,mk,nk,save_figs,Ylab,fig
         set(gca,'Visible','off')
     end
 
-    h2 = mtit(f2,'Input Primitives','yoff',0.02);
+    h2 = mtit(f2,'Input Synergies','yoff',0.02);
     xl = xlabel(h2.ah,'Time (sec)','Visible','on');
-    set(xl,'position',xl.Position+[0,-0.02,0]);
+    set(xl,'position',xl.Position+[0,-0.03,0]);
     ylabel(h2.ah,Ylab,'Visible','on')
     set(h2.ah,'FontSize',14)
     set(h2.ah,'clim',[Kmin,Kmax])
     colorbar(h2.ah)
 
-    h3 = mtit(f3,'Output Primitives','yoff',0.02);
+    h3 = mtit(f3,'Output Synergies','yoff',0.02);
     xl = xlabel(h3.ah,'Time (sec)','Visible','on');
-    set(xl,'position',xl.Position+[0,-0.02,0]);
+    set(xl,'position',xl.Position+[0,-0.03,0]);
     ylabel(h3.ah,Ylab,'Visible','on')
     set(h3.ah,'FontSize',14)
     set(h3.ah,'clim',[Omin,Omax])
