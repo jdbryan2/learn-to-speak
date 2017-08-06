@@ -24,7 +24,7 @@ enum kArt_muscle {
     kArt_muscle_INTERARYTENOID = 1, // constriction of larynx; 0 = breathing, 1 = constricted glottis
     
     kArt_muscle_CRICOTHYROID = 2, // vocal-cord tension
-    kArt_muscle_VOCALIS = 3, // vocal-cord tension
+    kArt_muscle_VOCALIS = 3, // vocal-cord tension (unused)
     kArt_muscle_THYROARYTENOID = 4,
     kArt_muscle_POSTERIOR_CRICOARYTENOID = 5, // opening of glottis
     kArt_muscle_LATERAL_CRICOARYTENOID = 6, // opening of glottis
@@ -33,10 +33,10 @@ enum kArt_muscle {
     kArt_muscle_STERNOHYOID = 8, // down movement of hyoid bone
     
     kArt_muscle_THYROPHARYNGEUS = 9, // constriction of ventricular folds
-    kArt_muscle_LOWER_CONSTRICTOR = 10,
-    kArt_muscle_MIDDLE_CONSTRICTOR = 11,
-    kArt_muscle_UPPER_CONSTRICTOR = 12,
-    kArt_muscle_SPHINCTER = 13, // constriction of pharynx
+    kArt_muscle_LOWER_CONSTRICTOR = 10, // lower rear wall of pharynx (unused)
+    kArt_muscle_MIDDLE_CONSTRICTOR = 11, // middle rear wall of pharynx (unused)
+    kArt_muscle_UPPER_CONSTRICTOR = 12, // upper rear wall of pharynx (unused)
+    kArt_muscle_SPHINCTER = 13, // backward movement of hyoid bone  (and seems to drive upper/middle/lower pharynx)
     
     kArt_muscle_HYOGLOSSUS = 14, // down movement of tongue body
     kArt_muscle_STYLOGLOSSUS = 15, // up movement of tongue body
@@ -51,7 +51,7 @@ enum kArt_muscle {
     kArt_muscle_ORBICULARIS_ORIS = 22, // rounding of lips
     
     kArt_muscle_LEVATOR_PALATINI = 23, // closing of velo-pharyngeal port; 0 = open ("nasal"), 1 = closed ("oral")
-    kArt_muscle_TENSOR_PALATINI = 24,
+    kArt_muscle_TENSOR_PALATINI = 24, // (unused)
     
     kArt_muscle_MASSETER = 25,// closing of jaw; 0 = open, 1 = closed
     kArt_muscle_MYLOHYOID = 26, // opening of jaw

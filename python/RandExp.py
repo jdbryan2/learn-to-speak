@@ -91,20 +91,23 @@ class RandExp:
         self.ResetOutputVars()
 
     def ResetOutputVars(self):
-        self.sound_wave = np.zeros(np.ceil(self.sample_freq *
-                                           self.utterance_length))
+        self.sound_wave = np.zeros(int(np.ceil(self.sample_freq *
+                                           self.utterance_length)))
 
         self.area_function = np.zeros((MAX_NUMBER_OF_TUBES,
-                                       np.ceil(self.sample_freq *
-                                               self.utterance_length)))
+                                       int(np.ceil(self.sample_freq *
+                                               self.utterance_length))))
 
         self.art_hist = np.zeros((aw.kArt_muscle.MAX,
-                                  np.ceil(self.sample_freq *
-                                          self.utterance_length)))
+                                  int(np.ceil(self.sample_freq *
+                                          self.utterance_length))))
 
-    def InitializeDir(self, dirname):
+    def InitializeDir(self, dirname, addDTS=True):
         # setup directory for saving files
-        self.directory = dirname + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
+        if addDTS:
+            self.directory = dirname + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
+        else:
+            self.directory = dirname
 
         if not os.path.exists(self.home_dir):
             os.makedirs(self.home_dir)
@@ -275,9 +278,6 @@ class RandExp:
                  glottal_masses=self.glottal_masses,
                  method=self.method,
                  loops=self.loops,
-                 initial_art=self.initial_art,
-                 max_increment=self.max_increment,
-                 min_increment=self.min_increment,
                  max_delta_target=self.max_delta_target)
 
     def SaveBrownianParams(self):
@@ -315,14 +315,14 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=100,
+                    loops=10,
                     utterance_length=1.0,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
     # manually pump the lungs
-    # rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-    #                         np.array([0.4, 0.0]),  # targets
-    #                         np.array([0.0, 0.5]))  # times
+    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+                            np.array([0.4, 0.0]),  # targets
+                            np.array([0.0, 0.5]))  # times
 
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
     # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
