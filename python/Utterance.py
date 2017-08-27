@@ -208,8 +208,8 @@ if __name__ == "__main__":
                     loops=1,
                     utterance_length=0.5)
 
-    apa.SetManualSequence(aw.kArt_muscle.INTERARYTENOID, [0,   0.5], 
-                                                         [0.5, 0.5])
+    apa.SetManualSequence(aw.kArt_muscle.INTERARYTENOID, [0,   0.5], # time 
+                                                         [0.5, 0.5]) # target
 
     apa.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
                                                            [1.0, 1.0])
@@ -221,10 +221,62 @@ if __name__ == "__main__":
 
     apa.SetManualSequence(aw.kArt_muscle.ORBICULARIS_ORIS, [0.25], [0.2])
 
-    # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
-
-    # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
-    #           initial_art=np.zeros(aw.kArt_muscle.MAX))
-    # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.3)
     apa.Run()
 
+    ############################################################################
+    sigh = Utterance(dir_name="sigh",
+                    loops=1,
+                    utterance_length=0.5)
+
+    sigh.SetManualSequence(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
+                                                [0.1, 0.0])
+
+
+    sigh.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
+                                                           [1.0, 1.0])
+
+
+    sigh.Run()
+    ############################################################################
+    ejective = Utterance(dir_name="ejective",
+                    loops=1,
+                    utterance_length=0.5)
+
+    ejective.SetManualSequence(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
+                                                     [0.1, 0.0])
+
+
+    ejective.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
+                                                                [1.0, 1.0])
+
+    ejective.SetManualSequence(aw.kArt_muscle.INTERARYTENOID, [0.0, 0.17, 0.2, 0.35, 0.38, 0.5], 
+                                                              [0.5, 0.5 , 1.0, 1.0 , 1.0 , 0.5])
+
+    ejective.SetManualSequence(aw.kArt_muscle.MASSETER, [0.0, 0.5], 
+                                                        [-.3, -.3])
+
+    ejective.SetManualSequence(aw.kArt_muscle.HYOGLOSSUS, [0.0, 0.5], 
+                                                          [0.5, 0.5])
+
+    ejective.SetManualSequence(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.1, 0.15, 0.29, 0.32], 
+                                                            [0.0, 0.0, 1.0 , 1.0 , 0.0 ])
+
+    ejective.SetManualSequence(aw.kArt_muscle.STYLOHYOID, [0.0, 0.22, 0.27, 0.35, 0.38, 0.5], 
+                                                          [0.0,  0.0, 1.0 , 1.0 , 0.0 , 0.0])
+
+    ejective.Run()
+    ############################################################################
+
+    click = Utterance(dir_name="click",
+                    loops=1,
+                    utterance_length=0.5)
+
+    click.SetManualSequence(aw.kArt_muscle.MASSETER, [0.0 , 0.2 ,  0.3 ,  0.5 ], 
+                                                     [0.25, 0.25, -0.25, -0.25])
+
+    click.SetManualSequence(aw.kArt_muscle.ORBICULARIS_ORIS, [0.0 , 0.2 , 0.3, 0.5], 
+                                                             [0.75, 0.75, 0.0, 0.0])
+
+    click.SetManualSequence(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.5], 
+                                                         [0.9, 0.9])
+    click.Run()

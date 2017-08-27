@@ -46,8 +46,8 @@ void Artword::Init(double _totalTime) {
 void Artword::setTarget (int feature, double time, double target) {
     assert (feature >= 0);
     assert (feature < kArt_muscle_MAX);
-    assert(target>=0);
-    assert(target<=1.0);
+    //assert(target>=0);
+    //assert(target<=1.0);
     ArtwordData* f = &(data[feature]);
     assert (f->numberOfTargets >= 2);
     vector<art_target>::iterator it = f->targets.begin();
