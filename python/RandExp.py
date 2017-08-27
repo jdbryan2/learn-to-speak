@@ -10,6 +10,7 @@ import pylab as plt
 # TODO: Add this to constants in library
 MAX_NUMBER_OF_TUBES = 89
 
+# TODO: UPDATE to inherit Utterance.py
 
 class RandExp:
 
@@ -32,12 +33,12 @@ class RandExp:
             self.utterance_length / \
             self.min_increment + 1
 
-        # brownian default params
-        self.increment = 0.01
-        self.sigma = 0.1
-        self.total_increments = self.loops * \
-            self.utterance_length / \
-            self.increment + 1
+        ## brownian default params
+        #self.increment = 0.01
+        #self.sigma = 0.1
+        #self.total_increments = self.loops * \
+        #    self.utterance_length / \
+        #    self.increment + 1
 
         self.initial_art = np.zeros(aw.kArt_muscle.MAX,
                                     dtype=np.dtype('double'))
@@ -66,13 +67,13 @@ class RandExp:
                 self.utterance_length / \
                 self.min_increment + 1
 
-        elif self.method == "brownian":
-            print "Brownian exploration method initializing."
-            self.increment = kwargs.get("increment", self.increment)
-            self.sigma = kwargs.get("sigma", self.sigma)
-            self.total_increments = self.loops * \
-                self.utterance_length / \
-                self.increment + 1
+        #elif self.method == "brownian":
+        #    print "Brownian exploration method initializing."
+        #    self.increment = kwargs.get("increment", self.increment)
+        #    self.sigma = kwargs.get("sigma", self.sigma)
+        #    self.total_increments = self.loops * \
+        #        self.utterance_length / \
+        #        self.increment + 1
 
         else:
             print "Unknown method type: %s" % self.method
@@ -297,7 +298,8 @@ class RandExp:
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
 
-        self.InitializeDir(self.method)  # appends DTS to folder name
+        #self.InitializeDir(self.method)  # appends DTS to folder name
+        self.InitializeDir("random")  # appends DTS to folder name
         self.SaveGestureParams()  # save parameters before anything else
         self.InitializeSpeaker()
         self.InitializeSim()
