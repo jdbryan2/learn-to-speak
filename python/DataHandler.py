@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 # import scipy.signal as signal
 import os
-x = np.array([])
+
 
 # TODO: create simple class that loads data files, use as parent for prim class
 
@@ -84,12 +84,12 @@ class DataHandler:
         self.params['gender'] = params['gender'].item()
         self.params['sample_freq'] = params['sample_freq'].item()
         self.params['glottal_masses'] = params['glottal_masses'].item()
-        self.params['method'] = params['method'].item()
+        #self.params['method'] = params['method'].item()
         self.params['loops'] = params['loops'].item()
-        self.params['initial_art'] = params['initial_art']
-        self.params['max_increment'] = params['max_increment'].item()
-        self.params['min_increment'] = params['min_increment'].item()
-        self.params['max_delta_target'] = params['max_delta_target'].item()
+        #self.params['initial_art'] = params['initial_art']
+        #self.params['max_increment'] = params['max_increment'].item()
+        #self.params['min_increment'] = params['min_increment'].item()
+        #self.params['max_delta_target'] = params['max_delta_target'].item()
 
         if not self.data:
             print "No data has been loaded."
