@@ -108,9 +108,13 @@ class Utterance:
 
         initial_art = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
         if self._art_init:
-            self.articulation.intoArt(initial_art, self.speaker.NowSecondsLooped())
+            print "Initializing"
+            # hmm. Sim should always initialize at time zero. Even if it's looped... right?
+            self.articulation.intoArt(initial_art, 0.0) #self.speaker.NowSecondsLooped())
 
+        print initial_art
         self.speaker.InitSim(self.utterance_length, initial_art)
+        self.speaker.IterateSim()
 
     def InitializeArticulation(self):
         # note: changing speaker params requires calling InitializeSpeaker
@@ -147,6 +151,9 @@ class Utterance:
 
             # pass the current articulation in
             self.articulation.intoArt(articulation, self.speaker.NowSecondsLooped())
+            if self.speaker.NowSecondsLooped() < 0.001:
+                print self.speaker.NowSecondsLooped()
+                print articulation
             self.speaker.SetArticulation(articulation)
 
             self.speaker.IterateSim()
@@ -190,10 +197,12 @@ class Utterance:
         self.InitializeDir(self.dir_name)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
-        self.InitializeSim()
+
         if self._art_init == False:
             print "No articulations to simulate."
             return False
+
+        self.InitializeSim()
 
         for k in range(self.loops):
             print "Loop: " + str(k)
