@@ -36,7 +36,7 @@ class DataHandler:
         # initialize the variables
         self.data = {}
 
-        self.home_dir = kwargs.get("home_dir", "data")
+        self.home_dir = kwargs.get("home_dir", "../data")
 
     def LoadDataFile(self, fname):
         # load the data from fname, store in class variable
