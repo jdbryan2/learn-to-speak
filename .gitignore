@@ -17,6 +17,10 @@ bin/*
 python/data/*
 */.ropeproject/*
 
+# python compiled files
+#######################
+*.pyc
+
 
 # vim swap files
 ################
