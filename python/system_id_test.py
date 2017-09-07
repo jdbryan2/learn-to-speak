@@ -24,48 +24,48 @@ def enforce_full_rank(X, epsilon=0.1):
 
     return np.dot(U, np.dot(np.diag(s), V))
     
+def stabilize_operator(X, epsilon=0.1):
+    # enforce a minimum rank of margin epsilon
+    U,s,V = la.svd(X, full_matrices=False)
+
+    s[s<epsilon] = epsilon
+    s = 0.99*s/s[0]
+
+    return np.dot(U, np.dot(np.diag(s), V))
 
 
 # generate random discrete system matrices
-n = 3  # number of states
-m = 2  # number of inputs
+n = 5  # number of states
+m = 4  # number of inputs
 k = 2  # number of output variables
 
-samples = 10000
-past = 10
-future = 10
+samples = 1000000
+history = 10
+future = 1#50
+past = history-future
+
+internal_dim = 5
+
 
 # stable system matrix 
-A = enforce_full_rank(rand.random((n, n)))
-while la.norm(A, 2) > 1:
-    print '.'
-    A = A/la.norm(A, 2)
-    A = enforce_full_rank(A)
-
-U,S,V = la.svd(A)
-print S
-
-B = enforce_full_rank(rand.random((n, m)))
-U,S,V = la.svd(B)
-print S
+#A = enforce_full_rank((rand.random((n, n))-0.5)*2.)
+#while la.norm(A, 2) > 1:
+    #print '.'
+    #A = A/la.norm(A, 2)
+    #A = enforce_full_rank(A)
+A = stabilize_operator((rand.random((n, n))-0.5)*2.)
 
 
-C = enforce_full_rank(rand.random((k, n)))
-U,S,V = la.svd(C)
-print S
-
-
-D = enforce_full_rank(rand.random((k, m)))
-U,S,V = la.svd(D)
-print S
+B = enforce_full_rank((rand.random((n, m))-0.5)*2.)
+C = enforce_full_rank((rand.random((k, n))-0.5)*2.)
+D = enforce_full_rank((rand.random((k, m))-0.5)*2.)
+#C = enforce_full_rank(rand.random((k, n)))
+#D = enforce_full_rank(rand.random((k, m)))
 
 X = np.zeros((samples, n))
-#X[0] = 1  # impulse response
 Y = np.zeros((samples, k))
-#U = rand.random((samples, m))
-#U = np.zeros((samples, m))
 
-U = brownian_motion(samples, m, 1., 1./samples) 
+U = brownian_motion(samples, m, sigma=5., dt=1./samples) 
 
 plt.figure()
 for _m in range(m):
@@ -98,20 +98,32 @@ ss = subspace.PrimLearn()
 obs = np.append(Y, U, axis=1)
 #ss.LoadRawData(np.append(Y, U, axis=1).T)
 ss.LoadRawData(obs.T)
-ss.PreprocessData(past=past, future=future)
-ss.SubspaceDFA(3)
+ss.PreprocessData(past=past, future=future, overlap=False)
+ss.SubspaceDFA(internal_dim)
 
 
-h = np.zeros(X.shape)
+h = np.zeros((X.shape[0], internal_dim))
+Y_hat = np.zeros(Y.shape)
 for t in range(past, samples):
     _Xp = np.reshape(obs[t-past:t, :], (-1, 1))
     h[t] = np.dot(ss.K, _Xp).flatten()
 
+    _Xf = np.dot(ss.O, h[t])
+    Y_hat[t] = _Xf[:k]
+
 
 plt.figure()
-for _n in range(n):
+for _k in range(k):
+    plt.plot(Y[:, _k])
+    plt.plot(Y_hat[:, _k], '--')
+plt.title('Output trackings')
+
+plt.figure()
+for _n in range(internal_dim):
     plt.plot(h[:, _n])
     
 plt.title('Inferred sample paths')
 plt.show()
 
+phi = np.dot(h.T, la.pinv(X.T))
+print phi

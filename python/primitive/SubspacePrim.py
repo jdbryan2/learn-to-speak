@@ -41,7 +41,8 @@ class PrimLearn(DataHandler):
         self._data = np.copy(raw_data)
 
     def ConvertData(self, sample_rate):
-        # convert data dictionary into useable data array
+        # convert data dictionary into useable data array  
+        # function still not complete...
         if len(self.data) == 0:
             print "No data to convert."
             return 0
@@ -65,7 +66,9 @@ class PrimLearn(DataHandler):
         #        self._data = np.append(_data, self.data[key[n]], axis=0)
 
 
-    def PreprocessData(self, past, future, sample_rate=0):
+    def PreprocessData(self, past, future, overlap=False, sample_rate=0):
+        # note: axis 0 is parameter dimension, axis 1 is time
+
         # check if _data is populated first (data dictionary is ignored if so)
         if len(self._data) == 0:
             self.ConvertData(sample_rate)
@@ -74,13 +77,24 @@ class PrimLearn(DataHandler):
             print "No data has been loaded."
             return 0
 
-        # pull all data from dictionary and into syncronized vectors 
-
-
+        
         dim = self._data.shape[0]
 
-        # format data into Xf and Xp matrices
-        Xl = self._data.T.reshape(-1, (past+future)*dim).T  # reshape into column vectors of length past+future
+        if overlap==False:
+            chunks = int(np.floor(self._data.shape[1]/((past+future))))
+            # format data into Xf and Xp matrices
+            Xl = self._data[:, :chunks*(past+future)].T.reshape(-1, (past+future)*dim).T  # reshape into column vectors of length past+future
+            print Xl.shape
+        else:
+            print ''
+            chunks = int(np.floor(self._data.shape[1]/(past+future)))
+            Xl = self._data[:, :(chunks-1)*(past+future):future]
+            print Xl.shape
+            for k in range(1, past+future):
+                Xl = np.append(Xl, self._data[:, k:(chunks-1)*(past+future)+k:future], axis=0)
+                print Xl.shape
+
+
         self.Xf = Xl[(past*dim):((past+future)*dim), :]
         self.Xp = Xl[0:(past*dim), :]
 
