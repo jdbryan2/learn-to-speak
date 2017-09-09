@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal as signal
 import numpy.linalg as ln
 import os
 import pylab as plt
@@ -27,6 +28,11 @@ class PrimLearn(DataHandler):
         self.O = np.array([])
         self.K = np.array([])
 
+        # internal variables for tracking dimensions of past and future histories and internal state dimension
+        self._past = 0
+        self._future = 0
+        self._dim = 0
+
         # data vars
         self.art_hist = np.array([])
         self.area_function = np.array([])
@@ -42,13 +48,15 @@ class PrimLearn(DataHandler):
 
     def ConvertData(self, sample_rate):
         # convert data dictionary into useable data array  
+        # perform necessary normalizations and trim out unnecessary parts
         # function still not complete...
         if len(self.data) == 0:
             print "No data to convert."
             return 0
 
         # round down for decimation rate
-        dec_rate = int(np.floor(self.params['sample_freq']/sample_rate))
+        #dec_rate = int(np.floor(self.params['sample_freq']/sample_rate))
+
         # TODO: finish preprocess of data
         # compute moving_average over time dimension and down sample
 
@@ -57,7 +65,32 @@ class PrimLearn(DataHandler):
 
         # loop over indeces and stack them into data array
         self._data = self.data['art_hist']
-        self._data = np.append(self._data, self.data['area_function'], axis=0)
+
+        area_function = self.data['area_function'][self.tubes['all'], :]
+        area_ave = np.mean(area_function, axis=1)
+        area_std = np.std(area_function, axis=1)
+
+        plt.figure()
+        plt.plot(area_ave)
+        plt.plot(area_ave+area_std, 'r--')
+        plt.plot(area_ave-area_std, 'r--')
+        plt.show()
+        
+        #print area_function.shape, area_std.shape
+        #plt.plot(area_std)
+        #plt.show()
+
+        # normalize by standard deviation
+        area_function = ((area_function.T-area_ave)/area_std).T
+        #area_function  = (area_function.T/area_std).T
+
+        #self._data = np.append(self._data, self.data['area_function'], axis=0)
+        self._data = np.append(self._data, area_function, axis=0)
+        
+        # decimate to 1ms sampling period
+        self._data = signal.decimate(self._data, 8, axis=1, zero_phase=True) 
+        # decimate to 5ms sampling period
+        self._data = signal.decimate(self._data, 5, axis=1, zero_phase=True)
 
         #for n in range(len(keys)):
         #    if self._data.size == 0:
@@ -68,6 +101,10 @@ class PrimLearn(DataHandler):
 
     def PreprocessData(self, past, future, overlap=False, sample_rate=0):
         # note: axis 0 is parameter dimension, axis 1 is time
+
+        # save past, future values for later use
+        self._past = past
+        self._future = future
 
         # check if _data is populated first (data dictionary is ignored if so)
         if len(self._data) == 0:
@@ -102,6 +139,9 @@ class PrimLearn(DataHandler):
 
     def SubspaceDFA(self, k):
         """Decompose linear prediction matrix into O and K matrices"""
+
+        self._dim = k
+
         # compute predictor matrix
         self.F = np.dot(self.Xf, ln.pinv(self.Xp))
 
@@ -109,6 +149,9 @@ class PrimLearn(DataHandler):
 #       #gamma_p = ln.cholesky(np.cov(Xp))
 
         [U, S, Vh] = ln.svd(self.F)
+        self._U = np.copy(U)
+        self._Vh = np.copy(Vh)
+        self._S = np.copy(S)
 
         U = U[:, 0:k]
         # plt.plot(S)
@@ -124,12 +167,38 @@ class PrimLearn(DataHandler):
 
         # return [O, K]
 
+    def EstimateState(self, data):
+        self.h = np.zeros((self.K.shape[0], data.shape[1]))
+
+        for t in range(self._past, data.shape[1]):
+            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
+            self.h[:, t] = np.dot(ss.K, _Xp).flatten()
+
+
 
 if __name__ == "__main__":
     print "Do stuff"
     # Real test: Generate a signal using underlying factors and see if this
     # method infers them
 
+    dim = 8
     ss = PrimLearn()
-    ss.LoadDataDir('apa')
-    ss.PreprocessData(10, 10)
+    ss.LoadDataDir('full_random_30')
+    ss.PreprocessData(10, 1)
+    ss.SubspaceDFA(dim)
+
+    ss.EstimateState(ss._data)
+    plt.plot(ss.h.T)
+    plt.show()
+
+    for k in range(dim):
+        plt.figure();
+        plt.imshow(ss.K[k, :].reshape(ss._past, 88))
+        plt.title('Input: '+str(k))
+
+    for k in range(dim):
+        plt.figure();
+        plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
+        plt.title('Output: '+str(k))
+
+    plt.show()

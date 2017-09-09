@@ -14,7 +14,7 @@ MAX_NUMBER_OF_TUBES = 89
 
 class RandExp:
 
-    home_dir = 'data'  # changes to this changes all instances of the class
+    home_dir = '../data'  # changes to this changes all instances of the class
 
     def __init__(self, **kwargs):
         self.method = "gesture"
@@ -232,8 +232,9 @@ class RandExp:
 
                         break  # we've already hit the end of the utterance
             plt.plot(time_hist, target_hist)
-            plt.hold(True)
-        plt.show()
+            plt.show()
+            #plt.hold(True)
+        #plt.show()
 
     def Simulate(self):
 
@@ -317,14 +318,14 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=10,
+                    loops=30,
                     utterance_length=1.0,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
     # manually pump the lungs
-    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-                            np.array([0.4, 0.0]),  # targets
-                            np.array([0.0, 0.5]))  # times
+    #rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+    #                        np.array([0.4, 0.0]),  # targets
+    #                        np.array([0.0, 0.5]))  # times
 
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
     # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,

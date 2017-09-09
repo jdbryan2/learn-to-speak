@@ -21,8 +21,8 @@ class DataHandler:
         self.tubes['glottis'] = np.arange(35, 37)
         self.tubes['tract'] = np.arange(37, 64)
         self.tubes['nose'] = np.arange(64, 78)
-        self.tubes['all'] = np.arange(6, 64)  # exclude nasal cavity
-        self.tubes['all_no_lungs'] = np.arange(23, 64)  # exclude nasal cavity
+        self.tubes['all'] = np.arange(6, 65)  # include velum, exclude nasal cavity
+        self.tubes['all_no_lungs'] = np.arange(23, 65)  # include velum, exclude nasal cavity
 
         # self.all_tubes = self.lungs[:]
         # self.all_tubes = np.append(self.all_tubes, self.bronchi)
@@ -172,10 +172,33 @@ class DataHandler:
 
 
 if __name__ == "__main__":
-    print "Do stuff"
+    #print "Do stuff"
 
     # directory = 'gesture_2017-05-10-20-16-18'
-    directory = 'gesture_2017-05-19-20-55-19'
+    directory = 'full_random_30'
     dh = DataHandler()
     dh.LoadDataDir(directory)
-    dh.SaveAnimation(dirname=directory)
+    #dh.SaveAnimation(dirname=directory)
+
+    area_std = np.std(dh.data['area_function'], axis=1)
+    art_std = np.std(dh.data['art_hist'], axis=1)
+
+    area_ave = np.mean(dh.data['area_function'], axis=1)
+    art_ave = np.mean(dh.data['art_hist'], axis=1)
+
+    area_dr = np.max(dh.data['area_function'], axis=1)-np.min(dh.data['area_function'], axis=1)
+    art_dr = np.max(dh.data['art_hist'], axis=1)-np.min(dh.data['art_hist'], axis=1)
+
+    area = dh.data['area_function'][dh.tubes['all'], :]
+    area = (area.T-area_ave[dh.tubes['all']]).T
+    area = (area.T/area_std[dh.tubes['all']]).T
+
+
+    plt.figure()
+    plt.plot(area_std)
+    plt.figure()
+    plt.plot(art_std)
+
+    plt.show()
+
+
