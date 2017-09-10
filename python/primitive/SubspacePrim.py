@@ -3,6 +3,7 @@ import scipy.signal as signal
 import numpy.linalg as ln
 import os
 import pylab as plt
+import Artword as aw
 
 from DataHandler import DataHandler
 
@@ -46,7 +47,7 @@ class PrimLearn(DataHandler):
         # directly pass array into class
         self._data = np.copy(raw_data)
 
-    def ConvertData(self, sample_rate):
+    def ConvertData(self, sample_period=1):
         # convert data dictionary into useable data array  
         # perform necessary normalizations and trim out unnecessary parts
         # function still not complete...
@@ -64,17 +65,23 @@ class PrimLearn(DataHandler):
         # and feature extraction
 
         # loop over indeces and stack them into data array
-        self._data = self.data['art_hist']
+        art_ave = np.mean(self.data['art_hist'], axis=1)
+        art_std = np.std(self.data['art_hist'],axis=1)
+        self._data = ((self.data['art_hist'].T-art_ave)/art_std).T
 
         area_function = self.data['area_function'][self.tubes['all'], :]
         area_ave = np.mean(area_function, axis=1)
         area_std = np.std(area_function, axis=1)
 
-        plt.figure()
-        plt.plot(area_ave)
-        plt.plot(area_ave+area_std, 'r--')
-        plt.plot(area_ave-area_std, 'r--')
-        plt.show()
+        self._ave = np.append(art_ave, area_ave)
+        self._std = np.append(art_std, area_std)
+        
+
+        #plt.figure()
+        #plt.plot(area_ave)
+        #plt.plot(area_ave+area_std, 'r--')
+        #plt.plot(area_ave-area_std, 'r--')
+        #plt.show()
         
         #print area_function.shape, area_std.shape
         #plt.plot(area_std)
@@ -90,7 +97,8 @@ class PrimLearn(DataHandler):
         # decimate to 1ms sampling period
         self._data = signal.decimate(self._data, 8, axis=1, zero_phase=True) 
         # decimate to 5ms sampling period
-        self._data = signal.decimate(self._data, 5, axis=1, zero_phase=True)
+        if sample_period > 1:
+            self._data = signal.decimate(self._data, sample_period, axis=1, zero_phase=True)
 
         #for n in range(len(keys)):
         #    if self._data.size == 0:
@@ -99,8 +107,9 @@ class PrimLearn(DataHandler):
         #        self._data = np.append(_data, self.data[key[n]], axis=0)
 
 
-    def PreprocessData(self, past, future, overlap=False, sample_rate=0):
+    def PreprocessData(self, past, future, overlap=False, sample_period=1):
         # note: axis 0 is parameter dimension, axis 1 is time
+        #       sample_period is measured in milliseconds
 
         # save past, future values for later use
         self._past = past
@@ -108,7 +117,7 @@ class PrimLearn(DataHandler):
 
         # check if _data is populated first (data dictionary is ignored if so)
         if len(self._data) == 0:
-            self.ConvertData(sample_rate)
+            self.ConvertData(sample_period)
 
         if (len(self._data) == 0) and (len(self.data) == 0):
             print "No data has been loaded."
@@ -167,13 +176,40 @@ class PrimLearn(DataHandler):
 
         # return [O, K]
 
-    def EstimateState(self, data):
+    def EstimateStateHistory(self, data):
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
 
         for t in range(self._past, data.shape[1]):
             _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
             self.h[:, t] = np.dot(ss.K, _Xp).flatten()
 
+    
+    # controller functions 
+    #######################
+    # should set this up so I can feed it area and art individually
+    #def EstimateState(self, articulators, area_function): 
+    def EstimateState(self, data, normalize=False):
+        data_length = data.shape[1]
+
+        if normalize:
+            # convert data by mean and standard deviation
+            _data = data
+            _data = ((_data.T-self._ave)/self._std).T
+        
+        if data_length < self._past:
+            _data = np.append(np.zeros((data.shape[0], self._past-data_length)), _data, axis=1)
+            
+        _Xp = np.reshape(_data[:, data_length-self._past:data_length].T, (-1, 1))
+        current_state = np.dot(ss.K, _Xp).flatten()
+        return current_state
+
+    def GetControl(self, current_state):
+
+        _Xf = np.dot(ss.O, current_state)
+        _Xf = _Xf.reshape((self._data.shape[0], self._future))
+        predicted = _Xf[:, 0]
+        predicted = ((predicted.T*self._std)+self._ave).T
+        return predicted[0:self.data['art_hist'].shape[0]]
 
 
 if __name__ == "__main__":
@@ -182,23 +218,118 @@ if __name__ == "__main__":
     # method infers them
 
     dim = 8
+
+    #down_sample = 5
+    #ss = PrimLearn()
+    #ss.LoadDataDir('full_random_30')
+    #ss.PreprocessData(50, 10, sample_period=down_sample)
+
+    down_sample = 10
     ss = PrimLearn()
-    ss.LoadDataDir('full_random_30')
-    ss.PreprocessData(10, 1)
+    ss.LoadDataDir('full_random_100')
+    ss.PreprocessData(50, 10, sample_period=down_sample)
     ss.SubspaceDFA(dim)
 
-    ss.EstimateState(ss._data)
+    ss.EstimateStateHistory(ss._data)
     plt.plot(ss.h.T)
     plt.show()
 
+    #for k in range(dim):
+    #    plt.figure();
+    #    plt.imshow(ss.K[k, :].reshape(ss._past, 88))
+    #    plt.title('Input: '+str(k))
+
+    #for k in range(dim):
+    #    plt.figure();
+    #    plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
+    #    plt.title('Output: '+str(k))
+
     for k in range(dim):
         plt.figure();
-        plt.imshow(ss.K[k, :].reshape(ss._past, 88))
+        K = ss.K[k,:].reshape(ss._past, 88)
+        for p in range(ss._past):
+            plt.plot(K[p, :], 'b-', alpha=1.*(p+1)/(ss._past+1))
         plt.title('Input: '+str(k))
 
     for k in range(dim):
         plt.figure();
-        plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
-        plt.title('Output: '+str(k))
+        O = ss.O[:, k].reshape(ss._future, 88)
+        for f in range(ss._future):
+            dat = O[f, :]
+            dat = ((dat.T*ss._std)+ss._ave).T
 
+            plt.plot(dat, 'b-', alpha=1.*(ss._future-f+1)/(ss._future+1))
+        plt.title('Output: '+str(k))
+    
     plt.show()
+
+    ####
+    from utterance.Utterance import Utterance
+
+    
+    control = Utterance(dir_name="prim_out",
+                        loops=1,
+                        utterance_length=4)
+
+    control.InitializeDir(dirname="prim_out")
+
+    control.InitializeManualControl()
+
+
+    target = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
+    articulation = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
+    area_function = np.zeros(control.area_function.shape[0]) 
+    control.speaker.GetAreaFcn(area_function) # grab initial area_function
+
+    
+    last_art = np.zeros(control.art_hist.shape[0])
+    past_data = np.zeros((ss._data.shape[0], ss._past))
+    # area function should be back filled
+    past_data = (past_data.T+np.append(articulation, area_function[ss.tubes['all']])).T 
+
+    _h = np.zeros((1, dim))
+
+    while control.speaker.NotDone():
+
+        past_data = np.roll(past_data, -1, axis=1) # roll to the left
+        past_data[:, -1] = np.append(articulation, area_function[ss.tubes['all']]) # put data in last column
+    
+        h = ss.EstimateState(past_data, normalize=True)
+        target = ss.GetControl(h)
+        print h
+        #plt.plot(target)
+        #plt.show()
+        _h = np.append(_h, h.reshape((1, dim)), axis=0)
+
+        # reset variables so they will get loaded again
+        last_art = np.copy(articulation)
+
+
+        for t in range(down_sample*8):
+            if control.speaker.NotDone():
+                
+                # interpolate to target in order to make smooth motions
+                for k in range(target.size):
+                    articulation[k] = np.interp(t, [0, down_sample*8-1], [last_art[k], target[k]])
+                    if articulation[k] < 0.:
+                        articulation[k] = 0.
+                    elif articulation[k] > 1.:
+                        articulation[k] = 1.
+
+                # pass the current articulation in
+                control.speaker.SetArticulation(articulation)
+
+                control.speaker.IterateSim()
+
+                control.SaveOutputs()
+                # Save sound data point
+
+                #area_function += control.area_function[:, control.speaker.Now()-1]/down_sample/8.
+                #last_art += articulation/down_sample/8.
+
+        area_function = control.area_function[:, control.speaker.Now()-1]
+    control.Save()
+    plt.plot(_h)
+    plt.show()
+ 
+

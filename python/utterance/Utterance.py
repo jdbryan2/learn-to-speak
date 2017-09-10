@@ -141,6 +141,13 @@ class Utterance:
             self.articulation.setTarget(muscle, times[t], targets[t])
     
 
+    def SaveOutputs(self):
+        # Save sound data point
+        self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
+
+        self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
+
+
     def Simulate(self):
 
         self.ResetOutputVars()
@@ -168,17 +175,29 @@ class Utterance:
         self.speaker.LoopBack()
         self.iteration += 1
 
-    def Save(self):
+    def Save(self, fname = None):
 
-        scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
-        write(self.directory + 'audio' + str(self.iteration) + '.wav',
-              self.sample_freq,
-              scaled)
+        if not fname==None:
+            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
+            write(self.directory + 'audio' + str(fname) + '.wav',
+                  self.sample_freq,
+                  scaled)
 
-        np.savez(self.directory + 'data' + str(self.iteration),
-                 sound_wave=self.sound_wave,
-                 area_function=self.area_function,
-                 art_hist=self.art_hist)
+            np.savez(self.directory + 'data' + str(fname),
+                     sound_wave=self.sound_wave,
+                     area_function=self.area_function,
+                     art_hist=self.art_hist)
+
+        else:
+            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
+            write(self.directory + 'audio' + str(self.iteration) + '.wav',
+                  self.sample_freq,
+                  scaled)
+
+            np.savez(self.directory + 'data' + str(self.iteration),
+                     sound_wave=self.sound_wave,
+                     area_function=self.area_function,
+                     art_hist=self.art_hist)
 
     def SaveParams(self):
         np.savez(self.directory + 'params',
@@ -208,6 +227,19 @@ class Utterance:
             print "Loop: " + str(k)
             self.Simulate()
             self.Save()
+
+    def InitializeManualControl(self, **kwargs):
+        # initialize parameters if anything new is passed in
+        if len(kwargs.keys()):
+            self.InitializeParams(**kwargs)
+
+        #self.InitializeDir(self.method)  # appends DTS to folder name
+        self.InitializeDir(self.dir_name)  # appends DTS to folder name
+        self.SaveParams()  # save parameters before anything else
+        self.InitializeSpeaker()
+
+        self.InitializeSim()
+        
 
 
 if __name__ == "__main__":

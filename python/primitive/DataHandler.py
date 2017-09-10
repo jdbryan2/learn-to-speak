@@ -178,7 +178,8 @@ if __name__ == "__main__":
     directory = 'full_random_30'
     dh = DataHandler()
     dh.LoadDataDir(directory)
-    #dh.SaveAnimation(dirname=directory)
+    dh.SaveAnimation(dirname=directory)
+    print 'done'
 
     area_std = np.std(dh.data['area_function'], axis=1)
     art_std = np.std(dh.data['art_hist'], axis=1)

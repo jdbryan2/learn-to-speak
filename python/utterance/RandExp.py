@@ -318,7 +318,7 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=30,
+                    loops=100,
                     utterance_length=1.0,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
