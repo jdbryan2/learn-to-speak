@@ -15,6 +15,7 @@ build/*
 data/*
 bin/*
 python/data/*
+python/primitive/data/*
 */.ropeproject/*
 
 # python compiled files
