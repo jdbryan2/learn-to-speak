@@ -4,6 +4,7 @@ import numpy.linalg as ln
 import os
 import pylab as plt
 import Artword as aw
+from matplotlib2tikz import save as tikz_save
 
 from DataHandler import DataHandler
 
@@ -39,6 +40,12 @@ class PrimLearn(DataHandler):
         self.area_function = np.array([])
         self.sound_wave = np.array([])
         self._data = np.array([]) # internal data var
+        self.features = {}
+
+
+        # downsample data such that it's some number of ms
+        # period at which controller can make observations
+        self._observation_period = 1 # in ms
 
         # Taken care of in parent class.
         #self.home_dir = kwargs.get("home_dir", "../data")
@@ -46,6 +53,33 @@ class PrimLearn(DataHandler):
     def LoadRawData(self, raw_data):
         # directly pass array into class
         self._data = np.copy(raw_data)
+
+
+    #def LoadDataFile(self, fname):
+    #    # overload parent function so that we save on some memory
+    #    # BE CAREFUL: Data files must not have fractions of a ms of data 
+    #    #             i.e. 100ms per file == good
+    #    #                  100.3ms per file == bad
+
+    #    # load the data from fname, store in class variable
+    #    file_data = np.load(fname)
+
+    #    # load the data from file and append the dictionary to internal
+    #    # dictionary
+    #    for key, value in file_data.iteritems():
+    #        if key in self.data:
+    #            if len(value.shape) < 2:
+    #                # reshape if it's audio
+    #                self.data[key] = np.append(self.data[key], value.reshape((1, -1)), axis=1)
+    #            else:
+    #                self.data[key] = np.append(self.data[key], value, axis=1)
+    #        else:
+    #            if len(value.shape) < 2:
+    #                # reshape if it's audio
+    #                self.data[key] = value.reshape((1, -1))
+    #            else:
+    #                self.data[key] = value
+
 
     def ConvertData(self, sample_period=1):
         # convert data dictionary into useable data array  
@@ -65,40 +99,44 @@ class PrimLearn(DataHandler):
         # and feature extraction
 
         # loop over indeces and stack them into data array
-        art_ave = np.mean(self.data['art_hist'], axis=1)
-        art_std = np.std(self.data['art_hist'],axis=1)
-        self._data = ((self.data['art_hist'].T-art_ave)/art_std).T
 
-        area_function = self.data['area_function'][self.tubes['all'], :]
-        area_ave = np.mean(area_function, axis=1)
-        area_std = np.std(area_function, axis=1)
+        area_function = self.data['area_function'][self.tubes['glottis_to_velum'], :]
+        lung_pressure = np.mean(self.data['pressure_function'][self.tubes['lungs'], :], axis=0)
+        nose_pressure = np.mean(self.data['pressure_function'][self.tubes['nose'], :], axis=0)
 
-        self._ave = np.append(art_ave, area_ave)
-        self._std = np.append(art_std, area_std)
-        
 
-        #plt.figure()
-        #plt.plot(area_ave)
-        #plt.plot(area_ave+area_std, 'r--')
-        #plt.plot(area_ave-area_std, 'r--')
-        #plt.show()
-        
-        #print area_function.shape, area_std.shape
-        #plt.plot(area_std)
-        #plt.show()
+        start = 0
+        self._data = self.data['art_hist']
+        self.features['art_hist'] = np.arange(start, self._data.shape[0])
+        start=self._data.shape[0]
 
-        # normalize by standard deviation
-        area_function = ((area_function.T-area_ave)/area_std).T
-        #area_function  = (area_function.T/area_std).T
-
-        #self._data = np.append(self._data, self.data['area_function'], axis=0)
         self._data = np.append(self._data, area_function, axis=0)
+        self.features['area_function'] = np.arange(start, self._data.shape[0])
+        start=self._data.shape[0]
+
+        self._data = np.append(self._data, lung_pressure.reshape((1, -1)), axis=0)
+        self.features['lung_pressure'] = np.arange(start, self._data.shape[0])
+        start=self._data.shape[0]
         
+        self._data = np.append(self._data, nose_pressure.reshape((1, -1)), axis=0)
+        self.features['nose_pressure'] = np.arange(start, self._data.shape[0])
+        start=self._data.shape[0]
+
+        self.features['all'] = np.arange(0, self._data.shape[0])
+
+        print self.features
+
         # decimate to 1ms sampling period
         self._data = signal.decimate(self._data, 8, axis=1, zero_phase=True) 
+
         # decimate to 5ms sampling period
         if sample_period > 1:
             self._data = signal.decimate(self._data, sample_period, axis=1, zero_phase=True)
+
+        # shift to zero mean and  normalize by standard deviation
+        self._ave = np.mean(self._data, axis=1)
+        self._std = np.std(self._data, axis=1)
+        self._data = ((self._data.T-self._ave)/self._std).T
 
         #for n in range(len(keys)):
         #    if self._data.size == 0:
@@ -226,7 +264,7 @@ if __name__ == "__main__":
 
     down_sample = 10
     ss = PrimLearn()
-    ss.LoadDataDir('full_random_100')
+    ss.LoadDataDir('full_random_10')
     ss.PreprocessData(50, 10, sample_period=down_sample)
     ss.SubspaceDFA(dim)
 
@@ -244,22 +282,61 @@ if __name__ == "__main__":
     #    plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
     #    plt.title('Output: '+str(k))
 
+    feature_dim = ss.features['all'].size
+
     for k in range(dim):
+        # pull out the kth primitive dimension
+        K = ss.K[k,:].reshape(ss._past, feature_dim)
+        O = ss.O[:, k].reshape(ss._future, feature_dim)
+
+        _K =((K)+ss._ave) 
         plt.figure();
-        K = ss.K[k,:].reshape(ss._past, 88)
         for p in range(ss._past):
-            plt.plot(K[p, :], 'b-', alpha=1.*(p+1)/(ss._past+1))
-        plt.title('Input: '+str(k))
+            plt.plot(_K[p, ss.features['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
 
-    for k in range(dim):
+        plt.plot( ss._ave[ss.features['art_hist']], 'r-')
+        plt.title('Articulators Input: '+str(k))
+
         plt.figure();
-        O = ss.O[:, k].reshape(ss._future, 88)
-        for f in range(ss._future):
-            dat = O[f, :]
-            dat = ((dat.T*ss._std)+ss._ave).T
+        for p in range(ss._past):
+            plt.plot(K[p, ss.features['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
+        plt.title('Articulators Raw Input: '+str(k))
 
-            plt.plot(dat, 'b-', alpha=1.*(ss._future-f+1)/(ss._future+1))
-        plt.title('Output: '+str(k))
+        #plt.figure()
+        #plt.imshow(K[:, ss.features['art_hist']])
+        #plt.title('Articulators Input: '+str(k))
+
+
+        #plt.figure();
+        #for p in range(ss._past):
+        #    plt.plot(K[p, ss.features['area_function']], 'b-', alpha=1.*(p+1)/(ss._past+1))
+        #plt.title('Area Function Input: '+str(k))
+
+        #plt.figure()
+        #plt.imshow(K[:, ss.features['area_function']])
+        #plt.title('Area Function Input: '+str(k))
+
+        #plt.figure();
+        #plt.plot(K[:, ss.features['lung_pressure']], 'b-')
+        #plt.title('Lungs Input: '+str(k))
+        #plt.figure();
+        #plt.plot(K[:, ss.features['nose_pressure']], 'b-')
+        #plt.title('Nose Input: '+str(k))
+
+        ##for p in range(ss._past):
+        ##    plt.plot(K[p, :], 'b-', alpha=1.*(p+1)/(ss._past+1))
+        ##plt.title('Input: '+str(k))
+
+        #plt.show()
+
+    #for# k in range(dim):
+        #plt.figure();
+        #for f in range(ss._future):
+        #    dat = O[f, :]
+        #    dat = ((dat.T*ss._std)+ss._ave).T
+
+        #    plt.plot(dat, 'b-', alpha=1.*(ss._future-f+1)/(ss._future+1))
+        #plt.title('Output: '+str(k))
     
     plt.show()
 

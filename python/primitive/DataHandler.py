@@ -20,6 +20,7 @@ class DataHandler:
         self.tubes['trachea'] = np.arange(29, 35)
         self.tubes['glottis'] = np.arange(35, 37)
         self.tubes['tract'] = np.arange(37, 64)
+        self.tubes['glottis_to_velum'] = np.arange(35, 65)
         self.tubes['nose'] = np.arange(64, 78)
         self.tubes['all'] = np.arange(6, 65)  # include velum, exclude nasal cavity
         self.tubes['all_no_lungs'] = np.arange(23, 65)  # include velum, exclude nasal cavity
@@ -65,6 +66,19 @@ class DataHandler:
         # append home_dir to the front of dirname
         dirname = os.path.join(self.home_dir, dirname)
 
+        # load up data parameters before anything else
+        self.params = {}
+        params = np.load(os.path.join(dirname, 'params.npz'))
+        self.params['gender'] = params['gender'].item()
+        self.params['sample_freq'] = params['sample_freq'].item()
+        self.params['glottal_masses'] = params['glottal_masses'].item()
+        #self.params['method'] = params['method'].item()
+        self.params['loops'] = params['loops'].item()
+        #self.params['initial_art'] = params['initial_art']
+        #self.params['max_increment'] = params['max_increment'].item()
+        #self.params['min_increment'] = params['min_increment'].item()
+        #self.params['max_delta_target'] = params['max_delta_target'].item()
+
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
         for filename in os.listdir(dirname):
@@ -78,18 +92,6 @@ class DataHandler:
             print os.path.join(dirname, 'data'+str(index)+'.npz')
             self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
 
-        # load up data parameters
-        self.params = {}
-        params = np.load(os.path.join(dirname, 'params.npz'))
-        self.params['gender'] = params['gender'].item()
-        self.params['sample_freq'] = params['sample_freq'].item()
-        self.params['glottal_masses'] = params['glottal_masses'].item()
-        #self.params['method'] = params['method'].item()
-        self.params['loops'] = params['loops'].item()
-        #self.params['initial_art'] = params['initial_art']
-        #self.params['max_increment'] = params['max_increment'].item()
-        #self.params['min_increment'] = params['min_increment'].item()
-        #self.params['max_delta_target'] = params['max_delta_target'].item()
 
         if not self.data:
             print "No data has been loaded."
@@ -175,19 +177,22 @@ if __name__ == "__main__":
     #print "Do stuff"
 
     # directory = 'gesture_2017-05-10-20-16-18'
-    directory = 'full_random_30'
+    directory = 'full_random_10'
     dh = DataHandler()
     dh.LoadDataDir(directory)
     dh.SaveAnimation(dirname=directory)
     print 'done'
 
     area_std = np.std(dh.data['area_function'], axis=1)
+    pressure_std = np.std(dh.data['pressure_function'], axis=1)
     art_std = np.std(dh.data['art_hist'], axis=1)
 
     area_ave = np.mean(dh.data['area_function'], axis=1)
+    pressure_ave = np.mean(dh.data['pressure_function'], axis=1)
     art_ave = np.mean(dh.data['art_hist'], axis=1)
 
     area_dr = np.max(dh.data['area_function'], axis=1)-np.min(dh.data['area_function'], axis=1)
+    pressure_dr = np.max(dh.data['pressure_function'], axis=1)-np.min(dh.data['pressure_function'], axis=1)
     art_dr = np.max(dh.data['art_hist'], axis=1)-np.min(dh.data['art_hist'], axis=1)
 
     area = dh.data['area_function'][dh.tubes['all'], :]
@@ -199,6 +204,8 @@ if __name__ == "__main__":
     plt.plot(area_std)
     plt.figure()
     plt.plot(art_std)
+    plt.figure()
+    plt.plot(pressure_std)
 
     plt.show()
 

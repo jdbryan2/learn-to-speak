@@ -138,6 +138,7 @@ BOOST_PYTHON_MODULE(PyRAAT) // tells boost where to look
        .def("InitSim", &Speaker::py_InitSim)
        .def("IterateSim", &Speaker::IterateSim)
        .def("GetAreaFcn", &Speaker::py_getAreaFcn)
+       .def("GetPressureFcn", &Speaker::py_getPressureFcn)
        .def("Now", &Speaker::Now)
        .def("NowSeconds", &Speaker::NowSeconds)
        .def("NowSecondsLooped", &Speaker::NowSecondsLooped)

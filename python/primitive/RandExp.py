@@ -62,7 +62,7 @@ class RandExp:
             print "Gesture exploration method initializing."
             self.max_increment = kwargs.get("max_increment", 0.1)  # sec
             self.min_increment = kwargs.get("min_increment", 0.01)  # sec
-            self.max_delta_target = kwargs.get("max_delta_target", 1.0)  # sec
+            self.max_delta_target = kwargs.get("max_delta_target", 0.5)  
             self.total_increments = self.loops * \
                 self.utterance_length / \
                 self.min_increment + 1
@@ -79,8 +79,8 @@ class RandExp:
             print "Unknown method type: %s" % self.method
             print "Gesture exploration method initializing."
             self.method = "gesture"
-            self.max_increment = kwargs.get("max_increment", 0.2)  # sec
-            self.min_increment = kwargs.get("min_increment", 0.05)  # sec
+            self.max_increment = kwargs.get("max_increment", 0.1)  # sec
+            self.min_increment = kwargs.get("min_increment", 0.01)  # sec
             self.max_delta_target = kwargs.get("max_delta_target", 0.5)  # sec
             self.total_increments = self.loops * \
                 self.utterance_length / \
@@ -96,6 +96,10 @@ class RandExp:
                                            self.utterance_length)))
 
         self.area_function = np.zeros((MAX_NUMBER_OF_TUBES,
+                                       int(np.ceil(self.sample_freq *
+                                               self.utterance_length))))
+
+        self.pressure_function = np.zeros((MAX_NUMBER_OF_TUBES,
                                        int(np.ceil(self.sample_freq *
                                                self.utterance_length))))
 
@@ -232,9 +236,9 @@ class RandExp:
 
                         break  # we've already hit the end of the utterance
             plt.plot(time_hist, target_hist)
-            plt.show()
+            #plt.show()
             #plt.hold(True)
-        #plt.show()
+        plt.show()
 
     def Simulate(self):
 
@@ -254,6 +258,8 @@ class RandExp:
             self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
 
             self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
+            self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
+
 
             self.art_hist[:, self.speaker.Now()-1] = articulation
 
@@ -270,6 +276,7 @@ class RandExp:
         np.savez(self.directory + 'data' + str(self.iteration),
                  sound_wave=self.sound_wave,
                  area_function=self.area_function,
+                 pressure_function=self.pressure_function,
                  art_hist=self.art_hist)
 
     def SaveGestureParams(self):
@@ -318,7 +325,7 @@ class RandExp:
 
 if __name__ == "__main__":
     rando = RandExp(method="gesture",
-                    loops=100,
+                    loops=10,
                     utterance_length=1.0,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
@@ -331,5 +338,5 @@ if __name__ == "__main__":
     # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,
     #           initial_art=np.zeros(aw.kArt_muscle.MAX))
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.3)
-    rando.Run(max_increment=0.3, min_increment=0.05, max_delta_target=0.3,
+    rando.Run(max_increment=0.3, min_increment=0.01, max_delta_target=0.2,
               initial_art=np.random.random((aw.kArt_muscle.MAX, )))
