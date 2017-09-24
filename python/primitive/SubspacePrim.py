@@ -118,13 +118,12 @@ class PrimLearn(DataHandler):
         self.features['lung_pressure'] = np.arange(start, self._data.shape[0])
         start=self._data.shape[0]
         
-        self._data = np.append(self._data, nose_pressure.reshape((1, -1)), axis=0)
-        self.features['nose_pressure'] = np.arange(start, self._data.shape[0])
-        start=self._data.shape[0]
+        #self._data = np.append(self._data, nose_pressure.reshape((1, -1)), axis=0)
+        #self.features['nose_pressure'] = np.arange(start, self._data.shape[0])
+        #start=self._data.shape[0]
 
         self.features['all'] = np.arange(0, self._data.shape[0])
-
-        print self.features
+        self.features['all_out'] = np.arange(self.features['art_hist'][-1], self._data.shape[0])
 
         # decimate to 1ms sampling period
         self._data = signal.decimate(self._data, 8, axis=1, zero_phase=True) 
@@ -214,19 +213,49 @@ class PrimLearn(DataHandler):
 
         # return [O, K]
 
+    def SavePrimitives(self, fname=None):
+
+        if fname==None:
+            fname = 'primitives'
+
+        np.savez(os.path.join(self.home_dir, str(fname)),
+                 K=self.K,
+                 O=self.O,
+                 ave=self._ave,
+                 std=self._std,
+                 past=self._past,
+                 future=self._future)
+
+    def LoadPrimitives(self, fname=None):
+
+        if fname==None:
+            fname = 'primitives.npz'
+
+        primitives = np.load(os.path.join(self.home_dir, fname))
+
+        self.K = primitives['K']
+        self.O = primitives['O']
+        self._ave = primitives['ave']
+        self._std = primitives['std']
+        self._past = primitives['past'].item()
+        self._future = primitives['future'].item()
+
     def EstimateStateHistory(self, data):
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
 
+        #for t in range(0, self._past):
+        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
+
         for t in range(self._past, data.shape[1]):
             _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
-            self.h[:, t] = np.dot(ss.K, _Xp).flatten()
+            self.h[:, t] = np.dot(self.K, _Xp).flatten()
 
     
     # controller functions 
     #######################
     # should set this up so I can feed it area and art individually
     #def EstimateState(self, articulators, area_function): 
-    def EstimateState(self, data, normalize=False):
+    def EstimateState(self, data, normalize=True):
         data_length = data.shape[1]
 
         if normalize:
@@ -236,9 +265,10 @@ class PrimLearn(DataHandler):
         
         if data_length < self._past:
             _data = np.append(np.zeros((data.shape[0], self._past-data_length)), _data, axis=1)
+            data_length = self._past
             
         _Xp = np.reshape(_data[:, data_length-self._past:data_length].T, (-1, 1))
-        current_state = np.dot(ss.K, _Xp).flatten()
+        current_state = np.dot(self.K, _Xp).flatten()
         return current_state
 
     def GetControl(self, current_state):

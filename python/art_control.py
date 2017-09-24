@@ -1,7 +1,11 @@
-# script for learning primitives based on articulator feature outputs
-# script generates relevant figures detailing the learning of the primitives
-# end of script includes simple control with constant high level input set to 0
+# load primitives from file
+# control vocal tract 
+# generate figures with constant control inputs at various values
+# save vocal tract data of utterance to file, and save output audio to file
 
+
+
+# saved old code for the time being.
 import numpy as np
 import pylab as plt
 from primitive.SubspacePrim import PrimLearn

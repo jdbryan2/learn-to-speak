@@ -37,7 +37,7 @@ class DataHandler:
         # initialize the variables
         self.data = {}
 
-        self.home_dir = kwargs.get("home_dir", "../data")
+        self.home_dir = kwargs.get("home_dir", "data")
 
     def LoadDataFile(self, fname):
         # load the data from fname, store in class variable
@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     # directory = 'gesture_2017-05-10-20-16-18'
     directory = 'full_random_10'
-    dh = DataHandler()
+    dh = DataHandler(home_dir='../data')
     dh.LoadDataDir(directory)
     dh.SaveAnimation(dirname=directory)
     print 'done'
