@@ -11,19 +11,21 @@ from primitive.SubspacePrim import PrimLearn
 #import os
 
 dim = 8
-down_sample = 10
-dirname = 'full_random_10'
+sample_period = 10
+dirname = 'full_random_50'
 
 ss = PrimLearn()
-ss.LoadDataDir('full_random_10')
-ss.PreprocessData(50, 10, sample_period=down_sample)
+#ss.LoadDataDir(dirname)
+#ss.ConvertData(sample_period)
+ss.ConvertDataDir(dirname, sample_period=sample_period)
+ss.PreprocessData(50, 10, sample_period=sample_period)
 ss.SubspaceDFA(dim)
 
 ss.EstimateStateHistory(ss._data)
 plt.plot(ss.h.T)
 plt.show()
 
-ss.SavePrimitives('full_random_10/primitives')
+ss.SavePrimitives(dirname+'/primitives')
 
 #for k in range(dim):
 #    plt.figure();

@@ -14,9 +14,11 @@ MAX_NUMBER_OF_TUBES = 89
 
 class RandExp:
 
-    home_dir = '../data'  # changes to this changes all instances of the class
+    home_dir = 'data'  # changes to this changes all instances of the class
 
     def __init__(self, **kwargs):
+        self.dirname="random" # default directory name ../data/random_<current dts>
+
         self.method = "gesture"
         self.gender = "Female"
         self.sample_freq = 8000
@@ -49,6 +51,9 @@ class RandExp:
         self.InitializeParams(**kwargs)
 
     def InitializeParams(self, **kwargs):
+    
+        self.dirname = kwargs.get("dirname", self.dirname)
+
         self.method = kwargs.get("method", self.method)
         self.gender = kwargs.get("gender", self.gender)
         self.sample_freq = kwargs.get("sample_freq", self.sample_freq)
@@ -183,10 +188,11 @@ class RandExp:
 
             # random gestures if not
             else:
-                # generate manual sequence!
+                # generate random sequence!
                 time = 0.0
                 target = self.initial_art[k]  # np.random.random()
                 self.randart.setTarget(k, time, target)
+                
                 time_hist = np.array([time])
                 target_hist = np.array([target])
                 while True:
@@ -307,7 +313,7 @@ class RandExp:
             self.InitializeParams(**kwargs)
 
         #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir("random")  # appends DTS to folder name
+        self.InitializeDir(self.dirname)  # appends DTS to folder name
         self.SaveGestureParams()  # save parameters before anything else
         self.InitializeSpeaker()
         self.InitializeSim()
@@ -324,15 +330,41 @@ class RandExp:
 
 
 if __name__ == "__main__":
-    rando = RandExp(method="gesture",
-                    loops=10,
-                    utterance_length=1.0,
+    
+    loops = 15
+    utterance_length = 1.0
+    full_utterance = loops*utterance_length
+
+    rando = RandExp(dirname="full_random_15", 
+                    method="gesture",
+                    loops=loops,
+                    utterance_length=utterance_length,
                     initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
     # manually pump the lungs
     #rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-    #                        np.array([0.4, 0.0]),  # targets
+    #                        np.array([0.2, 0.0]),  # targets
     #                        np.array([0.0, 0.5]))  # times
+
+
+    # manually open the jaw
+    jaw_period = 0.5
+    jaw_period_var = 0.2
+    jaw_times = np.cumsum(np.random.rand(full_utterance/(jaw_period-jaw_period_var)))
+    jaw_times = jaw_times[jaw_times<full_utterance]
+    jaw_targets = np.random.rand(jaw_times.shape).reshape((-1, 2))*0.5
+    jaw_targets[:, 1] += 0.5
+    jaw_targets = jaw_targets.flatten()
+
+    plt.plot(jaw_times)
+    plt.show()
+
+    exit()
+
+    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+                            np.array([0.2, 0.0]),  # targets
+                            np.array([0.0, 0.5]))  # times
+
 
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)
     # rando.Run(max_increment=0.5, min_increment=0.05, max_delta_target=0.5,

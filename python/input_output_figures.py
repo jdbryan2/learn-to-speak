@@ -26,16 +26,20 @@ def PlotDistribution(ave, std, rows):
 
 dim = 8
 sample_period = 10
-dirname = 'full_random_10'
-savedir = 'data/' + dirname + '/figures/train/'
+dirname = 'full_random_50'
+dirname = 'full_random_50_prim'
+savedir = 'data/' + dirname + '/figures/in_out/'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+ATM = 14696. # one atmosphere in mPSI
+ATM = 101325. # one atm in pascals
 
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 
 ss = PrimLearn()
-ss.LoadDataDir(dirname)
-ss.ConvertData(sample_period=sample_period)
+ss.ConvertDataDir(dirname, sample_period=sample_period)
+#ss.LoadDataDir(dirname)
+#ss.ConvertData(sample_period=sample_period)
 #ss.PreprocessData(50, 10, sample_period=down_sample)
 #ss.SubspaceDFA(dim)
 ss.LoadPrimitives(load_fname)
@@ -64,7 +68,12 @@ tikz_save(savedir + 'articulator_stats.tikz',
 plt.show()
 
 plt.figure()
-PlotTraces((ss._data.T*ss._std+ss._ave).T*(14696.**(-1)), ss.features['lung_pressure'], 1000, sample_period, highlight=0)
+PlotTraces((ss._data.T*ss._std+ss._ave).T/(ATM), ss.features['lung_pressure'], 1000, sample_period, highlight=1)
+lung_ave = ss._ave[ss.features['lung_pressure']]
+lung_std = ss._std[ss.features['lung_pressure']]
+plt.plot([0, 10], np.ones(2)*lung_ave/ATM, 'b-', linewidth=2)
+plt.plot([0, 10], np.ones(2)*(lung_ave-lung_std)/ATM, 'r--')
+plt.plot([0, 10], np.ones(2)*(lung_ave+lung_std)/ATM, 'r--')
 plt.xlabel('Time (s)')
 plt.ylabel('Lung Pressure (atm)')
 plt.grid(True)

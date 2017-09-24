@@ -80,6 +80,98 @@ class PrimLearn(DataHandler):
     #            else:
     #                self.data[key] = value
 
+    def ConvertData_chunk(self, sample_period=1):
+        # loop over indeces and stack them into data array
+
+        area_function = self.data['area_function'][self.tubes['glottis_to_velum'], :]
+        lung_pressure = np.mean(self.data['pressure_function'][self.tubes['lungs'], :], axis=0)
+        nose_pressure = np.mean(self.data['pressure_function'][self.tubes['nose'], :], axis=0)
+
+
+        start = 0
+        _data = self.data['art_hist']
+        self.features['art_hist'] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+
+        _data = np.append(_data, area_function, axis=0)
+        self.features['area_function'] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+
+        _data = np.append(_data, lung_pressure.reshape((1, -1)), axis=0)
+        self.features['lung_pressure'] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+        
+        #self._data = np.append(self._data, nose_pressure.reshape((1, -1)), axis=0)
+        #self.features['nose_pressure'] = np.arange(start, self._data.shape[0])
+        #start=self._data.shape[0]
+
+        self.features['all'] = np.arange(0, _data.shape[0])
+        self.features['all_out'] = np.arange(self.features['art_hist'][-1], _data.shape[0])
+
+        # decimate to 1ms sampling period
+        _data = signal.decimate(_data, 8, axis=1, zero_phase=True) 
+
+        # decimate to 5ms sampling period
+        if sample_period > 1:
+            _data = signal.decimate(_data, sample_period, axis=1, zero_phase=True)
+
+
+        return _data
+
+    def ConvertDataDir(self, dirname, sample_period=1):
+        # open directory, walk files and call LoadDataFile on each
+        # is the audio saved in the numpy data? ---> Yes
+
+        # append home_dir to the front of dirname
+        dirname = os.path.join(self.home_dir, dirname)
+
+        # load up data parameters before anything else
+        self.params = {}
+        params = np.load(os.path.join(dirname, 'params.npz'))
+        self.params['gender'] = params['gender'].item()
+        self.params['sample_freq'] = params['sample_freq'].item()
+        self.params['glottal_masses'] = params['glottal_masses'].item()
+        #self.params['method'] = params['method'].item()
+        self.params['loops'] = params['loops'].item()
+        #self.params['initial_art'] = params['initial_art']
+        #self.params['max_increment'] = params['max_increment'].item()
+        #self.params['min_increment'] = params['min_increment'].item()
+        #self.params['max_delta_target'] = params['max_delta_target'].item()
+
+        # pull indeces from the filenames
+        index_list = []  # using a list for simplicity
+        for filename in os.listdir(dirname):
+            if filename.startswith('data') and filename.endswith(".npz"):
+                index_list.append(int(filter(str.isdigit, filename)))
+
+        # sort numerically and load files in order
+        index_list = sorted(index_list)
+
+        #print index_list
+        std_vals = np.zeros(len(index_list))
+        ave_vals = np.zeros(len(index_list))
+
+        for k, index in enumerate(index_list):
+            print os.path.join(dirname, 'data'+str(index)+'.npz')
+            self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
+            if k==0:
+                self._data = self.ConvertData_chunk(sample_period)
+                self.data.clear() # clear out the raw data to save space
+            else: 
+                data = self.ConvertData_chunk(sample_period)
+                self._data = np.append(self._data, data, axis=1)
+                self.data.clear()
+                
+
+        self._std = np.std(self._data, axis=1)
+        self._ave = np.mean(self._data, axis=1)
+
+        # shift to zero mean and  normalize by standard deviation
+        self._data = ((self._data.T-self._ave)/self._std).T
+
+        if len(index_list) == 0:
+            print "No data has been loaded."
+            return 0
 
     def ConvertData(self, sample_period=1):
         # convert data dictionary into useable data array  
@@ -137,11 +229,6 @@ class PrimLearn(DataHandler):
         self._std = np.std(self._data, axis=1)
         self._data = ((self._data.T-self._ave)/self._std).T
 
-        #for n in range(len(keys)):
-        #    if self._data.size == 0:
-        #        self._data = self.data[key[n]]
-        #    else:
-        #        self._data = np.append(_data, self.data[key[n]], axis=0)
 
 
     def PreprocessData(self, past, future, overlap=False, sample_period=1):
@@ -153,8 +240,8 @@ class PrimLearn(DataHandler):
         self._future = future
 
         # check if _data is populated first (data dictionary is ignored if so)
-        if len(self._data) == 0:
-            self.ConvertData(sample_period)
+        #if len(self._data) == 0:
+        #    self.ConvertData(sample_period)
 
         if (len(self._data) == 0) and (len(self.data) == 0):
             print "No data has been loaded."
@@ -273,11 +360,11 @@ class PrimLearn(DataHandler):
 
     def GetControl(self, current_state):
 
-        _Xf = np.dot(ss.O, current_state)
+        _Xf = np.dot(self.O, current_state)
         _Xf = _Xf.reshape((self._data.shape[0], self._future))
         predicted = _Xf[:, 0]
         predicted = ((predicted.T*self._std)+self._ave).T
-        return predicted[0:self.data['art_hist'].shape[0]]
+        return predicted[self.features['art_hist']]
 
 
 if __name__ == "__main__":

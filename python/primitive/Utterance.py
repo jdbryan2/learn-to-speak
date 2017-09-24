@@ -71,6 +71,11 @@ class Utterance:
                                        int(np.ceil(self.sample_freq *
                                                self.utterance_length))))
 
+        self.pressure_function = np.zeros((MAX_NUMBER_OF_TUBES,
+                                       int(np.ceil(self.sample_freq *
+                                               self.utterance_length))))
+
+
         self.art_hist = np.zeros((aw.kArt_muscle.MAX,
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
@@ -147,6 +152,7 @@ class Utterance:
 
         self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
 
+        self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
 
     def Simulate(self):
 
@@ -169,6 +175,7 @@ class Utterance:
             self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
 
             self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
+            self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
 
             self.art_hist[:, self.speaker.Now()-1] = articulation
 
@@ -186,6 +193,7 @@ class Utterance:
             np.savez(self.directory + 'data' + str(fname),
                      sound_wave=self.sound_wave,
                      area_function=self.area_function,
+                     pressure_function=self.pressure_function,
                      art_hist=self.art_hist)
 
         else:
@@ -197,6 +205,7 @@ class Utterance:
             np.savez(self.directory + 'data' + str(self.iteration),
                      sound_wave=self.sound_wave,
                      area_function=self.area_function,
+                     pressure_function=self.pressure_function,
                      art_hist=self.art_hist)
 
     def SaveParams(self):
@@ -234,7 +243,7 @@ class Utterance:
             self.InitializeParams(**kwargs)
 
         #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dir_name)  # appends DTS to folder name
+        self.InitializeDir(self.dir_name, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
 

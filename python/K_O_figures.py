@@ -7,7 +7,8 @@ from matplotlib2tikz import save as tikz_save
 
 dim = 8
 sample_period = 10
-dirname = 'full_random_10'
+dirname = 'full_random_50_prim'
+dirname = 'full_random_50'
 savedir = 'data/' + dirname + '/figures/learn/'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 
@@ -15,10 +16,8 @@ if not os.path.exists(savedir):
     os.makedirs(savedir)
 
 ss = PrimLearn()
-ss.LoadDataDir(dirname)
-ss.ConvertData(sample_period=sample_period)
-#ss.PreprocessData(50, 10, sample_period=down_sample)
-#ss.SubspaceDFA(dim)
+ss.ConvertDataDir(dirname, sample_period=sample_period)
+ss.PreprocessData(50, 10, sample_period=sample_period)
 ss.LoadPrimitives(load_fname)
 
 ss.EstimateStateHistory(ss._data)
