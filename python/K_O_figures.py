@@ -5,10 +5,14 @@ import pylab as plt
 from primitive.SubspacePrim import PrimLearn
 from matplotlib2tikz import save as tikz_save
 
-dim = 8
-sample_period = 10
-dirname = 'full_random_50_prim'
-dirname = 'full_random_50'
+#dim = 8
+#sample_period = 10
+#dirname = 'full_random_500_prim'
+#dirname = 'full_random_500'
+#past = 100
+#future = 10
+from test_params import *
+
 savedir = 'data/' + dirname + '/figures/learn/'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 
@@ -17,7 +21,7 @@ if not os.path.exists(savedir):
 
 ss = PrimLearn()
 ss.ConvertDataDir(dirname, sample_period=sample_period)
-ss.PreprocessData(50, 10, sample_period=sample_period)
+ss.PreprocessData(past, future, sample_period=sample_period)
 ss.LoadPrimitives(load_fname)
 
 ss.EstimateStateHistory(ss._data)

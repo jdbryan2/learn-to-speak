@@ -10,15 +10,18 @@ from primitive.SubspacePrim import PrimLearn
 #import numpy.linalg as ln
 #import os
 
-dim = 8
-sample_period = 10
-dirname = 'full_random_50'
+#dim = 8
+#sample_period = 10
+#dirname = 'full_random_500'
+#past = 50
+#future = 50
+from test_params import *
 
 ss = PrimLearn()
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
 ss.ConvertDataDir(dirname, sample_period=sample_period)
-ss.PreprocessData(50, 10, sample_period=sample_period)
+ss.PreprocessData(past, future, sample_period=sample_period)
 ss.SubspaceDFA(dim)
 
 ss.EstimateStateHistory(ss._data)

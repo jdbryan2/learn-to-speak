@@ -24,12 +24,13 @@ def PlotDistribution(ave, std, rows):
     plt.plot(ave[rows]+std[rows], 'ro--', linewidth=1)
 
 
-dim = 8
-sample_period = 10
-dirname = 'full_random_50'
-dirname = 'full_random_50_prim'
-savedir = 'data/' + dirname + '/figures/in_out/'
-load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+from test_params import *
+#dim = 8
+#sample_period = 10
+#dirname = 'full_random_500_prim'
+#dirname = 'full_random_500'
+#savedir = 'data/' + dirname + '/figures/in_out/'
+#load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
