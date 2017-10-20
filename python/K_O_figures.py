@@ -109,9 +109,10 @@ for k in range(dim):
     ################################################################################
     # lung IN
     plt.figure();
-    plt.plot(K[:, ss.features['lung_pressure']], 'b-')
-    plt.xlabel('Time')
-    plt.ylabel('Pressure')
+    time = np.arange(0, K.shape[0])*sample_period/1000.
+    plt.plot(time, K[:, ss.features['lung_pressure']]/np.max(np.abs(K[:, ss.features['lung_pressure']])), 'b-')
+    plt.xlabel('Time (s)')
+    plt.ylabel('SGP')
     tikz_save(
         savedir+'primitive_lung_in_'+str(k)+ '.tikz',
         figureheight = '\\figureheight',
@@ -171,9 +172,10 @@ for k in range(dim):
     ################################################################################
     # lung OUT
     plt.figure();
-    plt.plot(O[:, ss.features['lung_pressure']], 'b-')
-    plt.xlabel('Time')
-    plt.ylabel('Pressure')
+    time = np.arange(0, O.shape[0])*sample_period/1000.
+    plt.plot(time, O[:, ss.features['lung_pressure']]/np.max(np.abs(O[:, ss.features['lung_pressure']])), 'b-')
+    plt.xlabel('Time (s)')
+    plt.ylabel('SGP')
     tikz_save(
         savedir+'primitive_lung_out_'+str(k)+ '.tikz',
         figureheight = '\\figureheight',

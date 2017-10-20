@@ -28,7 +28,7 @@ from test_params import *
 #dim = 8
 #sample_period = 10
 #dirname = 'full_random_500'
-primdir = dirname+'_primv'
+primdir = dirname+'_primv'+str(v_)
 #savedir = 'data/' + dirname + '/figures/in_out/'
 #load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 ATM = 14696. # one atmosphere in mPSI
@@ -36,8 +36,8 @@ ATM = 101325. # one atm in pascals
 
 #max_delta = 0.2/0.01/1000*sample_period
 
-if not os.path.exists(savedir):
-    os.makedirs(savedir)
+#if not os.path.exists(savedir):
+#    os.makedirs(savedir)
 
 ss = PrimLearn()
 
@@ -58,7 +58,7 @@ from primitive.Utterance import Utterance
 
 control = Utterance(dir_name=primdir,
         loops=1,
-        utterance_length=5)
+        utterance_length=8)
 
 #control.InitializeDir(dirname=primdir, addDTS=False)
 
@@ -88,10 +88,11 @@ past_data = (past_data.T+
 _h = np.zeros((1, dim))
 _h[0] = ss.EstimateState(past_data, normalize=True)
 
-#target = ss.GetControl(_h[0])
+
+target = ss.GetControl(np.zeros(dim))
 #target[target<0] = 0.
 #target[target>1] = 1.
-#control.speaker.SetArticulation(target)
+control.speaker.SetArticulation(target)
 
 while control.speaker.NotDone():
 
@@ -101,7 +102,8 @@ while control.speaker.NotDone():
 
     h = ss.EstimateState(past_data, normalize=True)
     v = np.zeros(h.shape)
-    v[0] = 5 
+    if control.speaker.NowSeconds() > 5:
+        v[0] = v_
     target = ss.GetControl(h+v)
     print h
     #plt.plot(target)
@@ -154,11 +156,20 @@ while control.speaker.NotDone():
 
 control.Save()
 #plt.plot(_h)
+savedir = 'data/' + primdir + '/figures/in_out/'
+if not os.path.exists(savedir):
+    os.makedirs(savedir)
+
 PlotTraces(_h.T, np.arange(_h.shape[1]), _h.shape[0], sample_period, highlight=0)
+plt.grid(True)
+tikz_save(savedir + 'state_history.tikz',
+    figureheight = '\\figureheight',
+    figurewidth = '\\figurewidth')
+
 plt.show()
 
 plt.figure()
-PlotTraces(control.art_hist, np.arange(control.art_hist.shape[0]), control.art_hist.shape[1], sample_period, highlight=0)
+PlotTraces(control.art_hist, np.arange(control.art_hist.shape[0]), 5000, sample_period, highlight=0)
 #plt.plot(control.art_hist.T)
 plt.show()
 

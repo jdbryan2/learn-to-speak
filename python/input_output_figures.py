@@ -31,6 +31,7 @@ from test_params import *
 #dirname = 'full_random_500'
 #savedir = 'data/' + dirname + '/figures/in_out/'
 #load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+savedir = 'data/' + dirname + '/figures/in_out/'
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
@@ -38,17 +39,18 @@ if not os.path.exists(savedir):
     os.makedirs(savedir)
 
 ss = PrimLearn()
-ss.ConvertDataDir(dirname, sample_period=sample_period)
+ss.ConvertDataDir(dirname, sample_period=sample_period, normalize=False)
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period=sample_period)
 #ss.PreprocessData(50, 10, sample_period=down_sample)
 #ss.SubspaceDFA(dim)
 ss.LoadPrimitives(load_fname)
 
-ss.EstimateStateHistory(ss._data)
+ss.EstimateStateHistory(((ss._data.T-ss._ave)/ss._std).T)
 
 plt.figure()
-PlotTraces((ss._data.T*ss._std+ss._ave).T, ss.features['art_hist'], 1000, sample_period, highlight=0)
+PlotTraces(ss._data, ss.features['art_hist'], 1000, sample_period, highlight=0)
+#PlotTraces((ss._data.T*ss._std+ss._ave).T, ss.features['art_hist'], 1000, sample_period, highlight=0)
 #PlotTraces((ss._data.T*ss._std+ss._ave).T, ss.features['lung_pressure'], 1000, sample_period, highlight=0, highlight_style='r--')
 plt.xlabel('Time (s)')
 plt.ylabel('Articulator Value')
@@ -56,7 +58,7 @@ plt.grid(True)
 tikz_save(savedir + 'articulator_traces.tikz',
     figureheight = '\\figureheight',
     figurewidth = '\\figurewidth')
-plt.show()
+#plt.show()
 
 plt.figure()
 PlotDistribution(ss._ave, ss._std, ss.features['art_hist'])
@@ -66,10 +68,11 @@ plt.grid(True)
 tikz_save(savedir + 'articulator_stats.tikz',
     figureheight = '\\figureheight',
     figurewidth = '\\figurewidth')
-plt.show()
+#plt.show()
 
 plt.figure()
-PlotTraces((ss._data.T*ss._std+ss._ave).T/(ATM), ss.features['lung_pressure'], 1000, sample_period, highlight=1)
+PlotTraces(ss._data/(ATM), ss.features['lung_pressure'], 1000, sample_period, highlight=1)
+#PlotTraces((ss._data.T*ss._std+ss._ave).T/(ATM), ss.features['lung_pressure'], 1000, sample_period, highlight=1)
 lung_ave = ss._ave[ss.features['lung_pressure']]
 lung_std = ss._std[ss.features['lung_pressure']]
 plt.plot([0, 10], np.ones(2)*lung_ave/ATM, 'b-', linewidth=2)
@@ -81,19 +84,42 @@ plt.grid(True)
 tikz_save(savedir + 'lung_traces.tikz',
     figureheight = '\\figureheight',
     figurewidth = '\\figurewidth')
-plt.show()
+#plt.show()
 
 plt.figure()
-PlotDistribution(ss._ave, ss._std, ss.features['area_function'])
-plt.xlabel('Area Function')
-plt.ylabel('$\\mu \\pm \\sigma$')
+PlotDistribution(10000.*ss._ave, 10000.*ss._std, ss.features['area_function'])
+plt.ylabel('Area Function (cm$^2$)')
+plt.xlabel('Tube Segment')
+#plt.xlabel('Area Function')
+#plt.ylabel('$\\mu \\pm \\sigma$')
 plt.grid(True)
 tikz_save(savedir + 'area_stats.tikz',
     figureheight = '\\figureheight',
     figurewidth = '\\figurewidth')
+#plt.show()
+
+plt.figure()
+#PlotDistribution(ss._ave, ss._std, ss.features['area_function'])
+plt.plot(ss._data[ss.features['area_function']], 'bo--', linewidth=2)
+plt.xlabel('Tube')
+plt.ylabel('Area Function')
+plt.grid(True)
+tikz_save(savedir + 'end_area.tikz',
+    figureheight = '\\figureheight',
+    figurewidth = '\\figurewidth')
+#plt.show()
+
+
+plt.figure()
+plt.plot(ss._data[ss.features['area_function'], 10]*10000., 'ro-')
+plt.plot(ss._data[ss.features['area_function'], -1], 'bo-',)
+plt.ylabel('Area Function')
+plt.xlabel('Tube Segment')
+plt.grid(True)
+tikz_save(savedir + 'area_first_last.tikz',
+    figureheight = '\\figureheight',
+    figurewidth = '\\figurewidth')
 plt.show()
-
-
 
 ################################################################################
 if ss.h.shape[1] < 1000:

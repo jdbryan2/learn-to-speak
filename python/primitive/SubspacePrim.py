@@ -118,7 +118,7 @@ class PrimLearn(DataHandler):
 
         return _data
 
-    def ConvertDataDir(self, dirname, sample_period=1):
+    def ConvertDataDir(self, dirname, sample_period=1, normalize=True):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
@@ -162,12 +162,12 @@ class PrimLearn(DataHandler):
                 self._data = np.append(self._data, data, axis=1)
                 self.data.clear()
                 
-
         self._std = np.std(self._data, axis=1)
         self._ave = np.mean(self._data, axis=1)
 
-        # shift to zero mean and  normalize by standard deviation
-        self._data = ((self._data.T-self._ave)/self._std).T
+        if normalize:
+            # shift to zero mean and  normalize by standard deviation
+            self._data = ((self._data.T-self._ave)/self._std).T
 
         if len(index_list) == 0:
             print "No data has been loaded."

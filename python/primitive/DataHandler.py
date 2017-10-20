@@ -177,7 +177,7 @@ if __name__ == "__main__":
     #print "Do stuff"
 
     # directory = 'gesture_2017-05-10-20-16-18'
-    directory = 'full_random_10'
+    directory = 'full_random_100_primv5'
     dh = DataHandler(home_dir='../data')
     dh.LoadDataDir(directory)
     dh.SaveAnimation(dirname=directory)

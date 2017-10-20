@@ -24,7 +24,7 @@ rando = RandExp(dirname="full_random_"+str(loops),
 #                        np.array([0.2, 0.0]),  # targets
 #                        np.array([0.0, 0.5]))  # times
 
-rando.Run(max_increment=0.3, min_increment=0.01, max_delta_target=0.2, dirname="full_random_"+str(loops))
+rando.Run(max_increment=0.3, min_increment=0.02, max_delta_target=0.2, dirname="full_random_"+str(loops))
 
 
 # manually open the jaw
