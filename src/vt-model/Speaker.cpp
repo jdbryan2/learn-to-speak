@@ -957,7 +957,7 @@ int Speaker::SaveSound(std::string filepath)
 
 #if _BOOST_
 // Boost wrappers
-void Speaker::py_InitSim(double totalTime, boost::python::numeric::array initialArtList) {
+void Speaker::py_InitSim(double totalTime, boost::python::numpy::ndarray initialArtList) {
     Articulation initialArt = {0};
     for(int i = 0; i<kArt_muscle_MAX; i++) {
         initialArt[i] = boost::python::extract<double>(initialArtList[i]);
@@ -968,7 +968,7 @@ void Speaker::py_InitSim(double totalTime, boost::python::numeric::array initial
 }
 
 //boost::python::numeric::array Speaker::py_getAreaFcn() {
-void Speaker::py_getAreaFcn(boost::python::numeric::array & AreaFcn) {
+void Speaker::py_getAreaFcn(boost::python::numpy::ndarray & AreaFcn) {
     for(int ind=0; ind<numberOfTubes; ind++)
     {
         //AreaFcn.append(tube[ind].A);
@@ -977,7 +977,7 @@ void Speaker::py_getAreaFcn(boost::python::numeric::array & AreaFcn) {
     //return AreaFcn;
 }
 //boost::python::numeric::array Speaker::py_getPressureFcn(boost::python::numeric::array PressureFcn){
-void Speaker::py_getPressureFcn(boost::python::numeric::array & PressureFcn){
+void Speaker::py_getPressureFcn(boost::python::numpy::ndarray & PressureFcn){
     for(int ind=0; ind<numberOfTubes; ind++)
     {
         //PressureFcn.append(tube[ind].Qhalf);
@@ -986,7 +986,7 @@ void Speaker::py_getPressureFcn(boost::python::numeric::array & PressureFcn){
     //return PressureFcn;
 }
 
-void Speaker::py_setArticulation(boost::python::numeric::array & _art) {
+void Speaker::py_setArticulation(boost::python::numpy::ndarray & _art) {
     for(int ind=0; ind<kArt_muscle_MAX; ind++) {
         art[ind] = boost::python::extract<double>(_art[ind]);
         //std::cout << art[ind] << ",";

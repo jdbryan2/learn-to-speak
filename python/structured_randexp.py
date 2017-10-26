@@ -9,7 +9,7 @@ from primitive.RandExp import RandExp
 import pylab as plt
 
     
-loops = 500
+loops = 5
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 

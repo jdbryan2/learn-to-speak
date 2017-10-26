@@ -44,6 +44,12 @@ xcuserdata/
 *.m~
 *.prim
 *.alog
+*.rtf
+*.eps
+*converted-to.pdf
+*.avi
+*.wav
+*.mp4
 
 # Video/audio files
 ###################

@@ -144,7 +144,7 @@ void Artword::Copy(Artword* newArtword) {
 }
 
 #if _BOOST_
-void Artword::py_intoArt(boost::python::numeric::array & art, double tim) {
+void Artword::py_intoArt(boost::python::numpy::ndarray & art, double tim) {
 	for (int feature = 0; feature < kArt_muscle_MAX; feature ++) {
 		art [feature] = getTarget (feature, tim);
 	}
