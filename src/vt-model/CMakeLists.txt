@@ -28,9 +28,9 @@ include_directories(
 add_definitions(-std=c++11)
 add_definitions(-DBOOST_ALL_NO_LIB )
 #SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS} -lrt -lm -lasound -pthread ")              
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DNORT -lm")              
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DNORT -lm -O3 -funroll-loops")              
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -funroll-loops")
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
 
 SET(VTSIM_FILES 
     Articulation_enums.h
@@ -49,8 +49,8 @@ SET(VTSIM_FILES
 
 ADD_LIBRARY(vtModel ${VTSIM_FILES})
 
-ADD_LIBRARY(PyRAAT SHARED Speaker.cpp VocalTract.cpp Sound.cpp)
-ADD_LIBRARY(Artword SHARED Artword.cpp)
+ADD_LIBRARY(PyRAAT MODULE Speaker.cpp VocalTract.cpp Sound.cpp)
+ADD_LIBRARY(Artword MODULE Artword.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 #TARGET_LINK_LIBRARIES(vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
@@ -68,6 +68,6 @@ TARGET_LINK_LIBRARIES(vocal_tract vtModel portaudio ${GSL_LIBRARIES})
 #INSTALL(TARGETS vocal_tract DESTINATION /home/jacob/Projects/learn-to-speak/bin)
 #INSTALL(TARGETS PyRAAT DESTINATION /home/jacob/Projects/learn-to-speak/bin)
 #INSTALL(TARGETS Artword DESTINATION /home/jacob/Projects/learn-to-speak/bin)
-INSTALL(TARGETS vocal_tract DESTINATION ../../bin)
-INSTALL(TARGETS PyRAAT DESTINATION ../../bin)
-INSTALL(TARGETS Artword DESTINATION ../../bin)
+INSTALL(TARGETS vocal_tract DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+INSTALL(TARGETS PyRAAT DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+INSTALL(TARGETS Artword DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
