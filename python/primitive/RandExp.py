@@ -348,22 +348,30 @@ if __name__ == "__main__":
 
 
     # manually open the jaw
-    jaw_period = 0.5
-    jaw_period_var = 0.2
-    jaw_times = np.cumsum(np.random.rand(full_utterance/(jaw_period-jaw_period_var)))
-    jaw_times = jaw_times[jaw_times<full_utterance]
-    jaw_targets = np.random.rand(jaw_times.shape).reshape((-1, 2))*0.5
-    jaw_targets[:, 1] += 0.5
-    jaw_targets = jaw_targets.flatten()
+#    jaw_period = 0.5
+#    jaw_period_var = 0.2
+#    jaw_times = np.cumsum(np.random.rand(int(full_utterance/(jaw_period-jaw_period_var))))
+#    print jaw_times
+#    jaw_times = jaw_times[jaw_times<full_utterance]
+#    print jaw_times
+#    print 'NEXT'
+#    print jaw_times.shape
+#    print 'NEXT'
+#    print np.random.random_sample(jaw_times.shape)
+#    print 'NEXT'
+#    print np.random.random_sample(jaw_times.shape).reshape((-1, 2))
+#    jaw_targets = np.random.random_sample(jaw_times.shape).reshape((-1, 2))*0.5
+#    jaw_targets[:, 1] += 0.5
+#    jaw_targets = jaw_targets.flatten()
+#
+#    plt.plot(jaw_times)
+#    plt.show()
 
-    plt.plot(jaw_times)
-    plt.show()
+#exit()
 
-    exit()
-
-    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-                            np.array([0.2, 0.0]),  # targets
-                            np.array([0.0, 0.5]))  # times
+#    rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+#                            np.array([0.2, 0.0]),  # targets
+#                            np.array([0.0, 0.5]))  # times
 
 
     # rando.Run(max_increment=0.5, min_increment=0.1, max_delta_target=0.5)

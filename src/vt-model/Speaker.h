@@ -133,6 +133,9 @@ private:
 BOOST_PYTHON_MODULE(PyRAAT) // tells boost where to look
 {
     //boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+    // Need these to avoid a segfault
+    Py_Initialize();
+    boost::python::numpy::initialize();
 
     boost::python::class_<Speaker>("Speaker", boost::python::init<std::string, int, double, int>())
        .def("InitSim", &Speaker::py_InitSim)
