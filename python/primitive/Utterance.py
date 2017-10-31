@@ -123,7 +123,6 @@ class Utterance:
         for t in range(len(targets)):
             self.articulation.setTarget(muscle, times[t], targets[t])
     
-
     def SaveOutputs(self):
         # Save sound data point
         self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()

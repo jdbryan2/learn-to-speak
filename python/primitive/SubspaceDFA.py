@@ -13,7 +13,7 @@ def moving_average(a, n=3, axis=0) :
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
 
-# TODO: create simple class that loads data files, use as parent for prim class
+# TODO: Create feature extractor class(es), modularly add as a member variable
 
 class PrimLearn(DataHandler):
 
