@@ -6,7 +6,7 @@ cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
 # add required linker flags
-find_package(Boost COMPONENTS filesystem system date_time python numpy REQUIRED)
+find_package(Boost COMPONENTS filesystem system date_time python3 numpy REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 
