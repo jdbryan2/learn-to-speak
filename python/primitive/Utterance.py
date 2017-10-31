@@ -16,7 +16,12 @@ class Utterance:
     home_dir = 'data'  # changes to this changes all instances of the class
 
     def __init__(self, **kwargs):
-        self.method = "gesture"
+        self.DefaultParams()
+        self.InitializeParams(**kwargs)
+
+    def DefaultParams(self):
+        self.dirname="utterance" # default directory name ../data/utterance_<current dts>
+
         self.gender = "Female"
         self.sample_freq = 8000
         self.oversamp = 70
@@ -24,33 +29,14 @@ class Utterance:
         self.utterance_length = 1.0  # seconds
         self.loops = 10
 
-        # gesture default params
-        self.max_increment = 0.1
-        self.min_increment = 0.01
-        self.max_delta_target = 1.0
-        self.total_increments = self.loops * \
-            self.utterance_length / \
-            self.min_increment + 1
-
-        ## brownian default params
-        #self.increment = 0.01
-        #self.sigma = 0.1
-        #self.total_increments = self.loops * \
-        #    self.utterance_length / \
-        #    self.increment + 1
-
         self.initial_art = np.zeros(aw.kArt_muscle.MAX,
                                     dtype=np.dtype('double'))
 
-
-        self.dir_name = "utterance"
-
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
 
-        self.InitializeParams(**kwargs)
 
     def InitializeParams(self, **kwargs):
-        self.dir_name = kwargs.get("dir_name", self.dir_name)
+        self.dirname = kwargs.get("dirname", self.dirname)
 
         self.gender = kwargs.get("gender", self.gender)
         self.sample_freq = kwargs.get("sample_freq", self.sample_freq)
@@ -111,15 +97,7 @@ class Utterance:
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
 
-        initial_art = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
-        if self._art_init:
-            print "Initializing"
-            # hmm. Sim should always initialize at time zero. Even if it's looped... right?
-            self.articulation.intoArt(initial_art, 0.0) #self.speaker.NowSecondsLooped())
-
-        print initial_art
-        self.speaker.InitSim(self.utterance_length, initial_art)
-        self.speaker.IterateSim()
+        self.speaker.InitSim(self.utterance_length, self.initial_art)
 
     def InitializeArticulation(self):
         # note: changing speaker params requires calling InitializeSpeaker
@@ -131,7 +109,7 @@ class Utterance:
 
             self._art_init = True  # flag for whether self.InitializeArticulation has been called
 
-    def SetManualSequence(self, muscle, times, targets):
+    def SetManualArticulation(self, muscle, times, targets):
 
         self.InitializeArticulation()
 
@@ -164,9 +142,6 @@ class Utterance:
 
             # pass the current articulation in
             self.articulation.intoArt(articulation, self.speaker.NowSecondsLooped())
-            if self.speaker.NowSecondsLooped() < 0.001:
-                print self.speaker.NowSecondsLooped()
-                print articulation
             self.speaker.SetArticulation(articulation)
 
             self.speaker.IterateSim()
@@ -184,29 +159,19 @@ class Utterance:
 
     def Save(self, fname = None):
 
-        if not fname==None:
-            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
-            write(self.directory + 'audio' + str(fname) + '.wav',
-                  self.sample_freq,
-                  scaled)
+        if fname == None: 
+            fname = self.iteration
 
-            np.savez(self.directory + 'data' + str(fname),
-                     sound_wave=self.sound_wave,
-                     area_function=self.area_function,
-                     pressure_function=self.pressure_function,
-                     art_hist=self.art_hist)
+        scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
+        write(self.directory + 'audio' + str(fname) + '.wav',
+              self.sample_freq,
+              scaled)
 
-        else:
-            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
-            write(self.directory + 'audio' + str(self.iteration) + '.wav',
-                  self.sample_freq,
-                  scaled)
-
-            np.savez(self.directory + 'data' + str(self.iteration),
-                     sound_wave=self.sound_wave,
-                     area_function=self.area_function,
-                     pressure_function=self.pressure_function,
-                     art_hist=self.art_hist)
+        np.savez(self.directory + 'data' + str(fname),
+                 sound_wave=self.sound_wave,
+                 area_function=self.area_function,
+                 pressure_function=self.pressure_function,
+                 art_hist=self.art_hist)
 
     def SaveParams(self):
         np.savez(self.directory + 'params',
@@ -222,7 +187,7 @@ class Utterance:
             self.InitializeParams(**kwargs)
 
         #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dir_name)  # appends DTS to folder name
+        self.InitializeDir(self.dirname)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
 
@@ -243,7 +208,7 @@ class Utterance:
             self.InitializeParams(**kwargs)
 
         #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dir_name, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
+        self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
 
@@ -254,79 +219,79 @@ class Utterance:
 if __name__ == "__main__":
     
     # Default initial_art is all zeros
-    apa = Utterance(dir_name="apa",
+    apa = Utterance(dirname="apa",
                     loops=1,
                     utterance_length=0.5)
 
-    apa.SetManualSequence(aw.kArt_muscle.INTERARYTENOID, [0,   0.5], # time 
+    apa.SetManualArticulation(aw.kArt_muscle.INTERARYTENOID, [0,   0.5], # time 
                                                          [0.5, 0.5]) # target
 
-    apa.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
+    apa.SetManualArticulation(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
                                                            [1.0, 1.0])
 
-    apa.SetManualSequence(aw.kArt_muscle.LUNGS, [0.0, 0.2], 
+    apa.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.2], 
                                                 [0.1, 0.0])
 
-    apa.SetManualSequence(aw.kArt_muscle.MASSETER, [0.25], [0.7])
+    apa.SetManualArticulation(aw.kArt_muscle.MASSETER, [0.25], [0.7])
 
-    apa.SetManualSequence(aw.kArt_muscle.ORBICULARIS_ORIS, [0.25], [0.2])
+    apa.SetManualArticulation(aw.kArt_muscle.ORBICULARIS_ORIS, [0.25], [0.2])
 
     apa.Run()
 
     ############################################################################
-    sigh = Utterance(dir_name="sigh",
+    sigh = Utterance(dirname="sigh",
                     loops=1,
                     utterance_length=0.5)
 
-    sigh.SetManualSequence(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
+    sigh.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
                                                 [0.1, 0.0])
 
 
-    sigh.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
+    sigh.SetManualArticulation(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
                                                            [1.0, 1.0])
 
 
     sigh.Run()
     ############################################################################
-    ejective = Utterance(dir_name="ejective",
+    ejective = Utterance(dirname="ejective",
                     loops=1,
                     utterance_length=0.5)
 
-    ejective.SetManualSequence(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
+    ejective.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1], 
                                                      [0.1, 0.0])
 
 
-    ejective.SetManualSequence(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
+    ejective.SetManualArticulation(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5], 
                                                                 [1.0, 1.0])
 
-    ejective.SetManualSequence(aw.kArt_muscle.INTERARYTENOID, [0.0, 0.17, 0.2, 0.35, 0.38, 0.5], 
+    ejective.SetManualArticulation(aw.kArt_muscle.INTERARYTENOID, [0.0, 0.17, 0.2, 0.35, 0.38, 0.5], 
                                                               [0.5, 0.5 , 1.0, 1.0 , 1.0 , 0.5])
 
-    ejective.SetManualSequence(aw.kArt_muscle.MASSETER, [0.0, 0.5], 
+    ejective.SetManualArticulation(aw.kArt_muscle.MASSETER, [0.0, 0.5], 
                                                         [-.3, -.3])
 
-    ejective.SetManualSequence(aw.kArt_muscle.HYOGLOSSUS, [0.0, 0.5], 
+    ejective.SetManualArticulation(aw.kArt_muscle.HYOGLOSSUS, [0.0, 0.5], 
                                                           [0.5, 0.5])
 
-    ejective.SetManualSequence(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.1, 0.15, 0.29, 0.32], 
+    ejective.SetManualArticulation(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.1, 0.15, 0.29, 0.32], 
                                                             [0.0, 0.0, 1.0 , 1.0 , 0.0 ])
 
-    ejective.SetManualSequence(aw.kArt_muscle.STYLOHYOID, [0.0, 0.22, 0.27, 0.35, 0.38, 0.5], 
+    ejective.SetManualArticulation(aw.kArt_muscle.STYLOHYOID, [0.0, 0.22, 0.27, 0.35, 0.38, 0.5], 
                                                           [0.0,  0.0, 1.0 , 1.0 , 0.0 , 0.0])
 
     ejective.Run()
     ############################################################################
 
-    click = Utterance(dir_name="click",
+    click = Utterance(dirname="click",
                     loops=1,
                     utterance_length=0.5)
 
-    click.SetManualSequence(aw.kArt_muscle.MASSETER, [0.0 , 0.2 ,  0.3 ,  0.5 ], 
+    click.SetManualArticulation(aw.kArt_muscle.MASSETER, [0.0 , 0.2 ,  0.3 ,  0.5 ], 
                                                      [0.25, 0.25, -0.25, -0.25])
 
-    click.SetManualSequence(aw.kArt_muscle.ORBICULARIS_ORIS, [0.0 , 0.2 , 0.3, 0.5], 
+    click.SetManualArticulation(aw.kArt_muscle.ORBICULARIS_ORIS, [0.0 , 0.2 , 0.3, 0.5], 
                                                              [0.75, 0.75, 0.0, 0.0])
 
-    click.SetManualSequence(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.5], 
+    click.SetManualArticulation(aw.kArt_muscle.STYLOGLOSSUS, [0.0, 0.5], 
                                                          [0.9, 0.9])
     click.Run()

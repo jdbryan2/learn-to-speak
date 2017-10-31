@@ -21,7 +21,6 @@ class RandExcite(Utterance):
         self.DefaultParams()
         self.InitializeParams(**kwargs)
 
-
     def DefaultParams(self):
         # load parent defaults first
         Utterance.DefaultParams(self)
@@ -43,7 +42,6 @@ class RandExcite(Utterance):
 
         self.manual_targets = {}
         self.manual_times = {}
-
 
     def InitializeParams(self, **kwargs):
     
@@ -75,14 +73,6 @@ class RandExcite(Utterance):
         self.initial_art = kwargs.get("initial_art", self.initial_art)
 
         self.ResetOutputVars()
-
-
-    def InitializeSim(self, **kwargs):
-        # note: changing speaker params requires calling InitializeSpeaker
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
-
-        self.speaker.InitSim(self.utterance_length, self.initial_art)
 
     def SetManualArticulation(self, muscle, targets, times):
         if muscle > aw.kArt_muscle.MAX or muscle < 0:
@@ -185,7 +175,6 @@ class RandExcite(Utterance):
             #plt.hold(True)
         plt.show()
 
-
     def SaveParams(self):
         np.savez(self.directory + 'params',
                  gender=self.gender,
@@ -240,7 +229,7 @@ if __name__ == "__main__":
     jaw_period_var = 0.2
     jaw_times = np.cumsum(np.random.rand(int(full_utterance/(jaw_period-jaw_period_var))))
     jaw_times = jaw_times[jaw_times<full_utterance]
-    jaw_targets = np.random.rand(jaw_times.shape).reshape((-1, 2))*0.5
+    jaw_targets = np.random.rand(jaw_times.size).reshape((-1, 2))*0.5
     jaw_targets[:, 1] += 0.5
     jaw_targets = jaw_targets.flatten()
 
