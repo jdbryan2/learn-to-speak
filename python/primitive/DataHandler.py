@@ -9,7 +9,7 @@ import os
 # TODO: create simple class that loads data files, use as parent for prim class
 
 
-class DataHandler:
+class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
 
     def __init__(self, **kwargs):
         # define tube sections from PRAAT
@@ -25,27 +25,25 @@ class DataHandler:
         self.tubes['all'] = np.arange(6, 65)  # include velum, exclude nasal cavity
         self.tubes['all_no_lungs'] = np.arange(23, 65)  # include velum, exclude nasal cavity
 
-        # self.all_tubes = self.lungs[:]
-        # self.all_tubes = np.append(self.all_tubes, self.bronchi)
-        # self.all_tubes = np.append(self.all_tubes, self.trachea)
-        # self.all_tubes = np.append(self.all_tubes, self.glottis)
-        # self.all_tubes = np.append(self.all_tubes, self.tract)
-        # # nose may only need to be the nasopharangeal port
-        # self.all_tubes = np.append(self.all_tubes, 64)
-        # #self.all_tubes = np.append(self.all_tubes, self.nose)
-
         # initialize the variables
         self.data = {}
 
         self.home_dir = kwargs.get("home_dir", "data")
 
     def LoadDataFile(self, fname):
+        _error = True
+
         # load the data from fname, store in class variable
         file_data = np.load(fname)
 
-        # load the data from file and append the dictionary to internal
-        # dictionary
+        # load the data from file and append the dictionary to internal dictionary
         for key, value in file_data.iteritems():
+
+            # if any data is found, we don't print an error message
+            if len(value) > 0:
+                _error = False
+
+            # handle data according to whether the dictionary has the key or not
             if key in self.data:
                 if len(value.shape) < 2:
                     # reshape if it's audio
@@ -59,29 +57,38 @@ class DataHandler:
                 else:
                     self.data[key] = value
 
+        # print error message before we're done.
+        if _error:
+            print "Warning: No data found in file."
+
+    def LoadParams(self, dirname):
+        
+        # append home_dir to the front of dirname
+        full_dirname = os.path.join(self.home_dir, dirname)
+
+        # load up data parameters before anything else
+        self.params = {}
+        params = np.load(os.path.join(full_dirname, 'params.npz'))
+
+        for key in params.keys():
+            if not params[key].shape:
+                self.params[key] = params[key].item()
+            else:
+                self.params[key] = params[key]
+
     def LoadDataDir(self, dirname):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
         # append home_dir to the front of dirname
-        dirname = os.path.join(self.home_dir, dirname)
+        full_dirname = os.path.join(self.home_dir, dirname)
 
         # load up data parameters before anything else
-        self.params = {}
-        params = np.load(os.path.join(dirname, 'params.npz'))
-        self.params['gender'] = params['gender'].item()
-        self.params['sample_freq'] = params['sample_freq'].item()
-        self.params['glottal_masses'] = params['glottal_masses'].item()
-        #self.params['method'] = params['method'].item()
-        self.params['loops'] = params['loops'].item()
-        #self.params['initial_art'] = params['initial_art']
-        #self.params['max_increment'] = params['max_increment'].item()
-        #self.params['min_increment'] = params['min_increment'].item()
-        #self.params['max_delta_target'] = params['max_delta_target'].item()
+        self.LoadParams(dirname)
 
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
-        for filename in os.listdir(dirname):
+        for filename in os.listdir(full_dirname):
             if filename.startswith('data') and filename.endswith(".npz"):
                 index_list.append(int(filter(str.isdigit, filename)))
 
@@ -89,13 +96,15 @@ class DataHandler:
         index_list = sorted(index_list)
         print index_list
         for index in index_list:
-            print os.path.join(dirname, 'data'+str(index)+'.npz')
-            self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
+            print os.path.join(full_dirname, 'data'+str(index)+'.npz')
+            self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'))
 
+        # error check to make sure data is loaded correctly.
+        # might be better to place this inside the LoadDataFile method
 
-        if not self.data:
-            print "No data has been loaded."
-            return 0
+        #if not self.data:
+        #    print "No data has been loaded."
+        #    return 0
 
     def SaveAnimation(self, **kwargs):
         # should probably clean this up...
@@ -180,7 +189,7 @@ if __name__ == "__main__":
     directory = 'full_random_100_primv5'
     dh = DataHandler(home_dir='../data')
     dh.LoadDataDir(directory)
-    dh.SaveAnimation(dirname=directory)
+    #dh.SaveAnimation(dirname=directory)
     print 'done'
 
     area_std = np.std(dh.data['area_function'], axis=1)
