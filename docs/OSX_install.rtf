@@ -25,18 +25,18 @@ I used
 brew install \cf4 \expnd0\expndtw0\kerning0
 boost\cf5 \expnd0\expndtw0\kerning0
  \'97c++11\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 
-\f0 \cf0 \cb3 \expnd0\expndtw0\kerning0
+\f0 \cf0 \expnd0\expndtw0\kerning0
 \
 Also Instead of 
-\f1 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\f1 \cf2 \expnd0\expndtw0\kerning0
 brew install \cf4 \expnd0\expndtw0\kerning0
 boost-python
-\f0 \cf0 \cb3 \expnd0\expndtw0\kerning0
+\f0 \cf0 \expnd0\expndtw0\kerning0
 \
 I ran 
 \f2 \cf6 \cb0 \kerning1\expnd0\expndtw0 \CocoaLigature0 brew install boost-python --c++11 --with-python3\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 
 \f0 \cf0 \cb1 but had issues with linking boost. which lead me to believe that boost-python wasn\'92t installed properly. see here ({\field{\*\fldinst{HYPERLINK "https://github.com/davisking/dlib/issues/80"}}{\fldrslt https://github.com/davisking/dlib/issues/80}}) getting similar error\
 \
@@ -53,6 +53,7 @@ Then I tried this:
 \f2 \cf6 \cb0 brew reinstall boost-python --with-python3 --without-python --c++11\
 \
 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 \cf0 \cb1 \'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
 UPDATED INSTRUCTIONS\
 Install homebrew\
@@ -84,4 +85,14 @@ Then navigate to learn-to-speak repository and: ./build.sh\
 \
 For running python2:\
 \
-For running python3:}
+For running python3:\
+\
+\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+For creating an install location on OSX\
+cd /usr/local\
+sudo mkdir PyRAAT\
+Change install path to /usr/local/PyRAAT\
+symlink libraries to usr/local/lib/\
+set PYTHONPATH to include /usr/local/lib/ so python can find libs\
+}

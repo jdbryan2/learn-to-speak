@@ -5,8 +5,13 @@ if(COMMAND cmake_policy)
 cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+#Install directory
+set(INSTALL_DIR /usr/local/PyRAAT)
+
 # add required linker flags
-find_package(Boost COMPONENTS filesystem system date_time python3 numpy REQUIRED)
+# for python3, but issue is numpy3 doesn’t exist. may need to build development version of boost
+#find_package(Boost COMPONENTS filesystem system date_time python3 numpy3 REQUIRED)
+find_package(Boost COMPONENTS filesystem system date_time python numpy REQUIRED)
 message("Include dirs of boost: " ${Boost_INCLUDE_DIRS} )
 message("Libs of boost: " ${Boost_LIBRARIES} )
 
@@ -68,6 +73,11 @@ TARGET_LINK_LIBRARIES(vocal_tract vtModel portaudio ${GSL_LIBRARIES})
 #INSTALL(TARGETS vocal_tract DESTINATION /home/jacob/Projects/learn-to-speak/bin)
 #INSTALL(TARGETS PyRAAT DESTINATION /home/jacob/Projects/learn-to-speak/bin)
 #INSTALL(TARGETS Artword DESTINATION /home/jacob/Projects/learn-to-speak/bin)
-INSTALL(TARGETS vocal_tract DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
-INSTALL(TARGETS PyRAAT DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
-INSTALL(TARGETS Artword DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+
+#INSTALL(TARGETS vocal_tract DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+#INSTALL(TARGETS PyRAAT DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+#INSTALL(TARGETS Artword DESTINATION /Users/JacobWagner/Documents/Repositories/learn-to-speak/bin/)
+
+INSTALL(TARGETS vocal_tract DESTINATION ${INSTALL_DIR})
+INSTALL(TARGETS PyRAAT DESTINATION ${INSTALL_DIR})
+INSTALL(TARGETS Artword DESTINATION ${INSTALL_DIR})
