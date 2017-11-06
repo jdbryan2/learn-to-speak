@@ -34,7 +34,6 @@ class Utterance:
 
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
 
-
     def InitializeParams(self, **kwargs):
         self.dirname = kwargs.get("dirname", self.dirname)
 

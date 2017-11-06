@@ -40,7 +40,7 @@ class SubspaceDFA(DataHandler):
         self.area_function = np.array([])
         self.sound_wave = np.array([])
         self._data = np.array([]) # internal data var
-        self.features = {}
+        self.Features = None # init to nothing
 
 
         # downsample data such that it's some number of ms
@@ -49,6 +49,9 @@ class SubspaceDFA(DataHandler):
 
         # Taken care of in parent class.
         #self.home_dir = kwargs.get("home_dir", "../data")
+
+    def SetFeatures(self, feature_class):
+        self.Features = feature_class(tubes=self.tubes)
 
     def LoadRawData(self, raw_data):
         """
@@ -69,54 +72,14 @@ class SubspaceDFA(DataHandler):
         Overloaded version of DataHandler.LoadDataFile
         Loads data from file and converts to the appropriate format for subspace method.
         """ 
+        print fname
 
         # clear internal data dictionary and 
         # load data file according to parent class
         self.data.clear()
         super(SubspaceDFA, self).LoadDataFile(fname)
 
-
-        ########################################################################
-        # TODO: Move to feature extractor class
-        ########################################################################
-        # loop over self.data rows or build that into the function
-        # end result should be:
-        #   _data = self.features.extract(self.data)
-
-        area_function = self.data['area_function'][self.tubes['glottis_to_velum'], :]
-        lung_pressure = np.mean(self.data['pressure_function'][self.tubes['lungs'], :], axis=0)
-        nose_pressure = np.mean(self.data['pressure_function'][self.tubes['nose'], :], axis=0)
-
-
-        start = 0
-        _data = self.data['art_hist']
-        self.features['art_hist'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
-
-        _data = np.append(_data, area_function, axis=0)
-        self.features['area_function'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
-
-        _data = np.append(_data, lung_pressure.reshape((1, -1)), axis=0)
-        self.features['lung_pressure'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
-        
-        #self._data = np.append(self._data, nose_pressure.reshape((1, -1)), axis=0)
-        #self.features['nose_pressure'] = np.arange(start, self._data.shape[0])
-        #start=self._data.shape[0]
-
-        self.features['all'] = np.arange(0, _data.shape[0])
-        self.features['all_out'] = np.arange(self.features['art_hist'][-1], _data.shape[0])
-
-        # decimate to 1ms sampling period
-        _data = signal.decimate(_data, 8, axis=1, zero_phase=True) 
-
-        # decimate to 5ms sampling period
-        if sample_period > 1:
-            _data = signal.decimate(_data, sample_period, axis=1, zero_phase=True)
-
-        ########################################################################
-        ########################################################################
+        _data = self.Features.Extract(self.data, sample_period)
 
         if self._data.size==0:
             self._data = _data
@@ -239,6 +202,8 @@ if __name__ == "__main__":
     print "Do stuff"
     # Real test: Generate a signal using underlying factors and see if this
     # method infers them
+    from features.ArtFeatures import ArtFeatures
+    from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 
     dim = 8
 
@@ -249,7 +214,13 @@ if __name__ == "__main__":
 
     down_sample = 10
     ss = SubspaceDFA(home_dir='../data')
-    ss.LoadDataDir('full_random_10')
+    print "loading features class"
+
+    #ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+    ss.SetFeatures(SpectralAcousticFeatures)
+
+    print "loading data dir"
+    ss.LoadDataDir('full_random_10', verbose=True)
     ss.PreprocessData(50, 10)
     ss.SubspaceDFA(dim)
 
@@ -267,7 +238,7 @@ if __name__ == "__main__":
     #    plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
     #    plt.title('Output: '+str(k))
 
-    feature_dim = ss.features['all'].size
+    feature_dim = ss.Features.pointer['all'].size
 
     for k in range(dim):
         # pull out the kth primitive dimension
@@ -277,14 +248,14 @@ if __name__ == "__main__":
         _K =((K)+ss._ave) 
         plt.figure();
         for p in range(ss._past):
-            plt.plot(_K[p, ss.features['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
+            plt.plot(_K[p, ss.Features.pointer['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
 
-        plt.plot( ss._ave[ss.features['art_hist']], 'r-')
+        plt.plot( ss._ave[ss.Features.pointer['art_hist']], 'r-')
         plt.title('Articulators Input: '+str(k))
 
         plt.figure();
         for p in range(ss._past):
-            plt.plot(K[p, ss.features['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
+            plt.plot(K[p, ss.Features.pointer['art_hist']], 'b-', alpha=1.*(p+1)/(ss._past+1))
         plt.title('Articulators Raw Input: '+str(k))
 
         #plt.figure()
