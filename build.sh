@@ -13,8 +13,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     PYTHON_LIBRARY=/usr/local/Frameworks/Python.framework/Versions/$PYTHON_VERSION/lib/libpython$PYTHON_VERSION.dylib
     PYTHON_INCLUDE_DIR=/usr/local/Frameworks/Python.framework/Versions/$PYTHON_VERSION/Headers/
     cmake -DPYTHON_LIBRARY=$PYTHON_LIBRARY -DPYTHON_INCLUDE_DIR=$PYTHON_INCLUDE_DIR .. && make && sudo make install
-    # Make sure python will be able to find the installed shared libraries
-    export PYTHONPATH=/usr/local/PyRAAT/
     ln -s /usr/local/PyRAAT/Artword.so /usr/local/lib/Artword.so
     ln -s /usr/local/PyRAAT/PyRAAT.so /usr/local/lib/PyRAAT.so
 elif [[ "$OSTYPE" == "cygwin" ]]; then

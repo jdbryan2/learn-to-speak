@@ -102,14 +102,13 @@ class RandExcite(Utterance):
         # Should simply create an artword class in python
 
         total_length = self.utterance_length*self.loops
-
-        self.randart = aw.Artword(total_length)
+        self.InitializeArticulation()
 
         for k in range(aw.kArt_muscle.MAX):
             # check if manually defined
             if k in self.manual_targets:
                 for t in range(len(self.manual_targets[k])):
-                    self.randart.setTarget(k,
+                    self.articulation.setTarget(k,
                                            self.manual_times[k][t],
                                            self.manual_targets[k][t])
                 time_hist = self.manual_times[k][:]
@@ -120,7 +119,7 @@ class RandExcite(Utterance):
                 # generate random sequence!
                 time = 0.0
                 target = self.initial_art[k]  # np.random.random()
-                self.randart.setTarget(k, time, target)
+                self.articulation.setTarget(k, time, target)
                 
                 time_hist = np.array([time])
                 target_hist = np.array([target])
@@ -149,13 +148,13 @@ class RandExcite(Utterance):
                     if time+increment < total_length:
                         time = time+increment
                         target = target+delta
-                        self.randart.setTarget(k, time, target)
+                        self.articulation.setTarget(k, time, target)
                         time_hist = np.append(time_hist, time)
                         target_hist = np.append(target_hist, target)
 
                     # interp between current and next target at end of utterance
                     else:
-                        self.randart.setTarget(
+                        self.articulation.setTarget(
                                 k,
                                 total_length,
                                 np.interp(total_length,
@@ -191,7 +190,7 @@ class RandExcite(Utterance):
             self.InitializeParams(**kwargs)
 
         self.InitializeDir(self.dirname)  # appends DTS to folder name
-        self.SaveGestureParams()  # save parameters before anything else
+        self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
         self.InitializeSim()
         if self.method == "gesture":
