@@ -72,7 +72,8 @@ class SubspaceDFA(DataHandler):
         Overloaded version of DataHandler.LoadDataFile
         Loads data from file and converts to the appropriate format for subspace method.
         """ 
-        print fname
+        #print fname
+        self.control_period=sample_period
 
         # clear internal data dictionary and 
         # load data file according to parent class
@@ -171,7 +172,12 @@ class SubspaceDFA(DataHandler):
                  ave=self._ave,
                  std=self._std,
                  past=self._past,
-                 future=self._future)
+                 future=self._future, 
+                 control_period=self.control_period, 
+                 features=self.Features.__class__.__name__, # feature extractor parameters (don't like this way of passing them through)
+                 feature_pointer=self.Features.pointer,
+                 feature_tubes=self.Features.tubes,
+                 control_action=self.Features.control_action)
 
     def LoadPrimitives(self, fname=None):
 
