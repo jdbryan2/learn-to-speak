@@ -4,11 +4,8 @@ import numpy.linalg as ln
 import pylab as plt
 
 from features.BaseFeatures import BaseFeatures
+from features.BaseFeatures import moving_average
 
-def moving_average(a, n=3):
-    ret = np.cumsum(a, axis=1, dtype=float)
-    ret[:, n:] = (ret[:, n:] - ret[:, :-n])
-    return ret[:, n - 1:]/n
 
 class ArtFeatures(BaseFeatures):
 
@@ -23,13 +20,16 @@ class ArtFeatures(BaseFeatures):
 
     def Extract(self, data, sample_period=1):
 
+        # self.control_action is defaulted to "art_hist"
+        # can be changed directly or by passing a new string into InitializeParams
+
         area_function = data['area_function'][self.tubes['glottis_to_velum'], :]
         lung_pressure = np.mean(data['pressure_function'][self.tubes['lungs'], :], axis=0)
         nose_pressure = np.mean(data['pressure_function'][self.tubes['nose'], :], axis=0)
 
         start = 0
-        _data = data['art_hist']
-        self.pointer['art_hist'] = np.arange(start, _data.shape[0])
+        _data = data[self.control_action]
+        self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
 
         _data = np.append(_data, area_function, axis=0)
@@ -41,17 +41,41 @@ class ArtFeatures(BaseFeatures):
         start=_data.shape[0]
         
         self.pointer['all'] = np.arange(0, _data.shape[0])
-        self.pointer['all_out'] = np.arange(self.pointer['art_hist'][-1], _data.shape[0])
+        self.pointer['all_out'] = np.arange(self.pointer[self.control_action][-1], _data.shape[0])
 
+        # compute average value for each sample to match what controller does 
+        # (averages samples over control sample period)
         _data = moving_average(_data, n=8*sample_period)
         _data = _data[:, ::8*sample_period]
 
-        ## decimate to 1ms sampling period
-        #_data = signal.decimate(_data, 8, axis=1, zero_phase=True) 
+        return _data
 
-        ## decimate to 5ms sampling period
-        #if sample_period > 1:
-        #    _data = signal.decimate(_data, sample_period, axis=1, zero_phase=True)
+    def DirectExtract(self, articulation, full_area_function, pressure_function):
+        # I don't like the code repetition here
+
+        area_function = full_area_function[self.tubes['glottis_to_velum'], :]
+        lung_pressure = np.mean(pressure_function[self.tubes['lungs'], :], axis=0)
+        nose_pressure = np.mean(pressure_function][self.tubes['nose'], :], axis=0)
+
+        start = 0
+        _data = articulation
+        self.pointer[self.control_action] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+
+        _data = np.append(_data, area_function, axis=0)
+        self.pointer['area_function'] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+
+        _data = np.append(_data, lung_pressure.reshape((1, -1)), axis=0)
+        self.pointer['lung_pressure'] = np.arange(start, _data.shape[0])
+        start=_data.shape[0]
+        
+        self.pointer['all'] = np.arange(0, _data.shape[0])
+        self.pointer['all_out'] = np.arange(self.pointer[self.control_action][-1], _data.shape[0])
+
+        # compute average value for each sample to match what controller does 
+        # (averages samples over control sample period)
+        _data = np.mean(_data, axis=1)
 
         return _data
     

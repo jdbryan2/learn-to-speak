@@ -4,11 +4,7 @@ import numpy.linalg as ln
 import pylab as plt
 
 from features.BaseFeatures import BaseFeatures
-
-def moving_average(a, n=3):
-    ret = np.cumsum(a, axis=1, dtype=float)
-    ret[:, n:] = (ret[:, n:] - ret[:, :-n])
-    return ret[:, n - 1:]/n
+from features.BaseFeatures import moving_average
 
 class SpectralAcousticFeatures(BaseFeatures):
 
@@ -50,13 +46,12 @@ class SpectralAcousticFeatures(BaseFeatures):
 
 
         # start with articulator inputs and down sample
-        # TODO: figure out how to generalize this as generic control inputs
-        _data = data['art_hist']
+        _data = data[self.control_action]
         _data = moving_average(_data, n=sample_period)
         _data = _data[:, ::sample_period]
 
         start = 0
-        self.pointer['art_hist'] = np.arange(start, _data.shape[0])
+        self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
 
         _data = np.append(_data, np.abs(spectrum), axis=0)
