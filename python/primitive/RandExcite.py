@@ -191,9 +191,10 @@ class RandExcite(Utterance):
             self.InitializeParams(**kwargs)
 
         self.InitializeDir(self.dirname)  # appends DTS to folder name
-        self.SaveGestureParams()  # save parameters before anything else
+        self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
         self.InitializeSim()
+        self.InitializeArticulation()
         if self.method == "gesture":
             self.GenerateGestureSequence()
         else:

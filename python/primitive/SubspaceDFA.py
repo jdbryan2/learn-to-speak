@@ -8,13 +8,6 @@ from matplotlib2tikz import save as tikz_save
 
 from DataHandler import DataHandler
 
-def moving_average(a, n=3, axis=0) :
-    ret = np.cumsum(a, axis=axis, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
-
-# TODO: Create feature extractor class(es), modularly add as a member variable
-
 class SubspaceDFA(DataHandler):
 
     def __init__(self, **kwargs):
@@ -65,7 +58,7 @@ class SubspaceDFA(DataHandler):
         # directly pass array into class
         self._data = np.copy(raw_data)
 
-    def LoadDataFile(self, fname, sample_period=1):
+    def LoadDataFile(self, fname, sample_period=8):
         """
         LoadDataFile(sample_period=1)
 
@@ -218,15 +211,15 @@ if __name__ == "__main__":
     #ss.LoadDataDir('full_random_30')
     #ss.PreprocessData(50, 10, sample_period=down_sample)
 
-    down_sample = 10
+    down_sample = 10*8
     ss = SubspaceDFA(home_dir='../data')
     print "loading features class"
 
-    #ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-    ss.SetFeatures(SpectralAcousticFeatures)
+    ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+    #ss.SetFeatures(SpectralAcousticFeatures)
 
     print "loading data dir"
-    ss.LoadDataDir('full_random_10', verbose=True)
+    ss.LoadDataDir('full_random_10', sample_period=down_sample, verbose=True)
     ss.PreprocessData(50, 10)
     ss.SubspaceDFA(dim)
 

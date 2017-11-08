@@ -11,7 +11,7 @@ import pylab as plt
 MAX_NUMBER_OF_TUBES = 89
 
 
-class Utterance:
+class Utterance(object):
 
     home_dir = 'data'  # changes to this changes all instances of the class
 

@@ -4,7 +4,8 @@
 
 import numpy as np
 import pylab as plt
-from primitive.SubspacePrim import PrimLearn
+from primitive.SubspaceDFA import SubspaceDFA
+from features.ArtFeatures import ArtFeatures
 ## pretty sure these aren't used ##
 #import scipy.signal as signal
 #import numpy.linalg as ln
@@ -15,13 +16,16 @@ from primitive.SubspacePrim import PrimLearn
 #dirname = 'full_random_500'
 #past = 50
 #future = 50
+
+# call in all the necessary global variables
 from test_params import *
 
-ss = PrimLearn()
+ss = SubspaceDFA()
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-ss.ConvertDataDir(dirname, sample_period=sample_period)
-ss.PreprocessData(past, future, sample_period=sample_period)
+ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
+ss.PreprocessData(past, future)
 ss.SubspaceDFA(dim)
 
 ss.EstimateStateHistory(ss._data)
