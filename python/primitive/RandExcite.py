@@ -193,6 +193,7 @@ class RandExcite(Utterance):
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
         self.InitializeSim()
+        self.InitializeArticulation()
         if self.method == "gesture":
             self.GenerateGestureSequence()
         else:

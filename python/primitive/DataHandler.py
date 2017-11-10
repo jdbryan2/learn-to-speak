@@ -30,7 +30,9 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         self.home_dir = kwargs.get("home_dir", "data")
 
-    def LoadDataFile(self, fname):
+    def LoadDataFile(self, fname, sample_period=1):
+        # note: sample_period is only used by child classes
+        
         _error = True
 
         # load the data from fname, store in class variable
@@ -76,7 +78,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             else:
                 self.params[key] = params[key]
 
-    def LoadDataDir(self, dirname):
+    def LoadDataDir(self, dirname, sample_period=None, verbose = False):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
@@ -94,17 +96,20 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         # sort numerically and load files in order
         index_list = sorted(index_list)
-        print index_list
+        #print index_list
+
+        if verbose: 
+            print "Loading data files:"
+
         for index in index_list:
-            print os.path.join(full_dirname, 'data'+str(index)+'.npz')
-            self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'))
+            if verbose:
+                print os.path.join(full_dirname, 'data'+str(index)+'.npz')
+            if sample_period == None:
+                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'))
+            else: 
+                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'), sample_period)
 
-        # error check to make sure data is loaded correctly.
-        # might be better to place this inside the LoadDataFile method
 
-        #if not self.data:
-        #    print "No data has been loaded."
-        #    return 0
 
     def SaveAnimation(self, **kwargs):
         # should probably clean this up...

@@ -11,7 +11,7 @@ import pylab as plt
 MAX_NUMBER_OF_TUBES = 89
 
 
-class Utterance:
+class Utterance(object):
 
     home_dir = 'data'  # changes to this changes all instances of the class
 
@@ -21,7 +21,7 @@ class Utterance:
 
     def DefaultParams(self):
         self.dirname="utterance" # default directory name ../data/utterance_<current dts>
-
+        self.addDTS = True
         self.gender = "Female"
         self.sample_freq = 8000
         self.oversamp = 70
@@ -34,9 +34,9 @@ class Utterance:
 
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
 
-
     def InitializeParams(self, **kwargs):
         self.dirname = kwargs.get("dirname", self.dirname)
+        self.addDTS = kwargs.get("addDTS",self.addDTS)
 
         self.gender = kwargs.get("gender", self.gender)
         self.sample_freq = kwargs.get("sample_freq", self.sample_freq)
@@ -66,9 +66,9 @@ class Utterance:
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
 
-    def InitializeDir(self, dirname, addDTS=True):
+    def InitializeDir(self, dirname):
         # setup directory for saving files
-        if addDTS:
+        if self.addDTS:
             self.directory = dirname + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
         else:
             self.directory = dirname
@@ -207,7 +207,7 @@ class Utterance:
             self.InitializeParams(**kwargs)
 
         #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
+        self.InitializeDir(self.dirname)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
 
