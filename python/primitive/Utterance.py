@@ -96,7 +96,9 @@ class Utterance(object):
         # note: changing speaker params requires calling InitializeSpeaker
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
-
+        
+        # Make sure that intial articulation is same as the desired articulation sampled at 0
+        self.articulation.intoArt(self.initial_art,0.0)
         self.speaker.InitSim(self.utterance_length, self.initial_art)
 
     def InitializeArticulation(self):

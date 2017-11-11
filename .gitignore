@@ -16,6 +16,7 @@ data/*
 bin/*
 python/data/*
 python/primitive/data/*
+python/uterances/data/*
 */.ropeproject/*
 
 # python compiled files

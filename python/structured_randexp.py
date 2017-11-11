@@ -17,7 +17,7 @@ rando = RandExcite(dirname="full_random_"+str(loops),
                 method="gesture",
                 loops=loops,
                 utterance_length=utterance_length,
-                initial_art=np.zeros((aw.kArt_muscle.MAX, )))
+                initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
 # manually pump the lungs
 #rando.SetManualSequence(aw.kArt_muscle.LUNGS,
