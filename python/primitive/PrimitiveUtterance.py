@@ -179,6 +179,7 @@ class PrimitiveUtterance(Utterance):
 
         # intialize simulator
         self.InitializeSpeaker()
+        self.InitializeArticulation()
         self.InitializeSim()
         self.ResetOutputVars()
 

@@ -192,14 +192,14 @@ class RandExcite(Utterance):
         self.InitializeDir(self.dirname)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
         self.InitializeSpeaker()
-        self.InitializeSim()
-        self.InitializeArticulation()
+        
         if self.method == "gesture":
             self.GenerateGestureSequence()
         else:
             print "Excitation method is undefined: " + self.method
             return False
 
+        self.InitializeSim()
         for k in range(self.loops):
             print "Loop: " + str(k)
             self.Simulate()

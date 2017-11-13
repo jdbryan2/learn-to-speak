@@ -44,9 +44,10 @@ class ArtFeatures(BaseFeatures):
         self.pointer['all'] = np.arange(0, _data.shape[0])
         self.pointer['all_out'] = np.arange(self.pointer[self.control_action][-1], _data.shape[0])
 
-        # compute average value for each sample to match what controller does 
+        # compute average value for each sample to match what controller does
         # (averages samples over control sample period)
-        _data = moving_average(_data, n=sample_period)
+        # TODO: Decide if we actually want to average these or not
+        #_data = moving_average(_data, n=sample_period)
         _data = _data[:, ::sample_period]
 
         return _data

@@ -75,15 +75,12 @@ class SubspaceDFA(DataHandler):
 
         _data = self.Features.Extract(self.data, sample_period)
 
-        """
         # TODO: Need to decide what this was intially intended for
         # Disabled because it breaks loading of multiple unrelated files
         if self._data.size==0:
             self._data = _data
-        else: 
+        else:
             self._data = np.append(self._data, _data, axis=1)
-        """
-        self._data = _data
 
         # clear out the raw data dictionary to save space
         self.data.clear() 

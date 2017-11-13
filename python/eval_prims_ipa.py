@@ -6,6 +6,7 @@ from features.ArtFeatures import ArtFeatures
 from test_params import *
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+import numpy as np
 
 ss = SubspaceDFA()
 ss.LoadPrimitives(load_fname)
@@ -26,15 +27,18 @@ ax = fig.add_subplot(111, projection='3d')
 
 for ipa_num, c, m in zip(ipa_nums,colors,markers):
     
-    ss.LoadDataFile("data/ipa" + str(ipa_num) + "/data1.npz")
+    # TODO: Make a member function that will clear this
+    # Required to make sure ss doesn't append files together
+    ss._data = np.array([])
+    ss.LoadDataFile("data/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
 
     # shift to zero mean and  normalize by standard deviation
     data = ((ss._data.T-ss._ave)/ss._std).T
     ss.EstimateStateHistory(data)
 
-    xp = ss.h[prims[0]][100:]
-    yp = ss.h[prims[1]][100:]
-    zp = ss.h[prims[2]][100:]
+    xp = ss.h[prims[0]][past:]
+    yp = ss.h[prims[1]][past:]
+    zp = ss.h[prims[2]][past:]
     ax.scatter(xp, yp, zp, color=c, marker=m)
 
 ax.set_xlabel('Primitive '+str(prims[0]))
