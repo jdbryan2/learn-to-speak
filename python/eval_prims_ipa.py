@@ -19,11 +19,13 @@ ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
 prims = [0,1,2]
 # ipa logs that will be plotted
 ipa_nums = [132,134,140,142,301,304,305,316]
-colors = ['b','g','r','c','m','y','k','w']
+colors = ['b','g','r','c','m','y','k','0.75']
 markers = ['o','o','o','o','x','x','x','x',]
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+
+H = np.array([])
 
 for ipa_num, c, m in zip(ipa_nums,colors,markers):
     
@@ -39,10 +41,18 @@ for ipa_num, c, m in zip(ipa_nums,colors,markers):
     xp = ss.h[prims[0]][past:]
     yp = ss.h[prims[1]][past:]
     zp = ss.h[prims[2]][past:]
-    ax.scatter(xp, yp, zp, color=c, marker=m)
+    ax.plot(xp, yp, zp, color=c, marker=m)
+    if H.size == 0:
+        H = ss.h.T
+    else:
+        H = np.append(H,ss.h.T,axis=0)
 
 ax.set_xlabel('Primitive '+str(prims[0]))
 ax.set_ylabel('Primitive '+str(prims[1]))
 ax.set_zlabel('Primitive '+str(prims[2]))
 
+plt.show()
+
+fig = plt.figure()
+plt.plot(H)
 plt.show()
