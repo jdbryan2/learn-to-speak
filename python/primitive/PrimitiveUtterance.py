@@ -195,8 +195,8 @@ class PrimitiveUtterance(Utterance):
         self.current_state = self.EstimateState(self.past_data, normalize=True)
         self.state_hist[:, 0] = self.current_state
 
-        articulation = self.GetControl(self.current_state)
-        self.speaker.SetArticulation(articulation)
+        #articulation = self.GetControl(self.current_state)
+        #self.speaker.SetArticulation(articulation)
 
 
     # need a better way to pass sample period from one class to the other
@@ -206,8 +206,11 @@ class PrimitiveUtterance(Utterance):
             self.control_period=control_period
 
         # get target articulation
-        target = self.GetControl(self.current_state+control_action)
-        
+        #target = self.GetControl(self.current_state+control_action)
+        target = self.GetControl(control_action)
+        # Save control action history
+        self.action_hist[:, self.speaker.Now()/self.control_period-1] = control_action
+
         # initialize features and articulation
         features = np.zeros(self.past_data.shape[0])
         articulation = np.zeros(target.shape[0])
@@ -218,9 +221,20 @@ class PrimitiveUtterance(Utterance):
             if self.speaker.NotDone():
 
                 # interpolate to target in order to make smooth motions
+                # TODO: For some reason, this interpolation modifies the variable target.
+                """
+                print("target b4")
+                print target
                 for k in range(target.size):
-                    articulation[k] = np.interp(t, [0, self.control_period-1], [last_art[k], target[k]])
-
+                   articulation[k] = np.interp(t, [0, self.control_period-1], [last_art[k], target[k]])
+                print("target after")
+                print target
+                print ("end")
+                # Can fix with this, but not a good solution
+                # target = self.GetControl(current_state+control_action)
+                """
+                # Override interpolation
+                articulation = target
                 self.speaker.SetArticulation(articulation)
                 self.speaker.IterateSim()
 
@@ -241,9 +255,9 @@ class PrimitiveUtterance(Utterance):
         # get current state and choose target articulation
         self.current_state = self.EstimateState(self.past_data, normalize=True)
 
-        # save control action and state
+        # save state
         self.state_hist[:, self.speaker.Now()/self.control_period-1] = self.current_state
-        self.action_hist[:, self.speaker.Now()/self.control_period-1] = control_action
+
 
         return self.current_state
 
