@@ -47,35 +47,59 @@ print control.K
 control.InitializeControl()
 
 
-test_dim = 0
 Ts = 1000/(sample_period)
-#Kp = np.array([1/3,0,0,0,0,0,0,0])
-#Ki = np.array([0.2/3,0,0,0,0,0,0,0])
-#Kd = np.array([10/3,0,0,0,0,0,0,0])
 
-Kp = np.array([1/3,0,0,0,0,0,0,0])
-Ki = np.array([0.5/3,0,0,0,0,0,0,0]) #0.5/3
-Kd = np.array([10/3,0,0,0,0,0,0,0])
-I_lim = np.array([100,0,0,0,0,0,0,0])
+# Good values for individual primitive controllers
+Kp = np.array([1/3,1/3,0,0,0,0,0,0])
+Ki = np.array([0.5/3,1/3,0,0,0,0,0,0])
+Kd = np.array([10/3,5/3,0,0,0,0,0,0])
+I_lim = np.array([100,150,0,0,0,0,0,0])
 # leaky integrator constant
 a = 1
-#I_lim = Ki*100
-#Kp[test_dim] = 0
-# Get initial state
+
+# Setup state variables
 current_state = control.current_state
 desired_state = np.zeros(current_state.shape)
-desired_state[test_dim] = 2
 
+## Test Controller
+# Setpoint for controller
+desired_state[0] = 1
+desired_state[1] = -1
+test_dim =0
+
+"""
+## Tune Controller
+# Override all gains to 0 for tuning PID controllers
+Kp = np.array([0.0,0,0,0,0,0,0,0])
+Ki = np.array([0.0,0,0,0,0,0,0,0])
+Kd = np.array([0,0,0,0,0,0,0,0])
+I_lim = np.array([0.0,0,0,0,0,0,0,0])
+
+# Tune test_dim
+test_dim = 1
+Kp[test_dim] = 1/3
+Ki[test_dim] = 1/3
+Kd[test_dim] = 5/3
+I_lim[test_dim] = 150
+
+# Setpoint for controller
+desired_state[test_dim] = -.7
+"""
+
+# Setup PID History variables
 E_prev = desired_state - current_state
 I_prev = np.zeros(current_state.shape)
 
+# Perform Control
 while control.speaker.NotDone():
+    ## Compute control action
     E = desired_state - current_state
     # Proporational Contribution
     P = Kp*E
     # Integral Contribution (Leaky Trapezoidal)
     # TODO: make a scaled by Ts
     I = (a ) * I_prev + Ki * (E_prev + E)*Ts / 2
+    #print (a ) * I_prev + np.array([0.9,0,0,0,0,0,0,0]) * (E_prev + E) * Ts/2
     # Peform anti-windup
     for prim_num in np.arange(0,dim):
         i = I[prim_num]
@@ -94,6 +118,8 @@ while control.speaker.NotDone():
     # Combine Terms
     control_action = P + I + D
     #control_action[test_dim] = -20
+
+    ## Step Simulation
     current_state = control.SimulatePeriod(control_action=control_action, control_period=0.)
 
 control.Save()
