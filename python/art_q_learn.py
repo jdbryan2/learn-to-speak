@@ -11,17 +11,20 @@ import numpy as np
 import pylab as plt
 from primitive.PrimitiveUtterance import PrimitiveUtterance
 import Artword as aw
+import learners.Learner
 
 #import test_params
 from test_params import *
 primdir = dirname+'_prim'
+
+max_seconds = 3.0
 
 initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
                              loops=1,
-                             utterance_length=2,
+                             utterance_length=max_seconds,
                              initial_art = initial_art)
                              #initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 #print initial_art
@@ -33,6 +36,17 @@ Ts = 1000/(sample_period)
 # Setup state variables
 current_state = control.current_state
 desired_state = np.zeros(current_state.shape)
+
+# Initialize q learning class
+num_state_bins = 10
+num_action_bins = 10
+q_learn = Learner(states = np.linspace(-10.0,10.0,num=num_state_bins),
+                  goal_state = np.zeros((1,num_state_bins)),
+                  goal_width = np.ones(1,num_state_bins)*0.1,
+                  goal_reached_steps = 10,
+                  max_steps = max_seconds*Ts,
+                  actions = np.linspace(-10.0,10.0,num=num_action_bins),
+                  alpha = 0.99)
 
 ## Test Controller
 # Setpoint for controller
