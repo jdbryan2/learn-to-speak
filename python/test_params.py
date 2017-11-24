@@ -1,11 +1,11 @@
 
-dim = 8
+dim = 1
 sample_period = 20 # in milliseconds
 sample_period=sample_period*8 # convert to samples
 #dirname = 'structured_masseter_100'
 #dirname = 'full_random_100_primv5'
 #dirname = 'full_random_100_primv0'
-dirname = 'full_random_100'
+dirname = 'full_random_100_qlearn'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 past = 12
 future = 12

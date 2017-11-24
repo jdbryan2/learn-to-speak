@@ -49,6 +49,8 @@ class PrimitiveUtterance(Utterance):
             self.LoadPrimitives(prim_fname)
 
         super(PrimitiveUtterance, self).__init__(**kwargs)
+        # Articulator parameters
+        self.initial_art = kwargs.get("initial_art", self.initial_art)
 
     def LoadPrimitives(self, fname=None):
 
@@ -165,6 +167,18 @@ class PrimitiveUtterance(Utterance):
                                   int(np.ceil(self.sample_freq *
                                               self.utterance_length /
                                               self.control_period))))
+    
+    # Note: I'm overiding the base class because I want to use the actual
+    #       initial_art that is passed in not the default artword at 0.0 seconds.
+    # TODO: Find a better way to do this. Possibly clean dependence on artwords
+    #       for Utterance classes.
+    def InitializeSim(self, **kwargs):
+        # note: changing speaker params requires calling InitializeSpeaker
+        if len(kwargs.keys()):
+            self.InitializeParams(**kwargs)
+        
+        # Set the initial_art that the sim will be initialized with
+        self.speaker.InitSim(self.utterance_length, self.initial_art)
 
     def InitializeControl(self, **kwargs):
         # initialize parameters if anything new is passed in
@@ -178,8 +192,8 @@ class PrimitiveUtterance(Utterance):
         self.SaveParams()  # save parameters before anything else
 
         # intialize simulator
-        self.InitializeSpeaker()
-        self.InitializeArticulation()
+        self.InitializeSpeaker() # Should only have to call this once unless chaning speaker parameters
+        #self.InitializeArticulation()
         self.InitializeSim()
         self.ResetOutputVars()
 
