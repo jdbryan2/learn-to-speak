@@ -33,7 +33,7 @@ Ts = 1000/(sample_period_ms)
 
 
 # Initialize q learning class
-num_state_bins = 10
+num_state_bins = 30
 num_action_bins = 10
 # ensure that actions and states are 2d arrays
 states = np.linspace(-10.0,10.0,num=num_state_bins)
@@ -43,20 +43,20 @@ goal_state = np.ones((1))*2
 goal_state = goal_state.reshape(1,goal_state.shape[0])
 goal_width = np.ones((1))*.1
 goal_width = goal_width.reshape(1,goal_width.shape[0])
-actions = np.linspace(-10.0,10.0,num=num_action_bins)
-actions = actions.reshape(1,actions.shape[0])
-print actions
+actions_inc = np.linspace(-1.0,1.0,num=num_action_bins)
+actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
+print actions_inc
 
 q_learn = Learner(states = states,
                   goal_state = goal_state,
                   goal_width = goal_width,
                   goal_reached_steps = 1,
                   max_steps = np.floor(max_seconds*Ts),
-                  actions = actions,
+                  actions = actions_inc,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 20
+num_episodes = 40
 num_tests = 5
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
@@ -67,19 +67,23 @@ for e in range(num_episodes+num_tests):
     desired_state = np.zeros(current_state.shape)
     
     # TODO: Change with each episode
-    exploit_prob  = 1.0/(e+1.0)
+    #1-1.0/(e+1.0)
+    exploit_prob  = 0.1
     print exploit_prob
     # TODO: Change with each episode
     learning_rate = 0.1
     # Get initial state
     state = control.current_state
     i = 0
+    # Cumulative action command
+    action = np.zeros(actions_inc.shape[0])
     while not q_learn.episodeFinished():
         ## Compute control action
         if e >= num_episodes:
-            action = q_learn.exploit_and_explore(state=state,p_=1)
+            action_inc = q_learn.exploit_and_explore(state=state,p_=1)
         else:
-            action = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+            action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        action = action+action_inc
         ## Step Simulation
         next_state = control.SimulatePeriod(control_action=action)
         ## Update the estimate of Q
