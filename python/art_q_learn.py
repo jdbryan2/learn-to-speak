@@ -33,18 +33,19 @@ Ts = 1000/(sample_period_ms)
 
 
 # Initialize q learning class
-num_state_bins = 3
+num_state_bins = 10
 num_action_bins = 10
 # ensure that actions and states are 2d arrays
 states = np.linspace(-10.0,10.0,num=num_state_bins)
 states = states.reshape(1,states.shape[0])
 print states
-goal_state = np.zeros((1))
+goal_state = np.ones((1))*2
 goal_state = goal_state.reshape(1,goal_state.shape[0])
 goal_width = np.ones((1))*.1
 goal_width = goal_width.reshape(1,goal_width.shape[0])
 actions = np.linspace(-10.0,10.0,num=num_action_bins)
 actions = actions.reshape(1,actions.shape[0])
+print actions
 
 q_learn = Learner(states = states,
                   goal_state = goal_state,
@@ -56,8 +57,9 @@ q_learn = Learner(states = states,
 
 # Perform Q learning Control
 num_episodes = 20
+num_tests = 5
 # TODO: Change to condition checking some change between Q functions
-for e in range(num_episodes):
+for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     control.InitializeControl()
     # Setup state variables
@@ -65,29 +67,44 @@ for e in range(num_episodes):
     desired_state = np.zeros(current_state.shape)
     
     # TODO: Change with each episode
-    exploit_prob  = 0.1
+    exploit_prob  = 1.0/(e+1.0)
+    print exploit_prob
     # TODO: Change with each episode
-    learning_rate = 0.9
+    learning_rate = 0.1
     # Get initial state
     state = control.current_state
     i = 0
     while not q_learn.episodeFinished():
         ## Compute control action
-        d_action = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        if e >= num_episodes:
+            action = q_learn.exploit_and_explore(state=state,p_=1)
+        else:
+            action = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
         ## Step Simulation
-        next_state = control.SimulatePeriod(control_action=d_action)
+        next_state = control.SimulatePeriod(control_action=action)
         ## Update the estimate of Q
-        q_learn.updateQ(state=state,action=d_action,next_state=next_state)
+        q_learn.updateQ(state=state,action=action,next_state=next_state,epsilon=learning_rate)
         ## Update state
         state = next_state
         i+=1
     print("Episode"+str(e))
     print q_learn.Q
-    print "number of loops"
-    print i
-    print q_learn.actions
-    print q_learn.states
     q_learn.resetEpisode()
+
+    if e >= num_episodes:
+        _h = control.state_hist
+
+        prim_nums = np.arange(0,dim)
+        colors = ['b','g','r','c','m','y','k','0.75']
+        markers = ['o','o','o','o','x','x','x','x']
+        fig = plt.figure()
+        for prim_num, c, m in zip(prim_nums,colors,markers):
+            plt.plot(_h[prim_num][:],color=c)
+
+        # Remove last element from plot because we didn't perform an action
+        # after the last update of the state history.
+        plt.plot(control.action_hist[0][0:-1], color="0.5")
+        plt.show()
 
 
 control.Save()
@@ -97,8 +114,6 @@ if not os.path.exists(savedir):
     os.makedirs(savedir)
 
 _h = control.state_hist
-#print("_h")
-#print _h
 
 prim_nums = np.arange(0,dim)
 colors = ['b','g','r','c','m','y','k','0.75']
@@ -111,7 +126,4 @@ for prim_num, c, m in zip(prim_nums,colors,markers):
 # after the last update of the state history.
 plt.plot(control.action_hist[0][0:-1], color="0.5")
 plt.show()
-
-
-
 

@@ -64,6 +64,9 @@ class Learner:
         
         # Keep track of timesteps for computing discounted reward
         self.steps = 0
+        
+        #TODO: make this a variable returned by a new function
+        self.inrange = 0
 
         # Discount factor
         self.alpha = kwargs.get("alpha",0.99)
@@ -111,10 +114,12 @@ class Learner:
             
         # All states are within goal_range so increment goal_steps
         if inrange.all():
-            self.goal_steps += 1
+            #self.goal_steps += 1
+            self.inrange = 1
             print("within goal range")
-            print("step #"+str(self.goal_steps))
+            #print("step #"+str(self.goal_steps))
         else:
+            self.inrange = 0
             self.goal_steps = 0
 
         # Increment steps to keep track of the time
@@ -124,7 +129,7 @@ class Learner:
     def getReward(self, state, action):
         
         # Only give reward if goal has been reached
-        if not self.reachedGoal():
+        if not self.inrange:
             return 0.0
 
         # Else compute reward
@@ -142,6 +147,7 @@ class Learner:
         
         self.steps = 0
         self.goal_steps = 0
+        self.inrange = 0
     
     # Discretize state
     def getDiscreteState(self,state):
@@ -293,6 +299,12 @@ class Learner:
             Q,d_action = self.getMaxQ_and_u(d_state)
         else:
             d_action = self.explore()
-        
-        return d_action
+
+        # Cheat to make indexing work when only one dimension
+        if self.action_shape[0]==1:
+            ind2d = np.zeros((2,1))
+            ind2d[1,0] = d_action
+            return self.actions[tuple(ind2d.astype(int))]
+        else:
+            return self.actions[tuple(d_action.astype(int))]
 
