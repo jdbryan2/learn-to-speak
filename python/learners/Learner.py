@@ -28,25 +28,7 @@ class Learner:
         
         
         self.state_shape = self.states.shape
-        self.goal_state = kwargs.get("goal_state", np.zeros((1,self.state_shape[0])))
-        
-        # If one wants the goal_range to be uniform around goal_state just
-        # provide the goal_width for each state and the range will be
-        # (-0.5 * width + goal_state,0.5 * width + goal_state]
-        self.goal_width = kwargs.get("goal_width",np.ones(self.state_shape))
-        
-        # Row is state and Column is the low and high values of the acceptable ragne
-        self.goal_range = np.concatenate((self.goal_state-self.goal_width,
-                               self.goal_state+self.goal_width)).T
-        self.goal_range = kwargs.get("goal_range", self.goal_range)
-        
-        # Number of timesteps required for state to be within goal_range before
-        # we say that the goal has been reached.
-        self.goal_reached_steps = kwargs.get("goal_reached_steps", 10)
-        
-        # Used to keep track of how many timesteps that the state has been within
-        # the goal_range
-        self.goal_steps = 0
+        self.goal_state_index = kwargs.get("goal_state_index", np.zeros((self.state_shape[0])))
         
         # Max number of timesteps for episode
         self.max_steps = kwargs.get("max_steps", 200)
@@ -64,9 +46,6 @@ class Learner:
         
         # Keep track of timesteps for computing discounted reward
         self.steps = 0
-        
-        #TODO: make this a variable returned by a new function
-        self.inrange = 0
 
         # Discount factor
         self.alpha = kwargs.get("alpha",0.99)
@@ -90,46 +69,36 @@ class Learner:
         # else:
         return False
 
-    # Will return true if either the goal has been reached or the max_steps has been hit
+    # Will return true if the max_steps has been hit
     def episodeFinished(self):
 
-        goal_reached = self.reachedGoal()
         maxed_out = (self.steps >= self.max_steps)
-        if goal_reached:
-            print("Reached Goal")
-        elif maxed_out:
+        if maxed_out:
             print("Hit Max Number of Steps")
         
-        return goal_reached or maxed_out
+        return maxed_out
 
-    # Will see if all states are within the goal_range and increment goal_steps
-    # Important that this is called only once per step of the trial
-    def incrementSteps(self,state):
-        
-        inrange = np.zeros(self.state_shape[0])
+
+    # Check to see if state is in goal state
+    def inGoalState(self,state):
+    
+        d_state = self.getDiscreteState(state)
+        ingoal = np.zeros(self.state_shape[0])
         for s in np.arange(self.state_shape[0]):
-            if self.goal_range[s,0] < state[s] <= self.goal_range[s,1]:
-                inrange[s] = 1
-                continue
-            
-        # All states are within goal_range so increment goal_steps
-        if inrange.all():
-            #self.goal_steps += 1
-            self.inrange = 1
-            print("within goal range")
-            #print("step #"+str(self.goal_steps))
-        else:
-            self.inrange = 0
-            self.goal_steps = 0
+            if d_state[s] == self.goal_state_index[s]:
+                ingoal[s] = 1
+    
+        if ingoal.all():
+            print("In Goal State")
+            return True
 
-        # Increment steps to keep track of the time
-        self.steps += 1
+        return False
 
     # Return undiscounted reward for this state, action pair
     def getReward(self, state, action):
         
-        # Only give reward if goal has been reached
-        if not self.inrange:
+        # Only give reward if in goal state
+        if not self.inGoalState(state):
             return 0.0
 
         # Else compute reward
@@ -275,17 +244,34 @@ class Learner:
         # Find max Q and action over next state
         Q_next_max, v = self.getMaxQ_and_u(d_next_state)
         
-        # See if state is withing goal range and increment counter
-        self.incrementSteps(state)
-        
         # Get reward for state action pair
         r = self.getReward(state,action)
 
         # Update Q for this state action pair
         index = tuple(np.concatenate((d_state,d_action)).astype(int))
+        if not r==0:
+            print ("Divider-----------------------Divider")
+            print ("state ind")
+            print d_state
+            print ("action ind")
+            print d_action
+            print ("next state ind")
+            print d_next_state
+            print ("next max action ind")
+            print v
+            print ("Divider-----------------------Divider")
+        
         self.Q[index] = ((1-epsilon)*self.Q[index] +
                         epsilon*(r + self.alpha*Q_next_max) )
     
+        # Increment steps to keep track of the time
+        self.steps += 1
+    
+    # Call this instead of updateQ if you just want to use the learned policy
+    def incrementSteps(self):
+        # Increment steps to keep track of the time
+        self.steps += 1
+
     # Choose the action greedily with probability p_ and
     # choose randomly with probability 1-p_
     def exploit_and_explore(self,state,p_):
