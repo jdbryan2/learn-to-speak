@@ -18,7 +18,7 @@ from learners.Learner import Learner
 from test_params import *
 primdir = dirname+'_prim'
 
-max_seconds = 3.0
+max_seconds = 10.0
 
 initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 
@@ -40,8 +40,8 @@ num_action_bins = 10
 #states = np.linspace(-10.0,10.0,num=num_state_bins)
 goal_state = 1
 goal_width = .2
-states = np.linspace(-10.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
-states = np.append(states,np.linspace(goal_state+goal_width/2.0,10,num=np.ceil(num_state_bins/2.0)))
+states = np.linspace(-3.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
+states = np.append(states,np.linspace(goal_state+goal_width/2.0,3.0,num=np.ceil(num_state_bins/2.0)))
 states = states.reshape(1,states.shape[0])
 print states
 goal_state_index = np.array([np.floor(num_state_bins/2.0)])
@@ -60,9 +60,9 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 20
-num_view_episodes = 2
-num_tests = 5
+num_episodes = 3
+num_view_episodes = 3
+num_tests = 2
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
