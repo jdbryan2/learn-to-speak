@@ -60,7 +60,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 40
+num_episodes = 20
 num_view_episodes = 2
 num_tests = 5
 # TODO: Change to condition checking some change between Q functions
@@ -75,7 +75,8 @@ for e in range(num_episodes+num_tests):
     #1-1.0/(e+1.0)
     exploit_prob  = 0.1
     # TODO: Change with each episode
-    learning_rate = 0.1
+    #learning_rate = 0.1
+    learning_rate = 1.0/(e+1.0)
     # Get initial state
     state = control.current_state
     i = 0

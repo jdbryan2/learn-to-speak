@@ -97,6 +97,22 @@ class Learner:
     # Return undiscounted reward for this state, action pair
     def getReward(self, state, action):
         
+        """
+        d_state = self.getDiscreteState(state)
+        reward = np.zeros(self.state_shape[0])
+        for s in np.arange(self.state_shape[0]):
+            reward[s] = 1/(np.fabs(d_state[s] - self.goal_state_index[s])+1)
+        
+        
+        #print("d_state")
+        #print("reward")
+        #print d_state
+        #print np.sum(reward)
+        
+        
+        return np.sum(reward)
+        
+        """
         # Only give reward if in goal state
         if not self.inGoalState(state):
             return 0.0
@@ -105,6 +121,7 @@ class Learner:
         # Could compute reward dependent on how close state is to goal
         # and size of action, but for now just return constant.
         return 1.0
+
     
     # Return discounted reward for this state, action pair, for the entire episode
     def getDiscountedReward(self,state,action):
@@ -249,17 +266,19 @@ class Learner:
 
         # Update Q for this state action pair
         index = tuple(np.concatenate((d_state,d_action)).astype(int))
-        if not r==0:
-            print ("Divider-----------------------Divider")
-            print ("state ind")
-            print d_state
-            print ("action ind")
-            print d_action
-            print ("next state ind")
-            print d_next_state
-            print ("next max action ind")
-            print v
-            print ("Divider-----------------------Divider")
+        
+        """
+        print ("Divider-----------------------Divider")
+        print ("state ind")
+        print d_state
+        print ("action ind")
+        print d_action
+        print ("next state ind")
+        print d_next_state
+        print ("next max action ind")
+        print v
+        print ("Divider-----------------------Divider")
+        """
         
         self.Q[index] = ((1-epsilon)*self.Q[index] +
                         epsilon*(r + self.alpha*Q_next_max) )
