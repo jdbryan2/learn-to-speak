@@ -52,6 +52,11 @@ primdir = dirname+'_prim'
 # Without integral, just 10 actions in [-1,1] and 10 5 sec trials and goal width 0.5
 # get really good result.
 
+# With the first two primitives, each 10 possible values, 11 actions, no transience,
+# no reset, and reward based only on state 0, and control for state two set to 0,
+# we get good results. It oscilates about the goal, with occasional disturbances popping
+# up.
+
 max_seconds =   10.0
 initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 
@@ -77,11 +82,14 @@ goal_width = .2
 states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
 states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
 states = states.reshape(1,states.shape[0])
+states = np.concatenate((states,states),axis=0)
+
 print states
-goal_state_index = np.array([np.floor(num_state_bins/2.0)])
+goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
 print("Goal State")
-ind2d = np.zeros((2,1))
-ind2d[1,0] = goal_state_index
+ind2d = np.zeros((2,dim))
+#ind2d[1,0] = goal_state_index
+ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
 actions_inc = np.linspace(-1.0,1.0,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
@@ -95,16 +103,15 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 20
-num_view_episodes = 2
-num_tests = 5
+num_episodes = 10
+num_view_episodes = 0
+num_tests = 2
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     control.InitializeControl()
     # Setup state variables
     current_state = control.current_state
-    desired_state = np.zeros(current_state.shape)
     
     # TODO: Change with each episode
     #1-1.0/(e+1.0)
@@ -127,7 +134,8 @@ for e in range(num_episodes+num_tests):
             action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
     
         # Reset the acumulated action command to 0 if the reset action is taken
-        if action_inc == reset_action:
+        # or if we are still in the transient due to initialization of past in primitives
+        if action_inc == reset_action or i < past + 10:
             action = 0
         else:
             # Make action state incremental
@@ -136,13 +144,14 @@ for e in range(num_episodes+num_tests):
             #action = action_inc
         
         ## Step Simulation
-        next_state = control.SimulatePeriod(control_action=action)
+        # Currently give uncontrolled state zero command
+        next_state = control.SimulatePeriod(control_action=np.append(action,0))
         
         # Don't update Q if we are just using the policy or
         # if we are in the initial period of transience from the
         # initialization of the primitives.
-        no_train_samples = past +10
-        no_train_samples = 0
+        no_train_samples = past + 10
+        #no_train_samples = 0
         if e >= num_episodes or i < no_train_samples:
             q_learn.incrementSteps()
         else:
@@ -175,9 +184,10 @@ for e in range(num_episodes+num_tests):
         # Remove last element from plot because we didn't perform an action
         # after the last update of the state history.
         plt.plot(control.action_hist[0][0:-1], color="0.5")
-        plt.show()
+        for k in range(actions_inc.shape[1]):
+            fig = plt.figure()
+            pltm.imshow(q_learn.Q[:,:,k])
 
-        pltm.imshow(q_learn.Q)
         pltm.show()
 
 

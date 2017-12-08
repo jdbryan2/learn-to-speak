@@ -85,7 +85,9 @@ class Learner:
         d_state = self.getDiscreteState(state)
         ingoal = np.zeros(self.state_shape[0])
         for s in np.arange(self.state_shape[0]):
-            if d_state[s] == self.goal_state_index[s]:
+            # if we are in the specified goal index or
+            # if we are not using this state to determine reward
+            if d_state[s] == self.goal_state_index[s] or self.goal_state_index[s] == -1:
                 ingoal[s] = 1
     
         if ingoal.all():
