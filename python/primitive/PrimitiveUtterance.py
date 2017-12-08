@@ -103,14 +103,22 @@ class PrimitiveUtterance(Utterance):
 
     def EstimateState(self, data, normalize=True):
         data_length = data.shape[1]
+        _data = data
 
         if normalize:
             # convert data by mean and standard deviation
-            _data = data
             _data = ((_data.T-self._ave)/self._std).T
         
+        # This is currently never used, but I'm keeping it here for the future maybe
         if data_length < self._past:
-            _data = np.append(np.zeros((data.shape[0], self._past-data_length)), _data, axis=1)
+            # Either do 1 or 2
+            # 1.)Take last element of history and assume that was what the data was up til self._past
+            data_init = np.ones((_data.shape[0], self._past-data_length))*np.atleast_2d(_data[:,0]).T
+            _data = np.concatenate([data_init,_data],axis=1)
+            
+            # 2.)Set rest of history to zero
+            #_data = np.append(np.zeros((data.shape[0], self._past-data_length)), _data, axis=1)
+
             data_length = self._past
             
         # only grabs the last values of the data 
@@ -202,11 +210,24 @@ class PrimitiveUtterance(Utterance):
         features = self.GetFeatures()
 
         # past_data stores history of features used to compute current state
+        
+        # Currenlty not using this method. It relies on EstimateState to fill in the rest of the past_data vector
+        # self.past_data = features
+        # self.past_data = self.past_data.reshape(self.past_data.shape[0],1)
+        
+        # Either choose 1 or 2 for initializing past_data
+        
+        # 1.)Set all of past but last state to 0 then estimate state without normalization to avoid subtraction of mean
         self.past_data = np.zeros((features.shape[0], self._past))
-        self.past_data = (self.past_data.T+features).T
+        self.past_data[:,-1] = features
+        self.current_state = self.EstimateState(self.past_data, normalize=False)
 
-        # estimate current state and do appropriate action
-        self.current_state = self.EstimateState(self.past_data, normalize=True)
+        # 2.)Set whole past to initial features then estimate state with normalization
+        #self.past_data = np.zeros((features.shape[0], self._past))
+        #self.past_data = (self.past_data.T+features).T
+        #self.current_state = self.EstimateState(self.past_data, normalize=True)
+
+        # Append to state_history
         self.state_hist[:, 0] = self.current_state
 
         #articulation = self.GetControl(self.current_state)
@@ -260,11 +281,18 @@ class PrimitiveUtterance(Utterance):
 
                 self.art_hist[:, self.speaker.Now()-1] = articulation
 
+            # Average features over control_period
             features += self.GetFeatures()/self.control_period
 
         # add features to past data
-        self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
-        self.past_data[:, -1] = features
+        # First if statement won't get used currently how we are initializing past_data, but here for future proofing
+        if self.past_data.shape[1]< self._past:
+            features = features.reshape(features.shape[0],1)
+            self.past_data = np.concatenate([self.past_data,features],axis=1)
+        else:
+            self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
+            self.past_data[:, -1] = features
+        
 
         # get current state and choose target articulation
         self.current_state = self.EstimateState(self.past_data, normalize=True)

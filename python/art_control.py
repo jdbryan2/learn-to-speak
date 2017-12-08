@@ -64,11 +64,11 @@ desired_state = np.zeros(current_state.shape)
 ## Test Controller
 # Setpoint for controller
 desired_state[0] = 1
-desired_state[1] = -1
+#desired_state[1] = -1
 test_dim =0
 
-"""
-## Tune Controller
+
+## Tune Controller # Comment out this block for testing.
 # Override all gains to 0 for tuning PID controllers
 Kp = np.array([0.0,0,0,0,0,0,0,0])
 Ki = np.array([0.0,0,0,0,0,0,0,0])
@@ -76,23 +76,27 @@ Kd = np.array([0,0,0,0,0,0,0,0])
 I_lim = np.array([0.0,0,0,0,0,0,0,0])
 
 # Tune test_dim
-test_dim = 1
+test_dim = 0
 Kp[test_dim] = 1/3
-Ki[test_dim] = 1/3
-Kd[test_dim] = 5/3
+Ki[test_dim] = 0.5/3
+Kd[test_dim] = 10/3
 I_lim[test_dim] = 150
 
 # Setpoint for controller
-desired_state[test_dim] = -.7
-"""
+desired_state[test_dim] = 1
+
 
 # Setup PID History variables
 E_prev = desired_state - current_state
 I_prev = np.zeros(current_state.shape)
 
 # Perform Control
+j=0
 while control.speaker.NotDone():
     ## Compute control action
+    # Introduce a disturbance
+    if j == 60:
+        desired_state[test_dim] = 1
     E = desired_state - current_state
     # Proporational Contribution
     P = Kp*E
@@ -110,6 +114,19 @@ while control.speaker.NotDone():
         elif i < -i_lim:
             print ("hit limit neg")
             I[prim_num] = -i_lim
+        if j < past:
+            I[prim_num]=0
+
+        """
+        # For running tests. helps to show system is non-linear and single state
+        # doesn't capture state of system.
+        if j == 20:
+            I[prim_num] = -20
+        elif j == 50:
+            I[prim_num] = 0
+        elif j == 80:
+            I[prim_num] = -20
+        """
     # Derivative Contribution
     D = Kd * (E - E_prev) / Ts
     # Set PID history variables
@@ -121,6 +138,7 @@ while control.speaker.NotDone():
 
     ## Step Simulation
     current_state = control.SimulatePeriod(control_action=control_action, control_period=0.)
+    j+=1
 
 control.Save()
 #plt.plot(_h)

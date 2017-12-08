@@ -97,7 +97,7 @@ class Learner:
     # Return undiscounted reward for this state, action pair
     def getReward(self, state, action):
         
-        
+        """
         d_state = self.getDiscreteState(state)
         reward = np.zeros(self.state_shape[0])
         for s in np.arange(self.state_shape[0]):
@@ -111,9 +111,9 @@ class Learner:
         
         
         return np.sum(reward)
-        
-        
         """
+        
+        
         # Only give reward if in goal state
         if not self.inGoalState(state):
             return 0.0
@@ -122,7 +122,6 @@ class Learner:
         # Could compute reward dependent on how close state is to goal
         # and size of action, but for now just return constant.
         return 1.0
-        """
 
     
     # Return discounted reward for this state, action pair, for the entire episode
