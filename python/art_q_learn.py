@@ -92,19 +92,19 @@ prev_state = prev_state.reshape(1,prev_state.shape[0])
 #states = np.concatenate((states,states),axis=0)
 # INTSTATE
 #states = np.concatenate((states,action_int_state))
-#states = np.concatenate((states,prev_state))
+states = np.concatenate((states,prev_state))
 
 print states
 # 1DSTATE
 goal_state_index = np.array([np.floor(num_state_bins/2.0)])
 # 2DSTATE and INTSTATE
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
-#goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
+goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
 print("Goal State")
 # 1DSTATE OR 2DSTATE
-ind2d = np.zeros((2,dim))
+#ind2d = np.zeros((2,dim))
 # INTSTATE
-#ind2d = np.zeros((2,dim+1))
+ind2d = np.zeros((2,dim+1))
 #ind2d[1,0] = goal_state_index
 ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
@@ -149,7 +149,7 @@ for e in range(num_episodes+num_tests):
     state = control.current_state
     # INTSTATE
     #state = np.concatenate((state,action),axis=0)
-    #state = np.concatenate((state,state),axis=0)
+    state = np.concatenate((state,state),axis=0)
     while not q_learn.episodeFinished():
         ## Compute control action
         if e >= num_episodes :
@@ -175,7 +175,7 @@ for e in range(num_episodes+num_tests):
         #next_state = control.SimulatePeriod(control_action=np.append(action,0))
         # INTSTATE
         #next_state = np.concatenate((next_state,action),axis=0)
-        #next_state = np.concatenate((next_state,state),axis=0)
+        next_state = np.concatenate((next_state,state),axis=0)
         
         # Don't update Q if we are just using the policy or
         # if we are in the initial period of transience from the
@@ -215,12 +215,12 @@ for e in range(num_episodes+num_tests):
         # after the last update of the state history.
         plt.plot(control.action_hist[0][0:-1], color="0.5")
         # 1DSTATE
-        fig = plt.figure()
-        pltm.imshow(q_learn.Q)
+        #fig = plt.figure()
+        #pltm.imshow(q_learn.Q)
         # 2DSTATE and INTSTATE
-        #for k in range(actions_inc.shape[1]):
-        #    fig = plt.figure()
-        #    pltm.imshow(q_learn.Q[:,:,k])
+        for k in range(actions_inc.shape[1]):
+            fig = plt.figure()
+            pltm.imshow(q_learn.Q[:,:,k])
 
         pltm.show()
 
