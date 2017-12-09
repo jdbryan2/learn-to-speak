@@ -74,6 +74,7 @@ Ts = 1000/(sample_period_ms)
 # Initialize q learning class
 num_state_bins = 10
 num_action_bins = 11
+num_int_state_bins = 10
 reset_action = 100
 # ensure that actions and states are 2d arrays
 #states = np.linspace(-10.0,10.0,num=num_state_bins)
@@ -82,18 +83,36 @@ goal_width = .2
 states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
 states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
 states = states.reshape(1,states.shape[0])
-states = np.concatenate((states,states),axis=0)
+
+#action_int_state = np.linspace(-20,20,num=num_int_state_bins)
+#action_int_state = action_int_state.reshape(1,action_int_state.shape[0])
+prev_state = np.linspace(-1,1,num=num_int_state_bins)
+prev_state = prev_state.reshape(1,prev_state.shape[0])
+# 2DSTATE
+#states = np.concatenate((states,states),axis=0)
+# INTSTATE
+#states = np.concatenate((states,action_int_state))
+states = np.concatenate((states,prev_state))
 
 print states
+# 1DSTATE
+goal_state_index = np.array([np.floor(num_state_bins/2.0)])
+# 2DSTATE and INTSTATE
+#goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
 goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
 print("Goal State")
-ind2d = np.zeros((2,dim))
+# 1DSTATE OR 2DSTATE
+#ind2d = np.zeros((2,dim))
+# INTSTATE
+ind2d = np.zeros((2,dim+1))
 #ind2d[1,0] = goal_state_index
 ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
 actions_inc = np.linspace(-1.0,1.0,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
+# 2DACTION
+#actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
 print actions_inc
 
 q_learn = Learner(states = states,
@@ -104,28 +123,33 @@ q_learn = Learner(states = states,
 
 # Perform Q learning Control
 num_episodes = 10
-num_view_episodes = 0
+num_view_episodes = 1
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     control.InitializeControl()
-    # Setup state variables
-    current_state = control.current_state
     
     # TODO: Change with each episode
     #1-1.0/(e+1.0)
-    exploit_prob  = 0.1
+    exploit_prob = 1-1.0/(e**(1/10.0)+1.0)
+    print "exploitation probability"
+    print exploit_prob
+    #exploit_prob  = 0.1
     #exploit_prob  = 0.0
     
     # TODO: Change with each episode
     #learning_rate = 0.1
     learning_rate = 1.0/(e+1.0)
-    # Get initial state
-    state = control.current_state
     i = 0
     # Cumulative action command
     action = np.zeros(actions_inc.shape[0])
+    action.reshape(1,action.shape[0])
+    # Get initial state
+    state = control.current_state
+    # INTSTATE
+    #state = np.concatenate((state,action),axis=0)
+    state = np.concatenate((state,state),axis=0)
     while not q_learn.episodeFinished():
         ## Compute control action
         if e >= num_episodes :
@@ -136,16 +160,22 @@ for e in range(num_episodes+num_tests):
         # Reset the acumulated action command to 0 if the reset action is taken
         # or if we are still in the transient due to initialization of past in primitives
         if action_inc == reset_action or i < past + 10:
-            action = 0
+            action = np.zeros(action.shape)
         else:
             # Make action state incremental
             action = action+action_inc
             # Make action state absolute
             #action = action_inc
-        
+
         ## Step Simulation
         # Currently give uncontrolled state zero command
-        next_state = control.SimulatePeriod(control_action=np.append(action,0))
+        # 1DSTATE
+        next_state = control.SimulatePeriod(control_action=action)
+        # 2DSTATE
+        #next_state = control.SimulatePeriod(control_action=np.append(action,0))
+        # INTSTATE
+        #next_state = np.concatenate((next_state,action),axis=0)
+        next_state = np.concatenate((next_state,state),axis=0)
         
         # Don't update Q if we are just using the policy or
         # if we are in the initial period of transience from the
@@ -184,6 +214,10 @@ for e in range(num_episodes+num_tests):
         # Remove last element from plot because we didn't perform an action
         # after the last update of the state history.
         plt.plot(control.action_hist[0][0:-1], color="0.5")
+        # 1DSTATE
+        #fig = plt.figure()
+        #pltm.imshow(q_learn.Q)
+        # 2DSTATE and INTSTATE
         for k in range(actions_inc.shape[1]):
             fig = plt.figure()
             pltm.imshow(q_learn.Q[:,:,k])
