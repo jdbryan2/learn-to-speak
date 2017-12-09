@@ -86,8 +86,9 @@ states = states.reshape(1,states.shape[0])
 
 #action_int_state = np.linspace(-20,20,num=num_int_state_bins)
 #action_int_state = action_int_state.reshape(1,action_int_state.shape[0])
-prev_state = np.linspace(-1,1,num=num_int_state_bins)
-prev_state = prev_state.reshape(1,prev_state.shape[0])
+#prev_state = np.linspace(-1,1,num=num_int_state_bins)
+#prev_state = prev_state.reshape(1,prev_state.shape[0])
+prev_state = states
 # 2DSTATE
 #states = np.concatenate((states,states),axis=0)
 # INTSTATE
