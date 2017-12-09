@@ -314,5 +314,5 @@ class Learner:
             ind2d[1,0] = d_action
             return self.actions[tuple(ind2d.astype(int))]
         else:
-            return self.actions[tuple(d_action.astype(int))]
+            return self.actions[np.arange(0,self.action_shape[0]).T,d_action.astype(int).T]
 
