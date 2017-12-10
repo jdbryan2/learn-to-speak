@@ -55,7 +55,18 @@ max_seconds =   5.0
 #initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 # STATIC INIT
 # Does well for state 0 with goal btw [.6,1.3)
+#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+# Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
+initial_art=np.ones((aw.kArt_muscle.MAX, ))
+"""
+# initialize from ipa 305. see ipa305.py
 initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+initial_art[aw.kArt_muscle.INTERARYTENOID] = 0.5
+initial_art[aw.kArt_muscle.LUNGS] = 0.3
+initial_art[aw.kArt_muscle.MYLOHYOID] = 0.1
+initial_art[aw.kArt_muscle.SPHINCTER] = 0.7
+initial_art[aw.kArt_muscle.HYOGLOSSUS] = 0.3
+"""
 
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
@@ -161,7 +172,9 @@ for e in range(num_episodes+num_tests):
         # This worked ish for two states and actions and 20 10 sectiond trials
         #exploit_prob = 1-1.0/(0.02*(e-exploit_offset)+1.0)
         #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
-        exploit_prob = 1-learning_rate
+        #exploit_prob = 1-learning_rate
+        exploit_prob = 1-10.0/(e-exploit_offset+10.0)
+        #exploit_prob = 1- 20.0/(e+20.0)
 
     #overide exploit
     #exploit_prob = .1
@@ -257,18 +270,5 @@ savedir = 'data/' + primdir + '/figures/in_out/'
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 
-_h = control.state_hist
-
-prim_nums = np.arange(0,dim)
-colors = ['b','g','r','c','m','y','k','0.75']
-markers = ['o','o','o','o','x','x','x','x']
-fig = plt.figure()
-for prim_num, c, m in zip(prim_nums,colors,markers):
-    plt.plot(_h[prim_num][:],color=c)
-
-# Remove last element from plot because we didn't perform an action
-# after the last update of the state history.
-plt.plot(control.action_hist[0][0:-1], color="0.5")
-plt.show()
 
 

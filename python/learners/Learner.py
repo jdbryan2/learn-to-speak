@@ -204,7 +204,7 @@ class Learner:
         # Select random index if all the values are zero
         # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
         if Q_max == 0 :
-            print "Max value for state is 0. Choosing random action"
+            print "All values for state are 0. Choosing action uniformly at random."
             u_max = self.explore()
 
         """
@@ -335,6 +335,7 @@ class Learner:
 
     # Choose the action greedily with probability p_ and
     # choose randomly with probability 1-p_
+    # This is epsilon greedy approach
     def exploit_and_explore(self,state,p_):
 
         d_state = self.getDiscreteState(state)
@@ -346,6 +347,45 @@ class Learner:
             Q,d_action = self.getMaxQ_and_u(d_state)
         else:
             d_action = self.explore()
+
+        # Cheat to make indexing work when only one dimension
+        if self.action_shape[0]==1:
+            ind2d = np.zeros((2,1))
+            ind2d[1,0] = d_action
+            return self.actions[tuple(ind2d.astype(int))]
+        else:
+            return self.actions[np.arange(0,self.action_shape[0]).T,d_action.astype(int).T]
+
+    # Alternatively use Boltzman exploration
+    # Return optimal action
+    def boltzman_exploration(self,state,T):
+        
+        d_state = self.getDiscreteState(state)
+        d_action = np.zeros((self.action_shape[0],1))
+
+        state_ind = d_state.astype(int).tolist()
+        Q_slice = self.Q[state_ind]
+        Q_flat = Q_slice.flatten()
+        Q_sum = np.sum(Q_flat)
+        # Select random index if all the values are zero
+        # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
+        if Q_sum == 0 :
+            print "All values for state are 0. Choosing action uniformly at random."
+            d_action = self.explore()
+            Q_boltz = 0.0
+        else:
+            P_action = np.exp(-Q_flat/Q_sum/T)
+            num_actions = self.action_shape[1]**self.action_shape[0]
+            boltz_ind = np.random.choice(num_actions,p=P_action)
+            boltz_ind = np.unravel_index(boltz_ind,dims=self.Q.shape[self.state_shape[0]:])
+            full_ind = state_ind
+            full_ind.extend(boltz_ind)
+            
+            Q_boltz = self.Q[full_ind]
+            d_action = np.asarray(boltz_ind)
+            d_action = d_action.reshape(self.action_shape[0],1)
+    
+        
 
         # Cheat to make indexing work when only one dimension
         if self.action_shape[0]==1:
