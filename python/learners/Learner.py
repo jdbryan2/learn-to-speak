@@ -49,6 +49,9 @@ class Learner:
         
         # Keep track of total award
         self.total_reward = 0
+        
+        # Keep track of total times it was in the goal state
+        self.ingoal = np.zeros(self.state_shape[0])
 
         # Discount factor
         self.alpha = kwargs.get("alpha",0.99)
@@ -78,6 +81,8 @@ class Learner:
         maxed_out = (self.steps >= self.max_steps)
         if maxed_out:
             print("Total Undiscouted Reward is " +str(self.total_reward))
+            print("Total In Goal States is")
+            print self.ingoal
         
         return maxed_out
 
@@ -94,8 +99,9 @@ class Learner:
                 ingoal[s] = 1
     
         if ingoal.any():
-            print("In Goal State")
-            print ingoal
+            #print("In Goal State")
+            #print ingoal
+            self.ingoal = self.ingoal + ingoal
             return ingoal
             #return True
 
@@ -131,7 +137,7 @@ class Learner:
         # Could compute reward dependent on how close state is to goal
         # and size of action, but for now just return constant.
         # Consider using np.sum(ingoal)**2, 10**np.sum(ingoal), or similar instead
-        return np.sum(ingoal)
+        return np.sum(ingoal)**2
 
     
     # Return discounted reward for this state, action pair, for the entire episode
@@ -146,6 +152,7 @@ class Learner:
         self.goal_steps = 0
         self.inrange = 0
         self.total_reward = 0
+        self.ingoal = np.zeros(self.state_shape[0])
     
     # Discretize state
     def getDiscreteState(self,state):

@@ -127,7 +127,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 20
+num_episodes = 40
 num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
@@ -137,8 +137,13 @@ for e in range(num_episodes+num_tests):
     print("--------------Episode"+str(e)+"--------------")
     
     # TODO: Change with each episode
+    #learning_rate = 0.1
+    #learning_rate = 1.0/(e+1.0)
+    learning_rate = 20.0/(e+20.0)
+    
+    # TODO: Change with each episode
     #1-1.0/(e+1.0)
-    exploit_offset = 10
+    exploit_offset = 0
     if e<min(exploit_offset,num_episodes):
         exploit_prob = 0
     elif  e >= num_episodes:
@@ -148,7 +153,8 @@ for e in range(num_episodes+num_tests):
         #exploit_prob = 1-1.0/(0.1e**(1/10.0)+1.0)
         # This worked ish for two states and actions and 20 10 sectiond trials
         #exploit_prob = 1-1.0/(0.02*(e-exploit_offset)+1.0)
-        exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
+        #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
+        exploit_prob = 1-learning_rate
 
     #overide exploit
     #exploit_prob = .1
@@ -156,10 +162,7 @@ for e in range(num_episodes+num_tests):
     print "Exploitation Probability = " +str(exploit_prob)
     #exploit_prob  = 0.1
     #exploit_prob  = 0.0
-    
-    # TODO: Change with each episode
-    #learning_rate = 0.1
-    learning_rate = 1.0/(e+1.0)
+
     i = 0
     # Cumulative action command
     action = np.zeros(actions_inc.shape[0])
