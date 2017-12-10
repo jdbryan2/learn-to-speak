@@ -188,6 +188,15 @@ class PrimitiveUtterance(Utterance):
         # Set the initial_art that the sim will be initialized with
         self.speaker.InitSim(self.utterance_length, self.initial_art)
 
+    # Note: I'm overiding the base class because I want to use the actual
+    #       initial_art that is passed in not the default artword at 0.0 seconds.
+    #       This is requred in addition to Initialize Sim so that I can pass in a
+    #       new intitial_art each time I want to start over the sim.
+    def InitializeParams(self, **kwargs):
+        if len(kwargs.keys()):
+            self.initial_art = kwargs.get("initial_art", self.initial_art)
+            super(PrimitiveUtterance, self).InitializeParams(**kwargs)
+
     def InitializeControl(self, **kwargs):
         # initialize parameters if anything new is passed in
         if len(kwargs.keys()):

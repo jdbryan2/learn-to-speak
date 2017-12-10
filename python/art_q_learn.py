@@ -51,7 +51,11 @@ primdir = dirname+'_prim'
 # up.
 
 max_seconds =   5.0
-initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+# RANDOM INIT
+#initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+# STATIC INIT
+# Does well for state 0 with goal btw [.6,1.3)
+initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
@@ -127,23 +131,26 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 40
+num_episodes = 30
 num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
-    # Reset/Initialize Prim Controller and Simulation
-    control.InitializeControl()
     print("--------------Episode"+str(e)+"--------------")
+    # Reset/Initialize Prim Controller and Simulation
+    # Was using same intialzation for each episode before
+    # STATIC INIT
+    control.InitializeControl(initial_art = initial_art)
+    # RANDOM INIT
+    #control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
     
-    # TODO: Change with each episode
     #learning_rate = 0.1
     #learning_rate = 1.0/(e+1.0)
-    learning_rate = 20.0/(e+20.0)
+    learning_rate = 10.0/(e+10.0)
+    print "Learning Rate = " + str(learning_rate)
     
-    # TODO: Change with each episode
     #1-1.0/(e+1.0)
-    exploit_offset = 0
+    exploit_offset = 10
     if e<min(exploit_offset,num_episodes):
         exploit_prob = 0
     elif  e >= num_episodes:

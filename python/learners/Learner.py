@@ -318,7 +318,7 @@ class Learner:
         print ("Divider-----------------------Divider")
         """
         TD = r + self.alpha*Q_next_max - self.Q[index]
-        print "Temporal Difference = " + str(TD)
+        #print "Temporal Difference = " + str(TD)
         self.Q[index] = ((1-epsilon)*self.Q[index] +
                         epsilon*(r + self.alpha*Q_next_max) )
     
