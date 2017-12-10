@@ -14,19 +14,12 @@ from primitive.PrimitiveUtterance import PrimitiveUtterance
 from primitive.Utterance import Utterance
 import Artword as aw
 from learners.Learner import Learner
+# For getting tracking
+from primitive.SubspaceDFA import SubspaceDFA
+from features.ArtFeatures import ArtFeatures
 
 # Hacky way to get initial articulation/primitive value from some desired vocal tract shape
-# Default initial_art is all zeros
-ipa101 = Utterance(dirname="ipa101_q_test",
-                      loops=1,
-                      utterance_length=0.5,
-                      addDTS=False)
 
-ipa101.SetManualArticulation(aw.kArt_muscle.INTERARYTENOID, [0, 0.5],[0.5, 0.5])
-ipa101.SetManualArticulation(aw.kArt_muscle.LEVATOR_PALATINI, [0.0, 0.5],[1.0, 1.0])
-ipa101.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1],[0.2, 0.0])
-ipa101.SetManualArticulation(aw.kArt_muscle.MASSETER, [0.25], [0.7])
-ipa101.SetManualArticulation(aw.kArt_muscle.ORBICULARIS_ORIS, [0.25], [0.2])
 
 
 
@@ -57,7 +50,7 @@ primdir = dirname+'_prim'
 # we get good results. It oscilates about the goal, with occasional disturbances popping
 # up.
 
-max_seconds =   30.0
+max_seconds =   5.0
 initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 
 control = PrimitiveUtterance(dir_name=primdir,
@@ -78,14 +71,17 @@ num_int_state_bins = 10
 reset_action = 100
 # ensure that actions and states are 2d arrays
 #states = np.linspace(-10.0,10.0,num=num_state_bins)
-goal_state = 1
-goal_width = .4
-states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
-states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
-states = states.reshape(1,states.shape[0])
+#goal_state = 1
+#goal_width = .4
+#states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
+#states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
+first_state = np.linspace(-4,2,num=num_state_bins)
+first_state = first_state.reshape(1,first_state.shape[0])
+other_state = np.linspace(-4,2,num=num_state_bins)
+other_state = other_state.reshape(1,other_state.shape[0])
 
 # 2DSTATE
-states = np.concatenate((states,states),axis=0)
+states = np.concatenate((first_state,other_state),axis=0)
 
 #action_int_state = np.linspace(-20,20,num=num_int_state_bins)
 #action_int_state = action_int_state.reshape(1,action_int_state.shape[0])
@@ -95,21 +91,25 @@ prev_state = states
 
 # INTSTATE
 #states = np.concatenate((states,action_int_state))
-states = np.concatenate((states,prev_state))
+#states = np.concatenate((states,prev_state))
 
 print states
 # 1DSTATE
-goal_state_index = np.array([np.floor(num_state_bins/2.0)])
+#goal_state_index = np.array([np.floor(num_state_bins/2.0)])
 # 2DSTATE and INTSTATE
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
-goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0),-1,-1])
+#goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0),-1,-1])
+#goal_state_index = np.array([7,5])
+#1.2,-1.7 # For IPA 305
+goal_state_index = np.array([8,4])
 print("Goal State")
+print goal_state_index.shape
 # 1DSTATE OR 2DSTATE
-#ind2d = np.zeros((2,dim))
+ind2d = np.zeros((2,dim))
 # INTSTATE
 #ind2d = np.zeros((2,dim+1))
-ind2d = np.zeros((2,dim*2))
+#ind2d = np.zeros((2,dim*2))
 #ind2d[1,0] = goal_state_index
 ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
@@ -128,21 +128,32 @@ q_learn = Learner(states = states,
 
 # Perform Q learning Control
 num_episodes = 20
-num_view_episodes = 1
+num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     control.InitializeControl()
+    print("--------------Episode"+str(e)+"--------------")
     
     # TODO: Change with each episode
     #1-1.0/(e+1.0)
-    if e<10:
+    exploit_offset = 10
+    if e<min(exploit_offset,num_episodes):
         exploit_prob = 0
+    elif  e >= num_episodes:
+        exploit_prob = 1
     else:
-        exploit_prob = 1-1.0/(0.1*e**(1/10.0)+1.0)
-    print "exploitation probability"
-    print exploit_prob
+        #exploit_prob = 1-1.0/(0.1*e**(1/10.0)+1.0)
+        #exploit_prob = 1-1.0/(0.1e**(1/10.0)+1.0)
+        # This worked ish for two states and actions and 20 10 sectiond trials
+        #exploit_prob = 1-1.0/(0.02*(e-exploit_offset)+1.0)
+        exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
+
+    #overide exploit
+    #exploit_prob = .1
+
+    print "Exploitation Probability = " +str(exploit_prob)
     #exploit_prob  = 0.1
     #exploit_prob  = 0.0
     
@@ -157,13 +168,10 @@ for e in range(num_episodes+num_tests):
     state = control.current_state
     # INTSTATE
     #state = np.concatenate((state,action),axis=0)
-    state = np.concatenate((state,state),axis=0)
+    #state = np.concatenate((state,state),axis=0)
     while not q_learn.episodeFinished():
         ## Compute control action
-        if e >= num_episodes :
-            action_inc = q_learn.exploit_and_explore(state=state,p_=1)
-        else:
-            action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
     
         # Reset the acumulated action command to 0 if the reset action is taken
         # or if we are still in the transient due to initialization of past in primitives
@@ -183,7 +191,7 @@ for e in range(num_episodes+num_tests):
         #next_state = control.SimulatePeriod(control_action=np.append(action,0))
         # INTSTATE
         #next_state = np.concatenate((next_state,action),axis=0)
-        next_state = np.concatenate((next_state,state[dim:]),axis=0)
+        #next_state = np.concatenate((next_state,state[dim:]),axis=0)
         
         # Don't update Q if we are just using the policy or
         # if we are in the initial period of transience from the
@@ -191,7 +199,7 @@ for e in range(num_episodes+num_tests):
         no_train_samples = past + 10
         #no_train_samples = 0
         if e >= num_episodes or i < no_train_samples:
-            q_learn.incrementSteps()
+            q_learn.incrementSteps(state=state,action=action_inc.flatten())
         else:
             ## Update the estimate of Q
             q_learn.updateQ(state=state,action=action_inc.flatten(),next_state=next_state,epsilon=learning_rate)
@@ -199,7 +207,6 @@ for e in range(num_episodes+num_tests):
         ## Update state
         state = next_state
         i+=1
-    print("Episode"+str(e))
     #print q_learn.Q
     #pltm.imshow(q_learn.Q)
     #pltm.show()
@@ -229,7 +236,7 @@ for e in range(num_episodes+num_tests):
         # 2DSTATE and INTSTATE
         #for k in range(actions_inc.shape[1]):
         #    fig = plt.figure()
-        #    pltm.imshow(q_learn.Q[:,:,k])
+#    pltm.imshow(q_learn.Q[:,:,k])
 
         pltm.show()
 

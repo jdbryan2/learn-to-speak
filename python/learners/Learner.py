@@ -46,6 +46,9 @@ class Learner:
         
         # Keep track of timesteps for computing discounted reward
         self.steps = 0
+        
+        # Keep track of total award
+        self.total_reward = 0
 
         # Discount factor
         self.alpha = kwargs.get("alpha",0.99)
@@ -74,7 +77,7 @@ class Learner:
 
         maxed_out = (self.steps >= self.max_steps)
         if maxed_out:
-            print("Hit Max Number of Steps")
+            print("Total Undiscouted Reward is " +str(self.total_reward))
         
         return maxed_out
 
@@ -90,11 +93,14 @@ class Learner:
             if d_state[s] == self.goal_state_index[s] or self.goal_state_index[s] == -1:
                 ingoal[s] = 1
     
-        if ingoal.all():
+        if ingoal.any():
             print("In Goal State")
-            return True
+            print ingoal
+            return ingoal
+            #return True
 
-        return False
+        return ingoal
+        #return False
 
     # Return undiscounted reward for this state, action pair
     def getReward(self, state, action):
@@ -117,13 +123,15 @@ class Learner:
         
         
         # Only give reward if in goal state
-        if not self.inGoalState(state):
-            return 0.0
+        ingoal = self.inGoalState(state)
+        #if not ingoal.any():
+        #    return 0.0
 
         # Else compute reward
         # Could compute reward dependent on how close state is to goal
         # and size of action, but for now just return constant.
-        return 1.0
+        # Consider using np.sum(ingoal)**2, 10**np.sum(ingoal), or similar instead
+        return np.sum(ingoal)
 
     
     # Return discounted reward for this state, action pair, for the entire episode
@@ -137,6 +145,7 @@ class Learner:
         self.steps = 0
         self.goal_steps = 0
         self.inrange = 0
+        self.total_reward = 0
     
     # Discretize state
     def getDiscreteState(self,state):
@@ -176,7 +185,23 @@ class Learner:
     # Find maximum value of Q over all actions for a given discrete state
     # Also return the corresponding action
     def getMaxQ_and_u(self,d_state):
+        
+        state_ind = d_state.astype(int).tolist()
+        max_ind = np.argmax(self.Q[state_ind])
+        max_ind = np.unravel_index(max_ind,dims=self.Q.shape[self.state_shape[0]:])
+        full_ind = state_ind
+        full_ind.extend(max_ind)
+        Q_max = self.Q[full_ind]
+        u_max = np.asarray(max_ind)
+        u_max = u_max.reshape(self.action_shape[0],1)
+        # Select random index if all the values are zero
+        # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
+        if Q_max == 0 :
+            print "Max value for state is 0. Choosing random action"
+            u_max = self.explore()
 
+        """
+        # Didn't work with multiple actions
         Q_max = 0.0
         # Loop through all possible actions to find maximum
         for a in np.arange(self.action_shape[0]):
@@ -189,9 +214,11 @@ class Learner:
                 # Note: Tentatively working, but not tested with more than one
                 #       action and state. Also, a mess...
                 Q_u = self.Q[tuple(np.concatenate((d_state,d_action)).astype(int))]
+                print Q_u
                 if Q_u >= Q_max:
                    Q_max = Q_u
                    u_max = d_action
+       """
         
         
         """
@@ -266,6 +293,7 @@ class Learner:
         
         # Get reward for state action pair
         r = self.getReward(state,action)
+        self.total_reward += r
 
         # Update Q for this state action pair
         index = tuple(np.concatenate((d_state,d_action)).astype(int))
@@ -282,7 +310,8 @@ class Learner:
         print v
         print ("Divider-----------------------Divider")
         """
-        
+        TD = r + self.alpha*Q_next_max - self.Q[index]
+        print "Temporal Difference = " + str(TD)
         self.Q[index] = ((1-epsilon)*self.Q[index] +
                         epsilon*(r + self.alpha*Q_next_max) )
     
@@ -290,9 +319,12 @@ class Learner:
         self.steps += 1
     
     # Call this instead of updateQ if you just want to use the learned policy
-    def incrementSteps(self):
+    def incrementSteps(self,state,action):
         # Increment steps to keep track of the time
         self.steps += 1
+        # Get reward for state action pair
+        r = self.getReward(state,action)
+        self.total_reward += r
 
     # Choose the action greedily with probability p_ and
     # choose randomly with probability 1-p_
