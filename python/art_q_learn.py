@@ -150,7 +150,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 80
+num_episodes = 85
 num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
@@ -166,11 +166,17 @@ for e in range(num_episodes+num_tests):
     #learning_rate = 0.1
     #learning_rate = 1.0/(e+1.0)
     #learning_rate = 10.0/(e+10.0)
-    learning_rate = 20.0/(e+20.0)
+    #learning_rate = 20.0/(e+20.0)
+    learning_offset = 5
+    if e<learning_offset:
+        learning_rate = 1
+    else:
+        learning_rate = 20.0/(e-(learning_offset-1)+20.0)
+
     print "Learning Rate = " + str(learning_rate)
     
     #1-1.0/(e+1.0)
-    exploit_offset = 0
+    exploit_offset = 10
     if e<min(exploit_offset,num_episodes):
         exploit_prob = 0
     elif  e >= num_episodes:
