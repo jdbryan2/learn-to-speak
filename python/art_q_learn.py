@@ -54,27 +54,35 @@ max_seconds =   5.0
 # RANDOM INIT
 #initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 # STATIC INIT
+# From a randomly generated art that worked well
+initial_art = np.array([ 0.52779292,  0.32185364,  0.86558425,  0.33471684,  0.65112661,  0.79903379,
+ 0.11987483,  0.24855711,  0.31139851,  0.24787388,  0.19895598,  0.05290729,
+ 0.32252938,  0.63632587,  0.50026815,  0.98682582,  0.05327814,  0.57564972,
+ 0.09049773,  0.92107307,  0.25266528,  0.10626182,  0.59077853,  0.83012719,
+ 0.65740627,  0.65219443,  0.7657366,   0.66722533,  0.49950773,])
 # Does well for state 0 with goal btw [.6,1.3)
 #initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))
 
 # initialize from ipa 305. see ipa305.py
+"""
 initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 initial_art[aw.kArt_muscle.INTERARYTENOID] = 0.5
 initial_art[aw.kArt_muscle.LUNGS] = 0.3
 initial_art[aw.kArt_muscle.MYLOHYOID] = 0.1
 initial_art[aw.kArt_muscle.SPHINCTER] = 0.7
 initial_art[aw.kArt_muscle.HYOGLOSSUS] = 0.3
+"""
 
+print "Initial Articulation"
+print initial_art
 
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
                              loops=1,
                              utterance_length=max_seconds,
                              initial_art = initial_art)
-                             #initial_art=np.random.random((aw.kArt_muscle.MAX, )))
-#print initial_art
 
 Ts = 1000/(sample_period_ms)
 
@@ -142,7 +150,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 35 #20-------------
+num_episodes = 40
 num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
@@ -156,12 +164,13 @@ for e in range(num_episodes+num_tests):
     #control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
     
     #learning_rate = 0.1
-    #learning_rate = 1.0/(e+1.0)#----------------
-    learning_rate = 10.0/(e+10.0)
+    #learning_rate = 1.0/(e+1.0)
+    #learning_rate = 10.0/(e+10.0)
+    learning_rate = 20.0/(e+20.0)
     print "Learning Rate = " + str(learning_rate)
     
     #1-1.0/(e+1.0)
-    exploit_offset = 10
+    exploit_offset = 0
     if e<min(exploit_offset,num_episodes):
         exploit_prob = 0
     elif  e >= num_episodes:
@@ -171,10 +180,11 @@ for e in range(num_episodes+num_tests):
         #exploit_prob = 1-1.0/(0.1e**(1/10.0)+1.0)
         # This worked ish for two states and actions and 20 10 sectiond trials
         #exploit_prob = 1-1.0/(0.02*(e-exploit_offset)+1.0)
-        #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)#-------
+        #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
         #exploit_prob = 1-learning_rate
-        exploit_prob = 1-10.0/(e-exploit_offset+10.0)
+        #exploit_prob = 1-10.0/(e-exploit_offset+10.0)
         #exploit_prob = 1- 20.0/(e+20.0)
+        exploit_prob = 1 - learning_rate
 
     #overide exploit
     #exploit_prob = .1
@@ -192,7 +202,7 @@ for e in range(num_episodes+num_tests):
         T = 0.1
     #T = 0.1
 
-    print "Boltzman Temperature = " +str(T)
+    #print "Boltzman Temperature = " +str(T)
 
     i = 0
     # Cumulative action command
@@ -206,9 +216,9 @@ for e in range(num_episodes+num_tests):
     while not q_learn.episodeFinished():
         ## Compute control action
         # For epsilon Greedy
-        #action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
         # For Boltzman Exploration
-        action_inc = q_learn.boltzmann_exploration(state=state,T=T)
+        #action_inc = q_learn.boltzmann_exploration(state=state,T=T)
     
         # Reset the acumulated action command to 0 if the reset action is taken
         # or if we are still in the transient due to initialization of past in primitives
