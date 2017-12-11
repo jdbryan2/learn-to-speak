@@ -204,7 +204,7 @@ class Learner:
         # Select random index if all the values are zero
         # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
         if onlyQ == True and Q_max == 0 :
-            print "All values for state are 0. Choosing action uniformly at random."
+            #print "All values for state are 0. Choosing action uniformly at random."
             u_max = self.explore()
 
         """

@@ -52,13 +52,13 @@ primdir = dirname+'_prim'
 
 max_seconds =   5.0
 # RANDOM INIT
-initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+#initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 # STATIC INIT
 # Does well for state 0 with goal btw [.6,1.3)
 #initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))
-"""
+
 # initialize from ipa 305. see ipa305.py
 initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 initial_art[aw.kArt_muscle.INTERARYTENOID] = 0.5
@@ -66,7 +66,7 @@ initial_art[aw.kArt_muscle.LUNGS] = 0.3
 initial_art[aw.kArt_muscle.MYLOHYOID] = 0.1
 initial_art[aw.kArt_muscle.SPHINCTER] = 0.7
 initial_art[aw.kArt_muscle.HYOGLOSSUS] = 0.3
-"""
+
 
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
@@ -142,7 +142,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 30
+num_episodes = 35 #20-------------
 num_view_episodes = 2
 num_tests = 2
 # TODO: Change to condition checking some change between Q functions
@@ -151,12 +151,12 @@ for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     # Was using same intialzation for each episode before
     # STATIC INIT
-    #control.InitializeControl(initial_art = initial_art)
+    control.InitializeControl(initial_art = initial_art)
     # RANDOM INIT
-    control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
+    #control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
     
     #learning_rate = 0.1
-    #learning_rate = 1.0/(e+1.0)
+    #learning_rate = 1.0/(e+1.0)#----------------
     learning_rate = 10.0/(e+10.0)
     print "Learning Rate = " + str(learning_rate)
     
@@ -171,7 +171,7 @@ for e in range(num_episodes+num_tests):
         #exploit_prob = 1-1.0/(0.1e**(1/10.0)+1.0)
         # This worked ish for two states and actions and 20 10 sectiond trials
         #exploit_prob = 1-1.0/(0.02*(e-exploit_offset)+1.0)
-        #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)
+        #exploit_prob = 1-1.0/(0.01*(e-exploit_offset)+1.0)#-------
         #exploit_prob = 1-learning_rate
         exploit_prob = 1-10.0/(e-exploit_offset+10.0)
         #exploit_prob = 1- 20.0/(e+20.0)
