@@ -52,12 +52,12 @@ primdir = dirname+'_prim'
 
 max_seconds =   5.0
 # RANDOM INIT
-#initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 # STATIC INIT
 # Does well for state 0 with goal btw [.6,1.3)
 #initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
-initial_art=np.ones((aw.kArt_muscle.MAX, ))
+#initial_art=np.ones((aw.kArt_muscle.MAX, ))
 """
 # initialize from ipa 305. see ipa305.py
 initial_art=np.zeros((aw.kArt_muscle.MAX, ))
@@ -151,9 +151,9 @@ for e in range(num_episodes+num_tests):
     # Reset/Initialize Prim Controller and Simulation
     # Was using same intialzation for each episode before
     # STATIC INIT
-    control.InitializeControl(initial_art = initial_art)
+    #control.InitializeControl(initial_art = initial_art)
     # RANDOM INIT
-    #control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
+    control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
     
     #learning_rate = 0.1
     #learning_rate = 1.0/(e+1.0)
@@ -183,6 +183,17 @@ for e in range(num_episodes+num_tests):
     #exploit_prob  = 0.1
     #exploit_prob  = 0.0
 
+    # Boltzmann Temperature
+    #T = 10-e
+    T =  -0.1304*e+4.91
+    if T < 0.1:
+        T = 0.1
+    if  e >= num_episodes:
+        T = 0.1
+    #T = 0.1
+
+    print "Boltzman Temperature = " +str(T)
+
     i = 0
     # Cumulative action command
     action = np.zeros(actions_inc.shape[0])
@@ -194,7 +205,10 @@ for e in range(num_episodes+num_tests):
     #state = np.concatenate((state,state),axis=0)
     while not q_learn.episodeFinished():
         ## Compute control action
-        action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        # For epsilon Greedy
+        #action_inc = q_learn.exploit_and_explore(state=state,p_=exploit_prob)
+        # For Boltzman Exploration
+        action_inc = q_learn.boltzmann_exploration(state=state,T=T)
     
         # Reset the acumulated action command to 0 if the reset action is taken
         # or if we are still in the transient due to initialization of past in primitives

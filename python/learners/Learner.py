@@ -191,7 +191,7 @@ class Learner:
     
     # Find maximum value of Q over all actions for a given discrete state
     # Also return the corresponding action
-    def getMaxQ_and_u(self,d_state):
+    def getMaxQ_and_u(self,d_state,onlyQ = True):
         
         state_ind = d_state.astype(int).tolist()
         max_ind = np.argmax(self.Q[state_ind])
@@ -203,7 +203,7 @@ class Learner:
         u_max = u_max.reshape(self.action_shape[0],1)
         # Select random index if all the values are zero
         # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
-        if Q_max == 0 :
+        if onlyQ == True and Q_max == 0 :
             print "All values for state are 0. Choosing action uniformly at random."
             u_max = self.explore()
 
@@ -273,8 +273,10 @@ class Learner:
                     #   Q_max = Q_u
                     #   u_max = d_action
         """
-        
-        return Q_max, u_max
+        if onlyQ == True:
+            return Q_max
+        else:
+            return Q_max, u_max
     
                     
     # Choose a discrete action uniformly at random
@@ -295,8 +297,8 @@ class Learner:
         d_action = self.getDiscreteAction(action)
         d_next_state = self.getDiscreteState(next_state)
         
-        # Find max Q and action over next state
-        Q_next_max, v = self.getMaxQ_and_u(d_next_state)
+        # Find max Q over next state
+        Q_next_max= self.getMaxQ_and_u(d_next_state,onlyQ = True)
         
         # Get reward for state action pair
         r = self.getReward(state,action)
@@ -344,7 +346,7 @@ class Learner:
         exp = np.random.choice(2,1,p=[p_,1.0-p_])
         
         if exp == 0:
-            Q,d_action = self.getMaxQ_and_u(d_state)
+            Q,d_action = self.getMaxQ_and_u(d_state,onlyQ=False)
         else:
             d_action = self.explore()
 
@@ -356,9 +358,9 @@ class Learner:
         else:
             return self.actions[np.arange(0,self.action_shape[0]).T,d_action.astype(int).T]
 
-    # Alternatively use Boltzman exploration
+    # Alternatively use Boltzmann exploration
     # Return optimal action
-    def boltzman_exploration(self,state,T):
+    def boltzmann_exploration(self,state,T):
         
         d_state = self.getDiscreteState(state)
         d_action = np.zeros((self.action_shape[0],1))
@@ -366,26 +368,22 @@ class Learner:
         state_ind = d_state.astype(int).tolist()
         Q_slice = self.Q[state_ind]
         Q_flat = Q_slice.flatten()
-        Q_sum = np.sum(Q_flat)
-        # Select random index if all the values are zero
-        # NOTE: if all values are the same but non-zero, this will still pick the same action over and over
-        if Q_sum == 0 :
-            print "All values for state are 0. Choosing action uniformly at random."
-            d_action = self.explore()
-            Q_boltz = 0.0
-        else:
-            P_action = np.exp(-Q_flat/Q_sum/T)
-            num_actions = self.action_shape[1]**self.action_shape[0]
-            boltz_ind = np.random.choice(num_actions,p=P_action)
-            boltz_ind = np.unravel_index(boltz_ind,dims=self.Q.shape[self.state_shape[0]:])
-            full_ind = state_ind
-            full_ind.extend(boltz_ind)
-            
-            Q_boltz = self.Q[full_ind]
-            d_action = np.asarray(boltz_ind)
-            d_action = d_action.reshape(self.action_shape[0],1)
-    
+        P_action = np.exp(Q_flat/T)/np.sum(np.exp(Q_flat/T))
+        #print "Q for current state"
+        #print Q_flat
+        #print "Probabiliy"
+        #print P_action
         
+        num_actions = self.action_shape[1]**self.action_shape[0]
+        boltz_ind = np.random.choice(num_actions,p=P_action)
+        #print P_action[boltz_ind]
+        boltz_ind = np.unravel_index(boltz_ind,dims=self.Q.shape[self.state_shape[0]:])
+        full_ind = state_ind
+        full_ind.extend(boltz_ind)
+        
+        Q_boltz = self.Q[full_ind]
+        d_action = np.asarray(boltz_ind)
+        d_action = d_action.reshape(self.action_shape[0],1)
 
         # Cheat to make indexing work when only one dimension
         if self.action_shape[0]==1:
