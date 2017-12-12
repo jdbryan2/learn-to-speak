@@ -52,7 +52,7 @@ primdir = dirname+'_prim'
 
 max_seconds =   5.0
 # RANDOM INIT
-#initial_art=np.random.random((aw.kArt_muscle.MAX, )) #------
+initial_art=np.random.random((aw.kArt_muscle.MAX, )) #------
 # STATIC INIT
 # From a randomly generated art that worked well
 """
@@ -63,7 +63,7 @@ initial_art = np.array([ 0.52779292,  0.32185364,  0.86558425,  0.33471684,  0.6
  0.65740627,  0.65219443,  0.7657366,   0.66722533,  0.49950773,])
 """
 # Does well for state 0 with goal btw [.6,1.3)
-initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))
 
@@ -157,16 +157,16 @@ q_learn = Learner(states = states,
 # Perform Q learning Control
 num_episodes = 80 #----10
 num_view_episodes = 2
-num_tests = 2
+num_tests = 5
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     print("--------------Episode"+str(e)+"--------------")
     # Reset/Initialize Prim Controller and Simulation
     # Was using same intialzation for each episode before
     # STATIC INIT
-    control.InitializeControl(initial_art = initial_art)
+    #control.InitializeControl(initial_art = initial_art)
     # RANDOM INIT
-    #control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
+    control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
     
     learning_offset = 5 #------0
     if e<learning_offset:
