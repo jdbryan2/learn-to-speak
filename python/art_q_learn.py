@@ -155,7 +155,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 80 #----10
+num_episodes = 40 #----10
 num_view_episodes = 2
 num_tests = 5
 # TODO: Change to condition checking some change between Q functions
