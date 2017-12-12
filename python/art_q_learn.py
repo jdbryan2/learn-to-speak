@@ -172,7 +172,7 @@ for e in range(num_episodes+num_tests):
     if e<learning_offset:
         learning_rate = 1
     else:
-        learning_rate = 20.0/(e-(learning_offset-1)+20.0)
+        learning_rate = 10.0/(e-(learning_offset-1)+10.0)
         #learning_rate = 0.1
         #learning_rate = 1.0/(e+1.0) #--------
         #learning_rate = 10.0/(e+10.0)
