@@ -91,7 +91,7 @@ Ts = 1000/(sample_period_ms)
 
 # Initialize q learning class
 num_state_bins = 10
-num_action_bins = 11
+num_action_bins = 3
 num_int_state_bins = 10
 reset_action = 100
 # ensure that actions and states are 2d arrays
@@ -141,7 +141,7 @@ ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
 
 #1DACTION
-actions_inc = np.linspace(-1.0,1.0,num=num_action_bins)
+actions_inc = np.linspace(-0.5,0.5,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
 # 2DACTION
