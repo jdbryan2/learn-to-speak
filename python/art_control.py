@@ -39,7 +39,7 @@ ATM = 101325. # one atm in pascals
 control = PrimitiveUtterance(dir_name=primdir,
                              prim_fname=load_fname,
                              loops=1,
-                             utterance_length=2)
+                             utterance_length=3)
 
 #control.InitializeDir(dirname=primdir, addDTS=False)
 
@@ -54,8 +54,16 @@ Kp = np.array([1/3,1/3,0,0,0,0,0,0])
 Ki = np.array([0.5/3,1/3,0,0,0,0,0,0])
 Kd = np.array([10/3,5/3,0,0,0,0,0,0])
 I_lim = np.array([100,150,0,0,0,0,0,0])
+
+#Integral gain only
+Kp = np.array([0.0,0,0,0,0,0,0,0])
+Ki = np.array([0.1,0.05,0.2,0,0,0,0,0])
+Kd = np.array([0,0,0,0,0,0,0,0])
+I_lim = np.array([150,150,150,0,0,0,0,0])
 # leaky integrator constant
 a = 1
+#Ki[0]=0
+#Ki[2]=0
 
 # Setup state variables
 current_state = control.current_state
@@ -63,11 +71,11 @@ desired_state = np.zeros(current_state.shape)
 
 ## Test Controller
 # Setpoint for controller
-desired_state[0] = 1
-#desired_state[1] = -1
-test_dim =0
+desired_state[0] = -1
+desired_state[1] = 1
+desired_state[2] = 2
 
-
+"""
 ## Tune Controller # Comment out this block for testing.
 # Override all gains to 0 for tuning PID controllers
 Kp = np.array([0.0,0,0,0,0,0,0,0])
@@ -77,14 +85,13 @@ I_lim = np.array([0.0,0,0,0,0,0,0,0])
 
 # Tune test_dim
 test_dim = 0
-Kp[test_dim] = 1/3
-Ki[test_dim] = 0.5/3
-Kd[test_dim] = 10/3
+Kp[test_dim] = 0
+Ki[test_dim] = 0.1
+Kd[test_dim] = 0
 I_lim[test_dim] = 150
-
 # Setpoint for controller
 desired_state[test_dim] = 1
-
+"""
 
 # Setup PID History variables
 E_prev = desired_state - current_state
@@ -95,8 +102,8 @@ j=0
 while control.speaker.NotDone():
     ## Compute control action
     # Introduce a disturbance
-    if j == 60:
-        desired_state[test_dim] = 1
+    #if j == 100:
+        #desired_state[test_dim] = 1
     E = desired_state - current_state
     # Proporational Contribution
     P = Kp*E
@@ -117,16 +124,20 @@ while control.speaker.NotDone():
         if j < past:
             I[prim_num]=0
 
-        """
-        # For running tests. helps to show system is non-linear and single state
-        # doesn't capture state of system.
-        if j == 20:
-            I[prim_num] = -20
-        elif j == 50:
-            I[prim_num] = 0
-        elif j == 80:
-            I[prim_num] = -20
-        """
+    """
+    # For running tests. helps to show system is non-linear and single state
+    # doesn't capture state of system.
+    prim_num = test_dim
+    if j == 50:
+        I[prim_num] = -5
+    elif j == 100:
+        I[prim_num] = 0
+    elif j == 150:
+        I[prim_num] = -5
+    elif j ==200:
+        I[prim_num] = 0
+    """
+
     # Derivative Contribution
     D = Kd * (E - E_prev) / Ts
     # Set PID history variables
@@ -163,15 +174,19 @@ plt.show()
 #plt.show()
 
 prim_nums = np.arange(0,dim)
+prim_nums = np.arange(3)
+#prim_nums = np.array([test_dim])
 colors = ['b','g','r','c','m','y','k','0.75']
 markers = ['o','o','o','o','x','x','x','x']
 fig = plt.figure()
 for prim_num, c, m in zip(prim_nums,colors,markers):
     plt.plot(_h[prim_num][:],color=c)
+    plt.plot(control.action_hist[prim_num][0:-1], color=str(0.5+0.2*prim_num/prim_nums[-1]))
+
 
 # Remove last element from plot because we didn't perform an action
 # after the last update of the state history.
-plt.plot(control.action_hist[test_dim][0:-1], color="0.5")
+#plt.plot(control.action_hist[test_dim][0:-1], color="0.5")
 plt.show()
 
 

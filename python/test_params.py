@@ -1,5 +1,5 @@
 
-dim = 1
+dim = 8
 sample_period_ms = 20 # in milliseconds
 sample_period=sample_period_ms*8 # convert to samples
 #dirname = 'structured_masseter_100'
