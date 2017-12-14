@@ -63,7 +63,7 @@ initial_art = np.array([ 0.52779292,  0.32185364,  0.86558425,  0.33471684,  0.6
  0.65740627,  0.65219443,  0.7657366,   0.66722533,  0.49950773,])
 """
 # Does well for state 0 with goal btw [.6,1.3)
-#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))
 
@@ -100,6 +100,7 @@ goal_state = 1
 goal_width = .2
 states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
 states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
+#states = np.linspace(-2.0,2.0,num=num_state_bins)
 states = states.reshape(1,states.shape[0])
 # 2DSTATE
 """
@@ -122,6 +123,7 @@ states = np.concatenate((first_state,other_state),axis=0)
 print states
 # 1DSTATE
 goal_state_index = np.array([np.floor(num_state_bins/2.0)])
+#goal_state_index = np.array([7])
 # 2DSTATE and INTSTATE
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
@@ -130,7 +132,7 @@ goal_state_index = np.array([np.floor(num_state_bins/2.0)])
 #1.2,-1.7 # For IPA 305
 #goal_state_index = np.array([8,4])
 print("Goal State")
-print goal_state_index.shape
+#print goal_state_index
 # 1DSTATE OR 2DSTATE
 ind2d = np.zeros((2,dim))
 # INTSTATE
@@ -142,6 +144,7 @@ print states[tuple(ind2d.astype(int))]
 
 #1DACTION
 actions_inc = np.linspace(-0.5,0.5,num=num_action_bins)
+#actions_inc = np.linspace(-4.0,4.0,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
 # 2DACTION
@@ -155,9 +158,10 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 40 #----10
+num_episodes = 80 #----10
 num_view_episodes = 2
 num_tests = 5
+rewards = np.zeros(num_episodes+num_tests)
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
     print("--------------Episode"+str(e)+"--------------")
@@ -257,10 +261,10 @@ for e in range(num_episodes+num_tests):
         no_train_samples = past + 10
         #no_train_samples = 0
         if e >= num_episodes or i < no_train_samples:
-            q_learn.incrementSteps(state=state,action=action_inc.flatten())
+            rewards[e] += q_learn.incrementSteps(state=state,action=action_inc.flatten())
         else:
             ## Update the estimate of Q
-            q_learn.updateQ(state=state,action=action_inc.flatten(),next_state=next_state,epsilon=learning_rate)
+            rewards[e] += q_learn.updateQ(state=state,action=action_inc.flatten(),next_state=next_state,epsilon=learning_rate)
 
         ## Update state
         state = next_state
@@ -288,13 +292,27 @@ for e in range(num_episodes+num_tests):
         # after the last update of the state history.
         for k in range(actions_inc.shape[0]):
             plt.plot(control.action_hist[k][0:-1], color=str(0.5+k/(2*actions_inc.shape[0])))
+        plt.title("Trial Run - Exploiting Q")
+        plt.xlabel("Samples taken at 50 Hz")
+        plt.ylabel("Primitive State")
         # 1DSTATE
         fig = plt.figure()
         pltm.imshow(q_learn.Q)
+        pltm.colorbar()
+        plt.title("Q Function")
+        plt.xlabel("Discrete Action Index")
+        plt.ylabel("Discrete State Index")
         # 2DSTATE and INTSTATE
         #for k in range(actions_inc.shape[1]):
         #    fig = plt.figure()
         #    pltm.imshow(q_learn.Q[:,:,k])
+
+        # Plot Reward
+        fig = plt.figure()
+        plt.plot(rewards, color="g")
+        plt.title("Undiscounted Accumulated Reward throughout Training")
+        plt.xlabel("Episode")
+        plt.ylabel("Total Reward")
         control.Save()
         pltm.show()
 

@@ -326,6 +326,7 @@ class Learner:
     
         # Increment steps to keep track of the time
         self.steps += 1
+        return r
     
     # Call this instead of updateQ if you just want to use the learned policy
     def incrementSteps(self,state,action):
@@ -334,6 +335,7 @@ class Learner:
         # Get reward for state action pair
         r = self.getReward(state,action)
         self.total_reward += r
+        return r
 
     # Choose the action greedily with probability p_ and
     # choose randomly with probability 1-p_
