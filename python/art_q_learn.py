@@ -63,7 +63,7 @@ initial_art = np.array([ 0.52779292,  0.32185364,  0.86558425,  0.33471684,  0.6
  0.65740627,  0.65219443,  0.7657366,   0.66722533,  0.49950773,])
 """
 # Does well for state 0 with goal btw [.6,1.3)
-initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 # Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))
 
@@ -94,22 +94,29 @@ num_state_bins = 10
 num_action_bins = 3
 num_int_state_bins = 10
 reset_action = 100
-# ensure that actions and states are 2d arrays
-#states = np.linspace(-10.0,10.0,num=num_state_bins)
+# 1DState
+"""
 goal_state = 1
 goal_width = .2
 states = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
 states = np.append(states,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
 #states = np.linspace(-2.0,2.0,num=num_state_bins)
 states = states.reshape(1,states.shape[0])
-# 2DSTATE
 """
+# 2DSTATE
+#goal_state = 1
+#goal_width = .2
+#first_state = np.linspace(-2.0,goal_state-goal_width/2.0,num=np.floor(num_state_bins/2.0))
+#first_state = np.append(first_state,np.linspace(goal_state+goal_width/2.0,2.0,num=np.ceil(num_state_bins/2.0)))
+#first_state = first_state.reshape(1,first_state.shape[0])
+#states = np.concatenate((first_state,first_state),axis=0)
+
 first_state = np.linspace(-4,2,num=num_state_bins)
 first_state = first_state.reshape(1,first_state.shape[0])
 other_state = np.linspace(-4,2,num=num_state_bins)
 other_state = other_state.reshape(1,other_state.shape[0])
 states = np.concatenate((first_state,other_state),axis=0)
-"""
+
 
 # INTSTATE
 #action_int_state = np.linspace(-20,20,num=num_int_state_bins)
@@ -122,7 +129,7 @@ states = np.concatenate((first_state,other_state),axis=0)
 
 print states
 # 1DSTATE
-goal_state_index = np.array([np.floor(num_state_bins/2.0)])
+#goal_state_index = np.array([np.floor(num_state_bins/2.0)])
 #goal_state_index = np.array([7])
 # 2DSTATE and INTSTATE
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
@@ -130,7 +137,7 @@ goal_state_index = np.array([np.floor(num_state_bins/2.0)])
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0),-1,-1])
 #goal_state_index = np.array([7,5])
 #1.2,-1.7 # For IPA 305
-#goal_state_index = np.array([8,4])
+goal_state_index = np.array([8,4])
 print("Goal State")
 #print goal_state_index
 # 1DSTATE OR 2DSTATE
@@ -148,7 +155,7 @@ actions_inc = np.linspace(-0.5,0.5,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
 # 2DACTION
-#actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
+actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
 print actions_inc
 
 q_learn = Learner(states = states,
@@ -158,7 +165,7 @@ q_learn = Learner(states = states,
                   alpha = 0.99)
 
 # Perform Q learning Control
-num_episodes = 80 #----10
+num_episodes = 100 #----10
 num_view_episodes = 2
 num_tests = 5
 rewards = np.zeros(num_episodes+num_tests)
@@ -249,7 +256,7 @@ for e in range(num_episodes+num_tests):
         # Currently give uncontrolled state zero command
         # 1DSTATE
         next_state = control.SimulatePeriod(control_action=action)
-        # 2DSTATE
+        # 2DSTATE with 1D control
         #next_state = control.SimulatePeriod(control_action=np.append(action,0))
         # INTSTATE
         #next_state = np.concatenate((next_state,action),axis=0)
@@ -296,20 +303,25 @@ for e in range(num_episodes+num_tests):
         plt.xlabel("Samples taken at 50 Hz")
         plt.ylabel("Primitive State")
         # 1DSTATE
-        fig = plt.figure()
-        pltm.imshow(q_learn.Q)
-        pltm.colorbar()
-        plt.title("Q Function")
-        plt.xlabel("Discrete Action Index")
-        plt.ylabel("Discrete State Index")
+        #fig = plt.figure()
+        #pltm.imshow(q_learn.Q)
+        #pltm.colorbar()
+        #plt.title("Q Function")
+        #plt.xlabel("Discrete Action Index")
+        #plt.ylabel("Discrete State Index")
         # 2DSTATE and INTSTATE
-        #for k in range(actions_inc.shape[1]):
-        #    fig = plt.figure()
-        #    pltm.imshow(q_learn.Q[:,:,k])
+        """
+        for k in range(actions_inc.shape[1]):
+            fig = plt.figure()
+            pltm.imshow(q_learn.Q[:,:,k])
+            plt.title("Q Function")
+            plt.xlabel("Discrete Action Index")
+            plt.ylabel("Discrete State Index")
+        """
 
         # Plot Reward
         fig = plt.figure()
-        plt.plot(rewards, color="g")
+        plt.plot(rewards)
         plt.title("Undiscounted Accumulated Reward throughout Training")
         plt.xlabel("Episode")
         plt.ylabel("Total Reward")
