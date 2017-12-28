@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal as signal
 
 # Original Matlab code for mel filter bank generator
 ################################################################################
@@ -33,7 +34,7 @@ import numpy as np
 #
 #end
 
-def MelFilters( p, nfft, fs )
+def matlab_MelFilters( p, nfft, fs ):
     """
     Generate numpy array of mel filter bank.
     """
@@ -69,5 +70,81 @@ def MelFilters( p, nfft, fs )
 
     return filter_bank
 
+def Freq2Mel(freq):
+    return 2595. * np.log10(1.+freq/700.)
+
+def Mel2Freq(mel):
+    return 700. * (10.**(mel/2595.0)-1.)
+
+def PreemphasisFilter(signal, coeff=0.95)
+    return np.append(signal[0], signal[1:] - coeff * signal[:-1])
+
+def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
+    # largely borrowed from python_speech_features by James Lyons
+
+    # set upper frequency
+    high_freq = high_freq or sample_freq/2. # clever use of 'or' 
+    assert high_freq <= sample_freq/2., "high_freq is greater than sample_freq/2"
+
+    # compute mel bins (evenly spaced on mel scale)
+    low_mel = Freq2Mel(low_freq)
+    high_mel = Freq2Mel(high_freq)
+    mel_bins = np.linspace(low_mel, high_mel, nbins+2)
+    print mel_bins
+
+    fft_bins = np.floor((nfft+1)*Mel2Freq(mel_bins)/sample_freq)
+    print fft_bins
+
+    # note: the '//' operator is divides and truncates to integer value
+    filter_bank = np.zeros([nbins, nfft//2+1])
+    for j in range(0, nbins):
+
+        for i in range(int(fft_bins[j]), int(fft_bins[j+1])):
+            filter_bank[j, i] = (i-fft_bins[j])/(fft_bins[j+1]-fft_bins[j])
+
+        for i in range(int(fft_bins[j+1]), int(fft_bins[j+2])):
+            filter_bank[j, i] = (fft_bins[j+2]-i)/(fft_bins[j+2]-fft_bins[j+1])
+
+    return filter_bank
+
+def MFCC(signal, nbins, nfft=512, sample_freq=16000, low_freq=0,
+         high_freq=None, preemph = 0.95, window='hamming', nperseg=512,
+         noverlap=0):
+
+
+    signal = PreemphasisFilter(signal, preemph)
+    f, power_spectrum = signal.periodogram(signal, sample_freq, window, nfft,
+                                           scaling='spectrum')
+
+    filter_bank = MelFilters(nbins, nfft, sample_freq, low_freq, high_freq)
+
+    f, t, spectrum = signal.stft(signal, 
+                                 fs=sample_freq, 
+                                 window=window, 
+                                 nperseg=nperseg,
+                                 noverlap=noverlap,
+                                 nfft=nfft)
+
+
+    spectrum = spectrum[:, :, :-1] # trim off last element
+    spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
+    spectrum = np.abs(spectrum)**2. # convert to power spectrum
+
+    energy = numpy.sum(spectrum,1)
+    energy = numpy.where(energy == 0,numpy.finfo(float).eps,energy)
+
+    features = np.dot(spectrum, filter_bank)
+    features = numpy.where(features == 0,numpy.finfo(float).eps,features)
+
+    return features, energy
+
+ 
+
+
 if __name__ == '__main__':
-    x = MelFilters(10, 256, 8000)
+    import pylab as plt
+    x = MelFilters(10, 512, 16000, 300., 8000.)
+    for filt in x:
+        plt.plot(filt)
+
+    plt.show()
