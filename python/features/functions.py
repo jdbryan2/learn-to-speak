@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal as signal
+from scipy.fftpack import dct
 
 # Original Matlab code for mel filter bank generator
 ################################################################################
@@ -76,7 +77,7 @@ def Freq2Mel(freq):
 def Mel2Freq(mel):
     return 700. * (10.**(mel/2595.0)-1.)
 
-def PreemphasisFilter(signal, coeff=0.95)
+def PreemphasisFilter(signal, coeff=0.95):
     return np.append(signal[0], signal[1:] - coeff * signal[:-1])
 
 def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
@@ -107,34 +108,42 @@ def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
 
     return filter_bank
 
-def MFCC(signal, nbins, nfft=512, sample_freq=16000, low_freq=0,
+def MFCC(data, nbins, nfft=512, sample_freq=16000, low_freq=0,
          high_freq=None, preemph = 0.95, window='hamming', nperseg=512,
          noverlap=0):
 
 
-    signal = PreemphasisFilter(signal, preemph)
-    f, power_spectrum = signal.periodogram(signal, sample_freq, window, nfft,
-                                           scaling='spectrum')
+    data = PreemphasisFilter(data, preemph)
 
     filter_bank = MelFilters(nbins, nfft, sample_freq, low_freq, high_freq)
 
-    f, t, spectrum = signal.stft(signal, 
+    f, t, spectrum = signal.stft(data, 
                                  fs=sample_freq, 
                                  window=window, 
                                  nperseg=nperseg,
                                  noverlap=noverlap,
                                  nfft=nfft)
 
+    print spectrum.shape
 
-    spectrum = spectrum[:, :, :-1] # trim off last element
-    spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
+    #spectrum = spectrum[:, :, :-1] # trim off last element
+    #spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
     spectrum = np.abs(spectrum)**2. # convert to power spectrum
 
-    energy = numpy.sum(spectrum,1)
-    energy = numpy.where(energy == 0,numpy.finfo(float).eps,energy)
+    energy = np.sum(spectrum,1)
+    energy = np.where(energy == 0,np.finfo(float).eps,energy)
 
-    features = np.dot(spectrum, filter_bank)
-    features = numpy.where(features == 0,numpy.finfo(float).eps,features)
+    features = np.dot(filter_bank, spectrum)
+    features = np.where(features == 0,np.finfo(float).eps,features)
+
+    features = features.T
+
+    features = np.log(features)
+    print features.shape
+
+    # I don't really know why the ortho paramter is important
+    # it applies a scaling factor but no explanation is given in scipy docs
+    features = dct(features, type=2, axis=1, norm='ortho')[:, :nbins]
 
     return features, energy
 
@@ -148,3 +157,6 @@ if __name__ == '__main__':
         plt.plot(filt)
 
     plt.show()
+
+    y, e = MFCC(np.random.random(2000), 10)
+
