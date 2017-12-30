@@ -39,7 +39,7 @@ def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
 
     return filter_bank
 
-def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=0,
+def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=300,
          high_freq=None, preemph = 0.95, window='hamming', nperseg=512,
          noverlap=0):
 
@@ -154,23 +154,23 @@ if __name__ == '__main__':
     #distance, lattice, backpointers, constraint = DynamicProgramming(y, y2)
 
     distance = np.ones((100, 100))*np.infty
-    for i in range(100):
+    for i in range(30):
         fname = "d%02i.wav"%i
         print "Comparing "+fname
         rate, data = wav_read('../data/digits/'+fname)
         data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
-        x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=256,
-                     noverlap=3.*256/4, sample_freq=rate)
+        x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
+                     noverlap=7.*512/8, sample_freq=rate)
         #print x.shape
 
-        for j in range(100):
+        for j in range(30):
             fname = "d%02i.wav"%j
             rate, data = wav_read('../data/digits/'+fname)
             data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
-            y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=256,
-                     noverlap=3.*256/4, sample_freq=rate)
+            y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
+                     noverlap=7.*512/8, sample_freq=rate)
             #print y.shape
-            d, l, b = DynamicProgramming(x,y)
+            d, l, b = DynamicProgramming(x[:, 1:],y[:, 1:])
             if d < distance[i, j]:
                 distance[i, j] = d
 
