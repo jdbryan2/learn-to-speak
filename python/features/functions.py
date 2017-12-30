@@ -2,75 +2,6 @@ import numpy as np
 import scipy.signal as signal
 from scipy.fftpack import dct
 
-# Original Matlab code for mel filter bank generator
-################################################################################
-#function [ filter_bank ] = MelFilters( p, nfft, fs )
-#%UNTITLED5 Summary of this function goes here
-#%   Detailed explanation goes here
-#
-#%f0 = fs/700;
-#f_max = fs/2;
-#length = floor(nfft/2);
-#
-#mel_spacing = log(1+f_max/700)/(p+1);
-#
-#% convert fft bin numbers to mel
-#mel_bins = nfft*(700/fs*(exp([0 1 p p+1]*mel_spacing)-1));
-#
-#% clever matlab-fu to compute the filter bank efficiently
-#b1 = floor(mel_bins(1)) + 1;
-#b2 = ceil(mel_bins(2));
-#b3 = floor(mel_bins(3));
-#b4 = min(length, ceil(mel_bins(4))) - 1;
-#
-#pf = log(1 + fs*(b1:b4)/nfft/700) / mel_spacing;
-#fp = floor(pf);
-#pm = pf - fp;
-#
-#r = [fp(b2:b4) 1+fp(1:b3)];
-#c = [b2:b4 1:b3] + 1;
-#v = 2 * [1-pm(b2:b4) pm(1:b3)];
-#
-#filter_bank = sparse(r, c, v, p, 1+length);
-#
-#end
-
-def matlab_MelFilters( p, nfft, fs ):
-    """
-    Generate numpy array of mel filter bank.
-    """
-
-    #f0 = fs/700;
-    f_max = fs/2.;
-    length = floor(nfft/2.);
-
-    mel_spacing = log(1.+f_max/700.)/(p+1.);
-
-    # convert fft bin numbers to mel
-    mel_bins = nfft*(700/fs*(np.exp(np.array([0., 1., p, p+1])*mel_spacing)-1));
-
-    # clever numpy-fu to compute the filter bank efficiently
-    b1 = np.floor(mel_bins[1]) + 1;
-    b2 = np.ceil(mel_bins[2]);
-    b3 = np.floor(mel_bins[3]);
-    b4 = np.min(length, ceil(mel_bins[4])) - 1;
-
-    pf = np.log(1 + fs*np.arange(b1,b4)/nfft/700.) / mel_spacing;
-    fp = np.floor(pf);
-    pm = pf - fp;
-
-    # define matrix sparsely
-    # r, c, v -> row, column, value
-    r = np.array([fp[b2:b4], 1+fp[1:b3]]);
-    c = np.append(np.arange(b2,b4), np.arange(1,b3)) + 1;
-    v = 2 * np.append(1-pm[b2:b4], pm[1:b3]);
-
-    # need to find the numpy equivalent of this
-    # matrix dimensions are (p x 1+length)
-    filter_bank = sparse(r, c, v, p, 1+length);
-
-    return filter_bank
-
 def Freq2Mel(freq):
     return 2595. * np.log10(1.+freq/700.)
 
@@ -91,10 +22,10 @@ def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
     low_mel = Freq2Mel(low_freq)
     high_mel = Freq2Mel(high_freq)
     mel_bins = np.linspace(low_mel, high_mel, nbins+2)
-    print mel_bins
+    #print mel_bins
 
     fft_bins = np.floor((nfft+1)*Mel2Freq(mel_bins)/sample_freq)
-    print fft_bins
+    #print fft_bins
 
     # note: the '//' operator is divides and truncates to integer value
     filter_bank = np.zeros([nbins, nfft//2+1])
@@ -124,7 +55,7 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=0,
                                  noverlap=noverlap,
                                  nfft=nfft)
 
-    print spectrum.shape
+    #print spectrum.shape
 
     #spectrum = spectrum[:, :, :-1] # trim off last element
     #spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
@@ -139,7 +70,7 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=0,
     features = features.T
 
     features = np.log(features)
-    print features.shape
+    #print features.shape
 
     # I don't really know why the ortho paramter is important
     # it applies a scaling factor but no explanation is given in scipy docs
@@ -148,86 +79,49 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=0,
     return features, energy
 
  
+def DynamicProgramming(x, y):
+    # x, y - input data matrices
+    #        first dimension is time, second is feature
+
     # Dynamic programming function
     # Copy and paste from Matlab 
-    #
-    #function [ distance, lattice, backpointers ] = dynamicLPC( x, y, window, step, p)
-    #%dynamicLPC Dynamic time warping applied to the LPC distance
-    #%   x,y: input signals (should be 2D like a spectrogram)
-    #%   window: window function defines dimensions and shape of window
-    #%   step: size of a single increment (default 1)
-    #%   a,b,c: weighting parameters used in local SSIM (defaulted to 1)
+    lattice = np.ones((x.shape[0], y.shape[0]))*np.infty
+    backpointers = np.zeros((x.shape[0], y.shape[0]))
+    if x.shape[0] > 2.*y.shape[0] or y.shape[0] > 2.*x.shape[0]:
+        distance = np.infty
+        return distance, lattice, backpointers
 
+    # loop over x axis of lattice
+    for i in range(0, x.shape[0]):
 
-    #    
-    #    %% Format x and y
-    #    %%%%%%%%%%%%%%%%%
-    #    
-    #    [xrows, xcols] = size(x);
-    #    [yrows, ycols] = size(y);
-    #    [wrows, wcols] = size(window);
-    #    wcols = 1;
-    #    
-    #    
-    #    %% Looping parameters
-    #    
-    #    x_max_steps = floor((xrows-wrows)/step);
-    #    y_max_steps = floor((yrows-wrows)/step);
-    #    
-    #    lattice = 100*ones(x_max_steps, y_max_steps);
-    #    backpointers = zeros(x_max_steps, y_max_steps);
-    #    
-    #    %% walk through the lattice
-    #    
-    #    for x_index = 1:x_max_steps
-    #        
-    #        % compute the global constraints
-    #        y_min = ceil(max([0.5+0.5*x_index, y_max_steps-2*(x_max_steps-x_index)]));
-    #        y_max = floor(min([2*x_index-1, y_max_steps-0.5*(x_max_steps-x_index)]));
-    #        
-    #        
-    #        for y_index = y_min:y_max            
-    #            x_local = x((1+(x_index-1)*step):((x_index-1)*step+wrows));
-    #            x_local = x_local.*window;
-    #            x_lpc = lpc(x_local, p);
-    #            Rx = xcorr(x_local);
-    #            Rx = toeplitz(Rx((0:p)+wrows));
-    #            
-    #            y_local = y((1+(y_index-1)*step):((y_index-1)*step+wrows));
-    #            y_local = y_local.*window;     
-    #            y_lpc = lpc(y_local, p);
-    #            
-    #            % find best previous step within local constraints
-    #            k = 2;
-    #            if y_index < 3
-    #                k = y_index-1;
-    #            end
-    #            
-    #            %bleh = y_lpc*Rx*y_lpc'
-    #            %blah = x_lpc*Rx*x_lpc'
-    #            
-    #            if x_index > 1
-    #                [min_val, min_index] = min(lattice(x_index-1, (y_index-k):y_index));
-    #                lattice(x_index, y_index) = log((y_lpc*Rx*y_lpc')/(x_lpc*Rx*x_lpc'))+min_val;
-    #                backpointers(x_index, y_index) = y_index-k+(min_index-1);
-    #            else
-    #                lattice(x_index, y_index) = log((y_lpc*Rx*y_lpc')/(x_lpc*Rx*x_lpc'));
-    #                backpointers(x_index, y_index) = 0;
-    #            end
-    #            
+        # compute the global constraints
+        y_min = np.ceil(np.max([0.5*i, y.shape[0]-2*(x.shape[0]-i)]))
+        y_max = np.floor(np.min([2.*i, y.shape[0]-0.5*(x.shape[0]-i)]))
 
-    #        end
+        #if i==0:
+        #    print "first constraints"
+        #    print y_min, y_max
 
-    #    end
-    #    
-    #    if ~isempty(lattice(x_index, y_index))
-    #        distance = lattice(x_index, y_index);
-    #    else 
-    #        distance = nan;
-    #    end
-    #    
-    #    
-    #end
+        # loop over y axis of lattice within global constrains
+        for j in range(int(y_min), int(y_max)+1):
+
+            # impose local constraints (no more than two steps back)
+            k=2
+            if j < 2:
+                k = j
+
+            # compute optimal distance to each point
+            if i > 0:
+                min_val = np.min(lattice[i-1, (j-k):(j+1)])
+                min_index = np.argmin(lattice[i-1, (j-k):(j+1)])
+                lattice[i, j] = np.sum(np.abs(x[i]-y[j])**.2)+min_val
+                backpointers[i, j] = j-k+(min_index)
+            else:
+                lattice[i, j] = np.sum(np.abs(x[i]-y[j])**.2)
+                backpointers[i, j] = 0
+
+    distance = lattice[i,j]
+    return distance, lattice, backpointers
 
 
 if __name__ == '__main__':
@@ -241,19 +135,45 @@ if __name__ == '__main__':
 
     rate, data = wav_read('/home/jacob/Projects/learn-to-speak/analysis/manifolds/timit/sa1.wav')
     data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
-    print rate, max(data), min(data)
-    plt.figure()
-    plt.plot(data)
-    plt.show()
+    #print rate, max(data), min(data)
+    #plt.figure()
+    #plt.plot(data)
+    #plt.show()
 
     #y, e = MFCC(np.random.random(2000), 10)
     y, e = MFCC(data, ncoeffs=13, nfilters=26)
     y2, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
-                 noverlap=384)
+                 noverlap=128)
 
-    print y.shape
-    plt.imshow(np.abs(y[:, 1:].T))
-    plt.figure()
-    plt.imshow(np.abs(y2[:, 1:].T))
+    #print y.shape
+    #plt.imshow(np.abs(y[:, 1:].T))
+    #plt.figure()
+    #plt.imshow(np.abs(y2[:, 1:].T))
+    #plt.show()
+
+    #distance, lattice, backpointers, constraint = DynamicProgramming(y, y2)
+
+    distance = np.ones((100, 100))*np.infty
+    for i in range(100):
+        fname = "d%02i.wav"%i
+        print "Comparing "+fname
+        rate, data = wav_read('../data/digits/'+fname)
+        data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+        x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=256,
+                     noverlap=3.*256/4, sample_freq=rate)
+        #print x.shape
+
+        for j in range(100):
+            fname = "d%02i.wav"%j
+            rate, data = wav_read('../data/digits/'+fname)
+            data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+            y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=256,
+                     noverlap=3.*256/4, sample_freq=rate)
+            #print y.shape
+            d, l, b = DynamicProgramming(x,y)
+            if d < distance[i, j]:
+                distance[i, j] = d
+
+
+    plt.imshow(distance)
     plt.show()
-
