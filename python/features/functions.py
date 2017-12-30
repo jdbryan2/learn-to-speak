@@ -108,14 +108,14 @@ def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
 
     return filter_bank
 
-def MFCC(data, nbins, nfft=512, sample_freq=16000, low_freq=0,
+def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=0,
          high_freq=None, preemph = 0.95, window='hamming', nperseg=512,
          noverlap=0):
 
 
     data = PreemphasisFilter(data, preemph)
 
-    filter_bank = MelFilters(nbins, nfft, sample_freq, low_freq, high_freq)
+    filter_bank = MelFilters(nfilters, nfft, sample_freq, low_freq, high_freq)
 
     f, t, spectrum = signal.stft(data, 
                                  fs=sample_freq, 
@@ -143,20 +143,117 @@ def MFCC(data, nbins, nfft=512, sample_freq=16000, low_freq=0,
 
     # I don't really know why the ortho paramter is important
     # it applies a scaling factor but no explanation is given in scipy docs
-    features = dct(features, type=2, axis=1, norm='ortho')[:, :nbins]
+    features = dct(features, type=2, axis=1, norm='ortho')[:, :ncoeffs]
 
     return features, energy
 
  
+    # Dynamic programming function
+    # Copy and paste from Matlab 
+    #
+    #function [ distance, lattice, backpointers ] = dynamicLPC( x, y, window, step, p)
+    #%dynamicLPC Dynamic time warping applied to the LPC distance
+    #%   x,y: input signals (should be 2D like a spectrogram)
+    #%   window: window function defines dimensions and shape of window
+    #%   step: size of a single increment (default 1)
+    #%   a,b,c: weighting parameters used in local SSIM (defaulted to 1)
+
+
+    #    
+    #    %% Format x and y
+    #    %%%%%%%%%%%%%%%%%
+    #    
+    #    [xrows, xcols] = size(x);
+    #    [yrows, ycols] = size(y);
+    #    [wrows, wcols] = size(window);
+    #    wcols = 1;
+    #    
+    #    
+    #    %% Looping parameters
+    #    
+    #    x_max_steps = floor((xrows-wrows)/step);
+    #    y_max_steps = floor((yrows-wrows)/step);
+    #    
+    #    lattice = 100*ones(x_max_steps, y_max_steps);
+    #    backpointers = zeros(x_max_steps, y_max_steps);
+    #    
+    #    %% walk through the lattice
+    #    
+    #    for x_index = 1:x_max_steps
+    #        
+    #        % compute the global constraints
+    #        y_min = ceil(max([0.5+0.5*x_index, y_max_steps-2*(x_max_steps-x_index)]));
+    #        y_max = floor(min([2*x_index-1, y_max_steps-0.5*(x_max_steps-x_index)]));
+    #        
+    #        
+    #        for y_index = y_min:y_max            
+    #            x_local = x((1+(x_index-1)*step):((x_index-1)*step+wrows));
+    #            x_local = x_local.*window;
+    #            x_lpc = lpc(x_local, p);
+    #            Rx = xcorr(x_local);
+    #            Rx = toeplitz(Rx((0:p)+wrows));
+    #            
+    #            y_local = y((1+(y_index-1)*step):((y_index-1)*step+wrows));
+    #            y_local = y_local.*window;     
+    #            y_lpc = lpc(y_local, p);
+    #            
+    #            % find best previous step within local constraints
+    #            k = 2;
+    #            if y_index < 3
+    #                k = y_index-1;
+    #            end
+    #            
+    #            %bleh = y_lpc*Rx*y_lpc'
+    #            %blah = x_lpc*Rx*x_lpc'
+    #            
+    #            if x_index > 1
+    #                [min_val, min_index] = min(lattice(x_index-1, (y_index-k):y_index));
+    #                lattice(x_index, y_index) = log((y_lpc*Rx*y_lpc')/(x_lpc*Rx*x_lpc'))+min_val;
+    #                backpointers(x_index, y_index) = y_index-k+(min_index-1);
+    #            else
+    #                lattice(x_index, y_index) = log((y_lpc*Rx*y_lpc')/(x_lpc*Rx*x_lpc'));
+    #                backpointers(x_index, y_index) = 0;
+    #            end
+    #            
+
+    #        end
+
+    #    end
+    #    
+    #    if ~isempty(lattice(x_index, y_index))
+    #        distance = lattice(x_index, y_index);
+    #    else 
+    #        distance = nan;
+    #    end
+    #    
+    #    
+    #end
 
 
 if __name__ == '__main__':
     import pylab as plt
-    x = MelFilters(10, 512, 16000, 300., 8000.)
-    for filt in x:
-        plt.plot(filt)
+    from scipy.io.wavfile import read as wav_read
 
+    # Spoken Language Processing: only first 13 MFCC needed for speech recog
+    x = MelFilters(13, 512, 16000, 300., 8000.)
+    #for filt in x:
+        #plt.plot(filt)
+
+    rate, data = wav_read('/home/jacob/Projects/learn-to-speak/analysis/manifolds/timit/sa1.wav')
+    data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+    print rate, max(data), min(data)
+    plt.figure()
+    plt.plot(data)
     plt.show()
 
-    y, e = MFCC(np.random.random(2000), 10)
+    #y, e = MFCC(np.random.random(2000), 10)
+    y, e = MFCC(data, ncoeffs=13, nfilters=26)
+    y2, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
+                 noverlap=384)
+
+    print y.shape
+    plt.imshow(np.abs(y[:, 1:].T))
+    plt.figure()
+    plt.imshow(np.abs(y2[:, 1:].T))
+    plt.show()
 
