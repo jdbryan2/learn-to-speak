@@ -2,6 +2,9 @@ import numpy as np
 import scipy.signal as signal
 from scipy.fftpack import dct
 
+import pylab as plt
+from scipy.io.wavfile import read as wav_read
+
 def Freq2Mel(freq):
     return 2595. * np.log10(1.+freq/700.)
 
@@ -78,6 +81,14 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=300,
 
     return features, energy
 
+def Delta(data):
+    output = np.copy(data)
+    output[1:, :] -= data[:-1, :]
+    output[-1, :] = 0.
+    output[0, :] = 0.
+    return output
+
+
  
 def DynamicProgramming(x, y):
     # x, y - input data matrices
@@ -97,6 +108,8 @@ def DynamicProgramming(x, y):
         # compute the global constraints
         y_min = np.ceil(np.max([0.5*i, y.shape[0]-2*(x.shape[0]-i)]))
         y_max = np.floor(np.min([2.*i, y.shape[0]-0.5*(x.shape[0]-i)]))
+        #y_min = 0
+        #y_max = y.shape[0]-1
 
         #if i==0:
         #    print "first constraints"
@@ -106,30 +119,44 @@ def DynamicProgramming(x, y):
         for j in range(int(y_min), int(y_max)+1):
 
             # impose local constraints (no more than two steps back)
-            k=2
-            if j < 2:
+            k=3
+            if j < 3:
                 k = j
 
             # compute optimal distance to each point
             if i > 0:
                 min_val = np.min(lattice[i-1, (j-k):(j+1)])
-                min_index = np.argmin(lattice[i-1, (j-k):(j+1)])
-                lattice[i, j] = np.sum(np.abs(x[i]-y[j])**.2)+min_val
-                backpointers[i, j] = j-k+(min_index)
+                backpointer = j-k+np.argmin(lattice[i-1, (j-k):(j+1)])
+                #min_val = np.min(lattice[i-1, :])
+                #backpointer = j-k+np.argmin(lattice[i-1, :])
             else:
-                lattice[i, j] = np.sum(np.abs(x[i]-y[j])**.2)
-                backpointers[i, j] = 0
+                min_val = 0.
+                backpointer = 0
+
+            #min_val=0
+
+            #plt.figure()
+            #plt.plot(x[i])
+            #plt.plot(y[j])
+            #plt.show()
+            lattice[i, j] = np.sum(np.abs(x[i]-y[j])**2.) / \
+                            np.sum(np.abs(x[i])**2.)/np.sum(np.abs(y[j])**2.)+ \
+                            min_val
+            backpointers[i, j] = backpointer
+        #plt.plot(lattice[i, :])
+        #plt.show()
+
 
     distance = lattice[i,j]
     return distance, lattice, backpointers
 
 
 if __name__ == '__main__':
-    import pylab as plt
-    from scipy.io.wavfile import read as wav_read
+    #import pylab as plt
+    #from scipy.io.wavfile import read as wav_read
 
     # Spoken Language Processing: only first 13 MFCC needed for speech recog
-    x = MelFilters(13, 512, 16000, 300., 8000.)
+    #x = MelFilters(13, 512, 16000, 300., 8000.)
     #for filt in x:
         #plt.plot(filt)
 
@@ -153,24 +180,47 @@ if __name__ == '__main__':
 
     #distance, lattice, backpointers, constraint = DynamicProgramming(y, y2)
 
+    nperseg=160 # 20 ms * 8 samples per ms
+    noverlap=int(3*nperseg/4)
+
     distance = np.ones((100, 100))*np.infty
-    for i in range(30):
+    for i in range(0,100):
         fname = "d%02i.wav"%i
         print "Comparing "+fname
         rate, data = wav_read('../data/digits/'+fname)
         data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
-        x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
-                     noverlap=7.*512/8, sample_freq=rate)
+        x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,
+                     noverlap=noverlap, sample_freq=rate)
+        delta_x = Delta(x)
+        x = np.append(x, delta_x, axis=1)
+        delta_delta_x = Delta(delta_x)
+        x = np.append(x, delta_delta_x, axis=1)
         #print x.shape
 
-        for j in range(30):
+        for j in range(0, 100):
             fname = "d%02i.wav"%j
             rate, data = wav_read('../data/digits/'+fname)
             data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
-            y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
-                     noverlap=7.*512/8, sample_freq=rate)
+            y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,
+                     noverlap=noverlap, sample_freq=rate)
+            delta_y = Delta(y)
+            y = np.append(y, delta_y, axis=1)
+            delta_delta_y = Delta(delta_y)
+            y = np.append(y, delta_delta_y, axis=1)
             #print y.shape
             d, l, b = DynamicProgramming(x[:, 1:],y[:, 1:])
+            #d2, l2, b2 = DynamicProgramming(y[:, 1:],x[:, 1:])
+            print "Distance Difference: %02i vs %02i" % (i, j)
+            #print d, d2
+            #plt.figure()
+            #plt.imshow(x[:, 1:].T)
+            #plt.figure()
+            #plt.imshow(y[:, 1:].T)
+            #plt.figure()
+            #plt.imshow(l)
+            #plt.figure()
+            #plt.imshow(l2)
+            #plt.show()
             if d < distance[i, j]:
                 distance[i, j] = d
 
