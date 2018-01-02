@@ -139,15 +139,15 @@ def DynamicProgramming(x, y):
             #plt.plot(x[i])
             #plt.plot(y[j])
             #plt.show()
-            lattice[i, j] = np.sum(np.abs(x[i]-y[j])**2.) / \
-                            np.sum(np.abs(x[i])**2.)/np.sum(np.abs(y[j])**2.)+ \
-                            min_val
+            lattice[i, j] = np.sqrt(np.sum(np.abs(x[i]-y[j])**2.)) #/ \
+                            #np.sum(np.abs(x[i])**2.)/np.sum(np.abs(y[j])**2.))+ \
+            lattice[i, j] += min_val
             backpointers[i, j] = backpointer
         #plt.plot(lattice[i, :])
         #plt.show()
 
 
-    distance = lattice[i,j]
+    distance = lattice[i,j] / np.min([x.shape[0], y.shape[0]])
     return distance, lattice, backpointers
 
 
@@ -189,41 +189,34 @@ if __name__ == '__main__':
         print "Comparing "+fname
         rate, data = wav_read('../data/digits/'+fname)
         data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+
         x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,
                      noverlap=noverlap, sample_freq=rate)
+
         delta_x = Delta(x)
-        x = np.append(x, delta_x, axis=1)
         delta_delta_x = Delta(delta_x)
+        x = np.append(x, delta_x, axis=1)
         x = np.append(x, delta_delta_x, axis=1)
-        #print x.shape
 
         for j in range(0, 100):
             fname = "d%02i.wav"%j
             rate, data = wav_read('../data/digits/'+fname)
             data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+
             y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,
                      noverlap=noverlap, sample_freq=rate)
+
             delta_y = Delta(y)
-            y = np.append(y, delta_y, axis=1)
             delta_delta_y = Delta(delta_y)
+            y = np.append(y, delta_y, axis=1)
             y = np.append(y, delta_delta_y, axis=1)
-            #print y.shape
             d, l, b = DynamicProgramming(x[:, 1:],y[:, 1:])
-            #d2, l2, b2 = DynamicProgramming(y[:, 1:],x[:, 1:])
+            d2, l2, b2 = DynamicProgramming(y[:, 1:],x[:, 1:])
             print "Distance Difference: %02i vs %02i" % (i, j)
-            #print d, d2
-            #plt.figure()
-            #plt.imshow(x[:, 1:].T)
-            #plt.figure()
-            #plt.imshow(y[:, 1:].T)
-            #plt.figure()
-            #plt.imshow(l)
-            #plt.figure()
-            #plt.imshow(l2)
-            #plt.show()
+            d = (d+d2)/2.
             if d < distance[i, j]:
-                distance[i, j] = d
+                distance[i, j] = d 
 
 
-    plt.imshow(distance)
+    plt.imshow(distance, cmap='jet')
     plt.show()
