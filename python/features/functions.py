@@ -63,6 +63,7 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=300,
     #spectrum = spectrum[:, :, :-1] # trim off last element
     #spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
     spectrum = np.abs(spectrum)**2. # convert to power spectrum
+    print spectrum.shape
 
     energy = np.sum(spectrum,1)
     energy = np.where(energy == 0,np.finfo(float).eps,energy)
@@ -162,6 +163,7 @@ if __name__ == '__main__':
 
     rate, data = wav_read('/home/jacob/Projects/learn-to-speak/analysis/manifolds/timit/sa1.wav')
     data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+    
     #print rate, max(data), min(data)
     #plt.figure()
     #plt.plot(data)

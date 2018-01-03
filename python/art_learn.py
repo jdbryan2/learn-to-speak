@@ -6,6 +6,7 @@ import numpy as np
 import pylab as plt
 from primitive.SubspaceDFA import SubspaceDFA
 from features.ArtFeatures import ArtFeatures
+from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 ## pretty sure these aren't used ##
 #import scipy.signal as signal
 #import numpy.linalg as ln
@@ -23,7 +24,8 @@ from test_params import *
 ss = SubspaceDFA()
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+ss.Features = SpectralAcousticFeatures(tubes=ss.tubes) # set feature extractor
 ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
 ss.PreprocessData(past, future)
 ss.SubspaceDFA(dim)

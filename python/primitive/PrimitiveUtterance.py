@@ -84,6 +84,15 @@ class PrimitiveUtterance(Utterance):
             self.Features= ArtFeatures(pointer=feature_pointer, 
                                        tubes=feature_tubes,
                                        control_action=control_action)
+
+        if feature_class == 'SpectralAcousticFeatures':
+            from features.SpectralAcousticFeatures import SpectralAcousticFeatures
+
+            # need to set this up to pass all relevant feature parameters
+            # through. This will only work with all defaults set
+            self.Features= SpectralAcousticFeatures(pointer=feature_pointer, 
+                                                    tubes=feature_tubes,
+                                                    control_action=control_action)
             
             
         else: 
@@ -124,12 +133,54 @@ class PrimitiveUtterance(Utterance):
         predicted = ((predicted.T*self._std)+self._ave).T
         return self.ClipArticulation(predicted[self.Features.pointer['art_hist']])
 
+    #def GetFeatures_old(self):
+    #    area_function = np.zeros(self.area_function.shape[0])
+    #    pressure_function = np.zeros(self.pressure_function.shape[0])
+    #    self.speaker.GetAreaFcn(area_function) # grab initial area_function
+    #    self.speaker.GetPressureFcn(pressure_function) # grab initial area_function
+    #    articulation = self.art_hist[:, self.speaker.Now()-1] 
+
+    #    return self.Features.DirectExtract(articulation,
+    #                                       area_function, 
+    #                                       pressure_function)
+
     def GetFeatures(self):
-        area_function = np.zeros(self.area_function.shape[0])
-        pressure_function = np.zeros(self.pressure_function.shape[0])
-        self.speaker.GetAreaFcn(area_function) # grab initial area_function
-        self.speaker.GetPressureFcn(pressure_function) # grab initial area_function
-        articulation = self.art_hist[:, self.speaker.Now()-1] 
+
+        area_function = np.zeros((self.area_function.shape[0],
+                                  self.control_period))
+
+        pressure_function = np.zeros((self.pressure_function.shape[0],
+                                      self.control_period))
+
+        sound_wave = np.zeros(self.control_period)
+
+        articulation = np.zeros((self.art_hist.shape[0],
+                                      self.control_period))
+        
+        # set to default values if it won't get filled entirely
+        if self.speaker.Now()-1 < self.control_period:
+            self.speaker.GetAreaFcn(area_function[:, 0])
+            area_function = (area_function.T+area_function[:, 0]).T
+
+            self.speaker.GetPressureFcn(pressure_function[:, 0])
+            pressure_function = (pressure_function.T+pressure_function[:, 0]).T
+
+            t_start=0
+
+        else: 
+
+            t_start = self.speaker.Now()-1-self.control_period
+
+        t_end = self.speaker.Now()
+        print t_start, t_end, self.area_function[:, t_start:t_end].shape
+
+        if t_end > t_start:
+            area_function[:, -t_end+t_start:]  = self.area_function[:, t_start:t_end]
+            pressure_function[:, -t_end+t_start:] = self.pressure_function[:, t_start:t_end]
+            sound_wave[-t_end+t_start:] = self.sound_wave[t_start:t_end]
+            articulation[:, -t_end+t_start:] = self.art_hist[:, self.speaker.Now()-1] 
+        
+        print area_function.shape, self.control_period, self.speaker.Now() 
 
         return self.Features.DirectExtract(articulation,
                                            area_function, 
@@ -231,7 +282,8 @@ class PrimitiveUtterance(Utterance):
 
                 self.art_hist[:, self.speaker.Now()-1] = articulation
 
-            features += self.GetFeatures()/self.control_period
+            #features += self.GetFeatures()/self.control_period
+        features = self.GetFeatures()
 
         # add features to past data
         self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
