@@ -52,33 +52,29 @@ class ArtFeatures(BaseFeatures):
 
         return _data
 
-    def DirectExtract(self, articulation, full_area_function, pressure_function):
-        # I don't like the code repetition here
+    def ExtractLast(self, data, **kwargs):
 
-        area_function = full_area_function[self.tubes['glottis_to_velum']]
-        lung_pressure = np.mean(pressure_function[self.tubes['lungs']])
-        nose_pressure = np.mean(pressure_function[self.tubes['nose']])
+        self.InitializeParams(**kwargs)
 
-        start = 0
-        _data = articulation
-        self.pointer[self.control_action] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
+        # default start of control action to copy of first element if not
+        # enough data provided
+        for key in data:
+            if key != 'sound_wave': # ignore sound_wave
 
-        _data = np.append(_data, area_function)
-        self.pointer['area_function'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
+                data_length = data[key].shape[1]
+                if data_length < self.sample_period:
+                    key_data = np.copy(data[key]) # create new instance
+                    default = np.zeros((key_data.shape[0],
+                                       self.sample_period-data_length))
+                    default = (default.T+key_data[:, 0].flatten()).T # fast copy over cols
+                    key_data = np.append(default, key_data, axis=1)
 
-        _data = np.append(_data, lung_pressure.reshape((1, -1)))
-        self.pointer['lung_pressure'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
-        
-        self.pointer['all'] = np.arange(0, _data.shape[0])
-        self.pointer['all_out'] = np.arange(self.pointer[self.control_action][-1], _data.shape[0])
+                    data[key] = key_data
 
-        # compute average value for each sample to match what controller does 
-        # (averages samples over control sample period)
-        #_data = np.mean(_data, axis=1)
+                elif data_length > self.sample_period:
+                    data[key] = data[key][:, -self.sample_period:]
 
-        return _data
+        # get extracted data and flatten that shit
+        return self.Extract(data).flatten()
     
 

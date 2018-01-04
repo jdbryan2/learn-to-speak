@@ -24,8 +24,8 @@ from test_params import *
 ss = SubspaceDFA()
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-ss.Features = SpectralAcousticFeatures(tubes=ss.tubes) # set feature extractor
+ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+#ss.Features = SpectralAcousticFeatures(tubes=ss.tubes) # set feature extractor
 ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
 ss.PreprocessData(past, future)
 ss.SubspaceDFA(dim)
