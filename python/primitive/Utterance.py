@@ -101,7 +101,7 @@ class Utterance(object):
         # element zero of output arrays will be filled with initial value of
         # simulator variables. 
         self.SaveOutputs()
-        self.art_hist[0] = np.copy(self.initial_art)
+        self.art_hist[:,0] = np.copy(self.initial_art)
 
     def InitializeArticulation(self):
         # note: changing speaker params requires calling InitializeSpeaker

@@ -151,46 +151,17 @@ class PrimitiveUtterance(Utterance):
 
     def GetFeatures(self):
 
-        area_function = np.zeros((self.area_function.shape[0],
-                                  self.control_period))
 
-        pressure_function = np.zeros((self.pressure_function.shape[0],
-                                      self.control_period))
+        # TODO: figure out a way of generalizing the 'art_hist' variable to a
+        # more general control_action variable as done in the feature extractor
+        _data = {}
+        _data['art_hist'] = self.art_hist[:, :self.speaker.Now()+1] 
+        _data['area_function'] = self.area_function[:, :self.speaker.Now()+1]
+        _data['pressure_function'] = self.pressure_function[:, :self.speaker.Now()+1]
+        _data['sound_wave'] = self.sound_wave[:self.speaker.Now()+1]
 
-        sound_wave = np.zeros(self.control_period)
-
-        articulation = np.zeros((self.art_hist.shape[0],
-                                      self.control_period))
-        
-        # set to default values if it won't get filled entirely
-        if self.speaker.Now()-1 < self.control_period:
-            self.speaker.GetAreaFcn(area_function[:, 0])
-            area_function = (area_function.T+area_function[:, 0]).T
-
-            self.speaker.GetPressureFcn(pressure_function[:, 0])
-            pressure_function = (pressure_function.T+pressure_function[:, 0]).T
-
-            t_start=0
-
-        else: 
-
-            t_start = self.speaker.Now()-1-self.control_period
-
-        t_end = self.speaker.Now()
-        print t_start, t_end, self.area_function[:, t_start:t_end].shape
-
-        if t_end > t_start:
-            area_function[:, -t_end+t_start:]  = self.area_function[:, t_start:t_end]
-            pressure_function[:, -t_end+t_start:] = self.pressure_function[:, t_start:t_end]
-            sound_wave[-t_end+t_start:] = self.sound_wave[t_start:t_end]
-            articulation[:, -t_end+t_start:] = self.art_hist[:, self.speaker.Now()-1] 
-        
-        print area_function.shape, self.control_period, self.speaker.Now() 
-
-        return self.Features.DirectExtract(articulation,
-                                           area_function, 
-                                           pressure_function)
-
+        return self.Features.ExtractLast(_data)
+                             
 
     def ClipArticulation(self, articulation):
         articulation[articulation<0] = 0.

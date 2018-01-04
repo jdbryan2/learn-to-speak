@@ -30,6 +30,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.nfft = kwargs.get('nfft', self.nfft)
         self.periodsperseg = kwargs.get('periodsperseg', self.periodsperseg)
 
+    # TODO: Add function for checking that all necessary items are in data dict
 
     def Extract(self, data, **kwargs):
 
@@ -40,12 +41,11 @@ class SpectralAcousticFeatures(BaseFeatures):
 
         if self.nfft < nperseg:
             print "nfft too small (%i vs %i), " % (self.nfft, nperseg),
-            self.nfft = int(2**np.ceil(np.log2(nperseg)))
+            #self.nfft = int(2**np.ceil(np.log2(nperseg)))
             self.nfft = int(nperseg)
             print "rounded up to %i" % self.nfft
 
         sound_wave = data['sound_wave'].flatten()
-
 
         #print "nperseg: " , self.periodsperseg*sample_period
 
@@ -76,5 +76,44 @@ class SpectralAcousticFeatures(BaseFeatures):
         start=_data.shape[0]
 
         return _data
+    
+    def ExtractLast(self, data, **kwargs):
+
+        self.InitializeParams(**kwargs)
+
+        nperseg = self.periodsperseg*self.sample_period 
+
+        # default start of sound wave to zero if not enough data provided
+        # otherwise grab last data points off the array
+        sound_length = len(data['sound_wave'])
+        if sound_length < nperseg:
+            sound_wave = data['sound_wave'].flatten() # creates new instance
+            sound_wave = np.append(np.zeros(nperseg-sound_length), sound_wave)
+
+            data['sound_wave'] = sound_wave
+            # note: dictionary only saves a pointer to the array, this does not
+            # actually overwrite any data, it just changes the pointer to the
+            # augmented sound_wave variable (which is a new instance due to flatten)
+
+        elif sound_length > nperseg:
+            data['sound_wave'] = data['sound_wave'][-nperseg:]
+
+        # default start of control action to copy of first element if not
+        # enough data provided
+        action_length = data[self.control_action].shape[1]
+        if action_length < self.sample_period:
+            action = np.copy(data[self.control_action]) # create new instance
+            default = np.zeros((action.shape[0],
+                               self.sample_period-action_length))
+            default = (default.T+action[:, 0].flatten()).T # fast copy over cols
+            action = np.append(default, action, axis=1)
+
+            data[self.control_action] = action
+
+        elif action_length > self.sample_period:
+            data[self.control_action] = data[self.control_action][:, -self.sample_period:]
+
+        # get extracted data and flatten that shit
+        return self.Extract(data).flatten()
     
 
