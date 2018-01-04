@@ -18,8 +18,9 @@ class ArtFeatures(BaseFeatures):
     def InitializeParams(self, **kwargs):
         super(ArtFeatures, self).InitializeParams(**kwargs)
 
-    def Extract(self, data, sample_period=8):
+    def Extract(self, data, **kwargs):
         # default sample period is 8samples == 1ms
+        self.InitializeParams(**kwargs)
 
         # self.control_action is defaulted to "art_hist"
         # can be changed directly or by passing a new string into InitializeParams
@@ -46,8 +47,8 @@ class ArtFeatures(BaseFeatures):
 
         # compute average value for each sample to match what controller does 
         # (averages samples over control sample period)
-        _data = moving_average(_data, n=sample_period)
-        _data = _data[:, ::sample_period]
+        _data = moving_average(_data, n=self.sample_period)
+        _data = _data[:, ::self.sample_period]
 
         return _data
 

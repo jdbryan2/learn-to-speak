@@ -76,6 +76,7 @@ class PrimitiveUtterance(Utterance):
         feature_tubes = primitives['feature_tubes'].item() # should pull out the dict
         control_action = primitives['control_action'].item() 
 
+        # pull control_period from primitive
         if 'control_period' in primitives:
             self.control_period = primitives['control_period'].item()
 
@@ -83,7 +84,8 @@ class PrimitiveUtterance(Utterance):
             from features.ArtFeatures import ArtFeatures
             self.Features= ArtFeatures(pointer=feature_pointer, 
                                        tubes=feature_tubes,
-                                       control_action=control_action)
+                                       control_action=control_action,
+                                       sample_period=self.control_period)
 
         if feature_class == 'SpectralAcousticFeatures':
             from features.SpectralAcousticFeatures import SpectralAcousticFeatures
@@ -92,7 +94,8 @@ class PrimitiveUtterance(Utterance):
             # through. This will only work with all defaults set
             self.Features= SpectralAcousticFeatures(pointer=feature_pointer, 
                                                     tubes=feature_tubes,
-                                                    control_action=control_action)
+                                                    control_action=control_action,
+                                                    sample_period=self.control_period)
             
             
         else: 
@@ -116,6 +119,8 @@ class PrimitiveUtterance(Utterance):
             _data = data
             _data = ((_data.T-self._ave)/self._std).T
         
+        # note: appending zeros actually works here because the feature data has been
+        # shifted to be zero mean. Features of 0 are the average value.
         if data_length < self._past:
             _data = np.append(np.zeros((data.shape[0], self._past-data_length)), _data, axis=1)
             data_length = self._past

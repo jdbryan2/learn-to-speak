@@ -31,12 +31,12 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.periodsperseg = kwargs.get('periodsperseg', self.periodsperseg)
 
 
-    def Extract(self, data, sample_period=1):
+    def Extract(self, data, **kwargs):
 
         # sample period is measured in ms
-        sample_period = sample_period*8
+        self.InitializeParams(**kwargs)
 
-        nperseg = self.periodsperseg*sample_period 
+        nperseg = self.periodsperseg*self.sample_period 
 
         if self.nfft < nperseg:
             print "nfft too small (%i vs %i), " % (self.nfft, nperseg),
@@ -46,18 +46,8 @@ class SpectralAcousticFeatures(BaseFeatures):
 
         sound_wave = data['sound_wave'].flatten()
 
-        #f, t, spectrum = signal.stft(sound_wave, 
-        #                                    fs=self.fs,
-        #                                    window=self.window, 
-        #                                    nperseg=self.periodsperseg*sample_period,
-        #                                    noverlap=(self.periodsperseg-1)*sample_period,
-        #                                    nfft=self.nfft)
-        #
-        #spectrum = spectrum[:, :, :-1] # trim off last element
-        #spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
-        #print spectrum.shape
 
-        print "nperseg: " , self.periodsperseg*sample_period
+        #print "nperseg: " , self.periodsperseg*sample_period
 
         spectrum, energy = MFCC(sound_wave, 
                                      ncoeffs=self.ncoeffs,
@@ -65,7 +55,7 @@ class SpectralAcousticFeatures(BaseFeatures):
                                      sample_freq=self.fs,
                                      window=self.window, 
                                      nperseg=nperseg,
-                                     noverlap=(self.periodsperseg-1)*sample_period,
+                                     noverlap=(self.periodsperseg-1)*self.sample_period,
                                      nfft=self.nfft)
         # transpose so that spectrum.shape[1]==time dimension
         #               and spectrum.shape[0]==feature dimension
@@ -73,8 +63,8 @@ class SpectralAcousticFeatures(BaseFeatures):
 
         # start with articulator inputs and down sample
         _data = data[self.control_action]
-        _data = moving_average(_data, n=sample_period)
-        _data = _data[:, ::sample_period]
+        _data = moving_average(_data, n=self.sample_period)
+        _data = _data[:, ::self.sample_period]
 
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])

@@ -50,20 +50,20 @@ class Utterance(object):
 
     def ResetOutputVars(self):
         self.sound_wave = np.zeros(int(np.ceil(self.sample_freq *
-                                           self.utterance_length)))
+                                           self.utterance_length+1)))
 
         self.area_function = np.zeros((MAX_NUMBER_OF_TUBES,
                                        int(np.ceil(self.sample_freq *
-                                               self.utterance_length))))
+                                               self.utterance_length+1))))
 
         self.pressure_function = np.zeros((MAX_NUMBER_OF_TUBES,
                                        int(np.ceil(self.sample_freq *
-                                               self.utterance_length))))
+                                               self.utterance_length+1))))
 
 
         self.art_hist = np.zeros((aw.kArt_muscle.MAX,
                                   int(np.ceil(self.sample_freq *
-                                          self.utterance_length))))
+                                          self.utterance_length+1))))
 
     def InitializeDir(self, dirname, addDTS=True):
         # setup directory for saving files
@@ -98,6 +98,11 @@ class Utterance(object):
 
         self.speaker.InitSim(self.utterance_length, self.initial_art)
 
+        # element zero of output arrays will be filled with initial value of
+        # simulator variables. 
+        self.SaveOutputs()
+        self.art_hist[0] = np.copy(self.initial_art)
+
     def InitializeArticulation(self):
         # note: changing speaker params requires calling InitializeSpeaker
         if self._art_init == False:
@@ -124,11 +129,11 @@ class Utterance(object):
     
     def SaveOutputs(self):
         # Save sound data point
-        self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
+        self.sound_wave[self.speaker.Now()] = self.speaker.GetLastSample()
 
-        self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
+        self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()])
 
-        self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
+        self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()])
 
     def Simulate(self):
 
@@ -145,12 +150,12 @@ class Utterance(object):
             self.speaker.IterateSim()
 
             # Save sound data point
-            self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
+            self.SaveOutputs()
+            #self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
+            #self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
+            #self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
 
-            self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
-            self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
-
-            self.art_hist[:, self.speaker.Now()-1] = articulation
+            self.art_hist[:, self.speaker.Now()-1] = np.copy(articulation)
 
         self.speaker.LoopBack()
         self.iteration += 1

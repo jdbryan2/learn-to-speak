@@ -73,7 +73,7 @@ class SubspaceDFA(DataHandler):
         self.data.clear()
         super(SubspaceDFA, self).LoadDataFile(fname)
 
-        _data = self.Features.Extract(self.data, sample_period)
+        _data = self.Features.Extract(self.data, sample_period=sample_period)
 
         if self._data.size==0:
             self._data = _data
