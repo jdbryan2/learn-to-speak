@@ -5,6 +5,7 @@
 import numpy as np
 import pylab as plt
 from primitive.SubspaceDFA import SubspaceDFA
+from primitive.IncrementalDFA import SubspaceDFA as IncrementalDFA
 from features.ArtFeatures import ArtFeatures
 from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 ## pretty sure these aren't used ##
@@ -21,19 +22,46 @@ from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 # call in all the necessary global variables
 from test_params import *
 
-ss = SubspaceDFA(sample_period=sample_period)
+inc_ss = IncrementalDFA(sample_period=sample_period, past=past, future=future)
+#inc_ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
+#ss.LoadDataDir(dirname)
+#ss.ConvertData(sample_period)
+#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+inc_ss.Features = SpectralAcousticFeatures(tubes=inc_ss.tubes,
+                                       sample_period=sample_period) # set feature extractor
+#ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
+inc_ss.LoadDataDir(dirname, verbose=True)
+inc_ss.PreprocessData()
+#inc_ss.PreprocessData(past,future)
+inc_ss.SubspaceDFA(dim)
+
+# internal data gets cleared so this doesn't work right now.
+inc_ss.EstimateStateHistory(inc_ss._data)
+
+#ss.SavePrimitives(dirname+'/primitives')
+
+ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
 #ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
 ss.Features = SpectralAcousticFeatures(tubes=ss.tubes,
-                                       sample_period=sample_period) # set feature extractor
+                                       sample_period=sample_period,
+                                       past=past, 
+                                       future=future) # set feature extractor
 #ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
 ss.LoadDataDir(dirname, verbose=True)
 ss.PreprocessData(past, future)
 ss.SubspaceDFA(dim)
 
 ss.EstimateStateHistory(ss._data)
+inc_ss.EstimateStateHistory(ss._data) # estimate state history off other data
+
+plt.figure()
+plt.plot(inc_ss.h.T)
+plt.figure()
 plt.plot(ss.h.T)
+plt.figure()
+plt.plot(ss.h.T-inc_ss.h.T)
 plt.show()
 
 ss.SavePrimitives(dirname+'/primitives')

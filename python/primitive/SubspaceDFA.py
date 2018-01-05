@@ -142,39 +142,47 @@ class SubspaceDFA(DataHandler):
         # save past, future values for later use
         self._past = past
         self._future = future
+        chunks = int(np.floor(self._data.shape[1]/((self._past+self._future))))
+        data_chunks = self._data[:, :chunks*(self._past+self._future)]
 
         if (len(self._data) == 0) and (len(self.data) == 0):
             print "No data has been loaded."
             return 0
 
         if normalize:
-            self._std = np.std(self._data, axis=1)
-            self._ave = np.mean(self._data, axis=1)
+            self._std = np.std(data_chunks, axis=1)
+            self._ave = np.mean(data_chunks, axis=1)
 
             # shift to zero mean and  normalize by standard deviation
-            self._data = ((self._data.T-self._ave)/self._std).T
+            data_chunks = ((data_chunks.T-self._ave)/self._std).T
+        #if normalize:
+        #    self._std = np.std(self._data, axis=1)
+        #    self._ave = np.mean(self._data, axis=1)
+
+        #    # shift to zero mean and  normalize by standard deviation
+        #    self._data = ((self._data.T-self._ave)/self._std).T
 
         
         # get dimension of input/output feature space
-        dim = self._data.shape[0]
+        dim = data_chunks.shape[0] #self._data.shape[0]
 
         if overlap==False:
-            chunks = int(np.floor(self._data.shape[1]/((past+future))))
             # format data into Xf and Xp matrices
-            Xl = self._data[:, :chunks*(past+future)].T.reshape(-1, (past+future)*dim).T  # reshape into column vectors of length past+future
+            #Xl = self._data[:, :chunks*(self._past+self._future)].T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+            Xl = data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
             #print Xl.shape
         else:
             print ''
-            chunks = int(np.floor(self._data.shape[1]/(past+future)))
-            Xl = self._data[:, :(chunks-1)*(past+future):future]
+            #chunks = int(np.floor(self._data.shape[1]/(self._past+future)))
+            Xl = self._data[:, :(chunks-1)*(self._past+self._future):self._future]
             print Xl.shape
             for k in range(1, past+future):
-                Xl = np.append(Xl, self._data[:, k:(chunks-1)*(past+future)+k:future], axis=0)
+                Xl = np.append(Xl, self._data[:, k:(chunks-1)*(self._past+self._future)+k:self._future], axis=0)
                 #print Xl.shape
 
 
-        self.Xf = Xl[(past*dim):((past+future)*dim), :]
-        self.Xp = Xl[0:(past*dim), :]
+        self.Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
+        self.Xp = Xl[0:(self._past*dim), :]
 
     def SubspaceDFA(self, k):
         """Decompose linear prediction matrix into O and K matrices"""
@@ -237,6 +245,7 @@ class SubspaceDFA(DataHandler):
         self._future = primitives['future'].item()
 
     def EstimateStateHistory(self, data):
+        data= ((data.T-self._ave)/self._std).T
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
 
         #for t in range(0, self._past):

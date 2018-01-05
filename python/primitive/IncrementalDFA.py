@@ -117,7 +117,9 @@ class SubspaceDFA(DataHandler):
         # remove all but the necessary bits
         self.ClearExcessData(size=_data.shape[1]*self.sample_period)
 
-        return _data
+        # does it really matter if we return the data? 
+        #return _data
+        #self.PreprocessData()
 
     def ClearExcessData(self, size=None):
         # clear excess data
@@ -134,46 +136,68 @@ class SubspaceDFA(DataHandler):
             else:
                 self.data[key] = self.data[key][:, size:]
 
-    def PreprocessData(self, past, future, overlap=False, normalize=True):
+    def PreprocessData(self, overlap=False, normalize=True):
+        #TODO: Remove option for normalize - assume always true 
+        #       Remove from SubspaceDFA.py too.
+
         # note: axis 0 is parameter dimension, axis 1 is time
         #       sample_period is measured in milliseconds
 
         # save past, future values for later use
-        self._past = past
-        self._future = future
+        #self._past = past
+        #self._future = future
+        if overlap:
+            print "Overlap is currently not supported. No overlap used."
 
         if (len(self._data) == 0) and (len(self.data) == 0):
             print "No data has been loaded."
             return 0
 
+        # count how many chunks of data we can use
+        # data_chunks points to the useable chunks   
+        # used data removed from self._data
+        chunks = int(np.floor(self._data.shape[1]/(self._past+self._future)))
+        data_chunks = self._data[:, :chunks*(self._past+self._future)]
+        self._data = self._data[:, chunks*(self._past+self._future):]
+
+        # get dimension of feature space
+        dim = data_chunks.shape[0]
+        print dim,data_chunks.shape
+
+
+        # Better normalization method is outlined in my notebook: 
+        # page 111-113
+
         if normalize:
-            self._std = np.std(self._data, axis=1)
-            self._ave = np.mean(self._data, axis=1)
+            # need to deal with normalization 
+            # right now this is only local stats
+            # may cause convergence problems
+            self._std = np.std(data_chunks, axis=1)
+            self._ave = np.mean(data_chunks, axis=1)
 
             # shift to zero mean and  normalize by standard deviation
-            self._data = ((self._data.T-self._ave)/self._std).T
+            data_chunks = ((data_chunks.T-self._ave)/self._std).T
+
+            # don't normalize here, save summations for computing mean and variance
+            #  mean -> sum(data_chunks, axis=1)
+            #  var -> sum(data_chunks**2, axis=1)
+            #  total_count += data_chunks.shape[1]
 
         
-        # get dimension of input/output feature space
-        dim = self._data.shape[0]
 
-        if overlap==False:
-            chunks = int(np.floor(self._data.shape[1]/((past+future))))
-            # format data into Xf and Xp matrices
-            Xl = self._data[:, :chunks*(past+future)].T.reshape(-1, (past+future)*dim).T  # reshape into column vectors of length past+future
-            #print Xl.shape
-        else:
-            print ''
-            chunks = int(np.floor(self._data.shape[1]/(past+future)))
-            Xl = self._data[:, :(chunks-1)*(past+future):future]
-            print Xl.shape
-            for k in range(1, past+future):
-                Xl = np.append(Xl, self._data[:, k:(chunks-1)*(past+future)+k:future], axis=0)
-                #print Xl.shape
+        # format data into Xf and Xp matrices
+        Xl = data_chunks[:, :chunks*(self._past+self._future)].T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+        print Xl.shape
 
+        self.Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
+        self.Xp = Xl[0:(self._past*dim), :]
 
-        self.Xf = Xl[(past*dim):((past+future)*dim), :]
-        self.Xp = Xl[0:(past*dim), :]
+        # save summation matrices:
+        # sum over Xf and Xp (along dim 1?)
+        # sum over Xf**2 and Xp**2
+        # save phi=dot(Xf, Xp.T) and psi=dot(Xp, Xp.T)
+
+        # use to compute normalization at start of SubspaceDFA
 
     def SubspaceDFA(self, k):
         """Decompose linear prediction matrix into O and K matrices"""
@@ -182,6 +206,7 @@ class SubspaceDFA(DataHandler):
 
         # compute predictor matrix
         self.F = np.dot(self.Xf, ln.pinv(self.Xp))
+        print self.F.shape
 
         #gamma_f = ln.cholesky(np.cov(Xf))
         #gamma_p = ln.cholesky(np.cov(Xp))
@@ -236,6 +261,9 @@ class SubspaceDFA(DataHandler):
         self._future = primitives['future'].item()
 
     def EstimateStateHistory(self, data):
+        # has to be normalized before processing state history
+        data= ((data.T-self._ave)/self._std).T
+
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
 
         #for t in range(0, self._past):
