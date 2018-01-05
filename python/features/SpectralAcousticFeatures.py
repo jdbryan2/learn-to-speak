@@ -11,6 +11,9 @@ from features.functions import MFCC
 class SpectralAcousticFeatures(BaseFeatures):
 
     def __init__(self, **kwargs):
+        # does this actually call the functions at this class level or the
+        # parent class level? 
+        # Yes! I just tested by printing a variable defined at child level
         super(SpectralAcousticFeatures, self).__init__(**kwargs)
 
     def DefaultParams(self):
@@ -21,6 +24,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.ncoeffs = 13 # number of MFCC features to return
         self.nfilters = 26 # number of mel spaced filters
         self.periodsperseg = 5 # measured in sample periods
+        self.min_data_length = self.sample_period*self.periodsperseg
 
     def InitializeParams(self, **kwargs):
         super(SpectralAcousticFeatures, self).InitializeParams(**kwargs)
@@ -29,6 +33,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.window = kwargs.get('window', self.window)
         self.nfft = kwargs.get('nfft', self.nfft)
         self.periodsperseg = kwargs.get('periodsperseg', self.periodsperseg)
+        self.min_sound_length = self.sample_period*(self.periodsperseg-1)
 
     # TODO: Add function for checking that all necessary items are in data dict
 
@@ -69,9 +74,11 @@ class SpectralAcousticFeatures(BaseFeatures):
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
+        #print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period
 
         # only the first 
         _data = np.append(_data, spectrum[:, :_data.shape[1]], axis=0) 
+        #_data = np.append(_data, spectrum, axis=0) 
         self.pointer['spectrum'] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
 

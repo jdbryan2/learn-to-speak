@@ -134,7 +134,6 @@ class SubspaceDFA(DataHandler):
             else:
                 self.data[key] = self.data[key][:, size:]
 
-
     def PreprocessData(self, past, future, overlap=False, normalize=True):
         # note: axis 0 is parameter dimension, axis 1 is time
         #       sample_period is measured in milliseconds

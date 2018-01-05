@@ -16,6 +16,7 @@ class BaseFeatures(object):
         self.pointer = {}
         self.control_action = 'art_hist'
         self.sample_period = 8
+        self.min_sound_length = 0
 
     def InitializeParams(self, **kwargs):
         # Pass tube segments dictionary through 

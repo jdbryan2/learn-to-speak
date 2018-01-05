@@ -21,12 +21,14 @@ from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 # call in all the necessary global variables
 from test_params import *
 
-ss = SubspaceDFA()
+ss = SubspaceDFA(sample_period=sample_period)
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-#ss.Features = SpectralAcousticFeatures(tubes=ss.tubes) # set feature extractor
-ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
+#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+ss.Features = SpectralAcousticFeatures(tubes=ss.tubes,
+                                       sample_period=sample_period) # set feature extractor
+#ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
+ss.LoadDataDir(dirname, verbose=True)
 ss.PreprocessData(past, future)
 ss.SubspaceDFA(dim)
 

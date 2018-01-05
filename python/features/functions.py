@@ -56,14 +56,15 @@ def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=300,
                                  window=window, 
                                  nperseg=nperseg,
                                  noverlap=noverlap,
-                                 nfft=nfft)
+                                 nfft=nfft, 
+                                 boundary=None)
 
     #print spectrum.shape
 
     #spectrum = spectrum[:, :, :-1] # trim off last element
     #spectrum = spectrum.reshape(spectrum.shape[1], spectrum.shape[2]) # remove first dim
     spectrum = np.abs(spectrum)**2. # convert to power spectrum
-    print spectrum.shape
+    #print spectrum.shape
 
     energy = np.sum(spectrum,1)
     energy = np.where(energy == 0,np.finfo(float).eps,energy)

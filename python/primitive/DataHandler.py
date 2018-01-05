@@ -49,7 +49,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             if key in self.data:
                 if len(value.shape) < 2:
                     # reshape if it's audio
-                    self.data[key] = np.append(self.data[key], value.reshape((1, -1)), axis=1)
+                    #self.data[key] = np.append(self.data[key], value.reshape((1, -1)), axis=1)
+                    self.data[key] = np.append(self.data[key], value)
                 else:
                     self.data[key] = np.append(self.data[key], value, axis=1)
             else:
@@ -107,7 +108,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             if sample_period == None:
                 self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'))
             else: 
-                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'), sample_period)
+                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'),
+                                  sample_period=sample_period)
 
 
 
