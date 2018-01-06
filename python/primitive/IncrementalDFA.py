@@ -124,7 +124,8 @@ class SubspaceDFA(DataHandler):
 
         # does it really matter if we return the data? 
         #return _data
-        #self.PreprocessData()
+        print self._data.shape
+        self.PreprocessData()
 
     def ClearExcessData(self, size=None):
         # clear excess data
@@ -167,7 +168,7 @@ class SubspaceDFA(DataHandler):
 
         # get dimension of feature space
         dim = data_chunks.shape[0]
-        print dim,data_chunks.shape
+        #print dim,data_chunks.shape
 
 
         # Better normalization method is outlined in my notebook: 
@@ -179,10 +180,11 @@ class SubspaceDFA(DataHandler):
         normed_data_chunks = ((data_chunks.T-self._ave)/self._std).T
 
         # format data into Xf and Xp matrices
-        Xl = normed_data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+        #Xl = normed_data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+        Xl = data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
         Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
         Xp = Xl[0:(self._past*dim), :]
-        print Xl.shape
+        #print Xl.shape
 
         # don't normalize here, save summations for computing mean and variance
         #  mean -> sum(data_chunks, axis=1)
@@ -192,10 +194,14 @@ class SubspaceDFA(DataHandler):
             self._sum = np.sum(data_chunks, axis=1)
             self._sum2 = np.sum(np.abs(data_chunks)**2, axis=1)
             self._count = data_chunks.shape[1]
-            print "Computing phi"
             self.phi = np.dot(Xf, Xp.T)
-            print "Computing psi"
             self.psi = np.dot(Xp, Xp.T)
+
+            self._sum_f = np.sum(Xf, axis=1)
+            self._sum_p = np.sum(Xp, axis=1)
+            self._sum2_f = np.sum(np.abs(Xf)**2, axis=1)
+            self._sum2_p = np.sum(np.abs(Xp)**2, axis=1)
+            self._count_fp = Xl.shape[1]
         else:
             self._sum += np.sum(data_chunks, axis=1)
             self._sum2 += np.sum(np.abs(data_chunks)**2, axis=1)
@@ -203,8 +209,15 @@ class SubspaceDFA(DataHandler):
             self.phi += np.dot(Xf, Xp.T)
             self.psi += np.dot(Xp, Xp.T)
 
-        print Xf.shape
-        print Xp.shape
+            self._sum_f += np.sum(Xf, axis=1)
+            self._sum_p += np.sum(Xp, axis=1)
+            self._sum2_f += np.sum(np.abs(Xf)**2, axis=1)
+            self._sum2_p += np.sum(np.abs(Xp)**2, axis=1)
+            self._count_fp += Xl.shape[1]
+        print self._count, self._count_fp
+
+        #print Xf.shape
+        #print Xp.shape
 
         # save summation matrices:
         # sum over Xf and Xp (along dim 1?)
@@ -219,18 +232,53 @@ class SubspaceDFA(DataHandler):
         self._dim = k
 
         # compute mean and variance
+        _mean = self._sum/self._count
+        #_std = np.sqrt(np.abs(self._sum2-np.abs(self._sum)**2)/self._count)
+        _std = np.sqrt(np.abs(self._sum2/self._count-np.abs(_mean)**2))
+        self._ave = _mean
+        self._std = _std
+        # Normalization works when I use these values
+        #_mean = self._ave
+        #_std = self._std
+        _mean_f = np.tile(_mean, self._future)
+        _mean_p = np.tile(_mean, self._past)
+        _std_f = np.tile(_std, self._future)
+        _std_p = np.tile(_std, self._past)
+
+        #_mean_f = self._sum_f/self._count_fp
+        #_std_f = np.sqrt(np.abs(self._sum2_f-np.abs(self._sum_f)**2)/self._count_fp)
+        #_mean_p = self._sum_p/self._count_fp
+        #_std_p = np.sqrt(np.abs(self._sum2_p-np.abs(self._sum_p)**2)/self._count_fp)
+
+        self._mean_f = _mean_f
+        self._mean_p = _mean_p
+        self._std_f = _std_f
+        self._std_p = _std_p
 
         # normalize phi and psi
+        #self.phi -= self._count*np.outer(_mean_f, _mean_p)
+        #self.phi /= np.outer(_std_f, _std_p)
+
+        #self.psi -= self._count*np.outer(_mean_p, _mean_p)
+        #self.psi /= np.outer(_std_p, _std_p)
+        
+        self.phi -= np.outer(self._sum_f, _mean_p)
+        self.phi -= np.outer(_mean_f, self._sum_p)
+        self.phi += self._count_fp*np.outer(_mean_f, self._mean_p)
+        self.phi /= np.outer(_std_f, _std_p)
+
+        self.psi -= np.outer(self._sum_p, _mean_p)
+        self.psi -= np.outer(_mean_p, self._sum_p)
+        self.psi += self._count_fp*np.outer(_mean_p, self._mean_p)
+        self.psi /= np.outer(_std_p, _std_p)
 
         # compute predictor matrix
-        #self.F = np.dot(self.Xf, ln.pinv(self.Xp))
+        ####self.F = np.dot(self.Xf, ln.pinv(self.Xp))
         print "Computing F"
-        print self.psi.shape
-        #print ln.matrix_rank(self.phi)
         
         # use scipy.linalg.pinvh to speed up inverting symmetric matrix
         self.F = np.dot(self.phi, ln.pinvh(self.psi))
-        print self.F.shape
+        #print self.F.shape
 
         #gamma_f = ln.cholesky(np.cov(Xf))
         #gamma_p = ln.cholesky(np.cov(Xp))

@@ -31,7 +31,7 @@ inc_ss.Features = SpectralAcousticFeatures(tubes=inc_ss.tubes,
                                        sample_period=sample_period) # set feature extractor
 #ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
 inc_ss.LoadDataDir(dirname, verbose=True)
-inc_ss.PreprocessData()
+#inc_ss.PreprocessData()
 #inc_ss.PreprocessData(past,future)
 inc_ss.SubspaceDFA(dim)
 
