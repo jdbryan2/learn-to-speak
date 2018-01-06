@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.signal as signal
-import numpy.linalg as ln
+#import numpy.linalg as ln
+import scipy.linalg as ln
 import os
 import pylab as plt
 import Artword as aw
@@ -19,13 +20,21 @@ class SubspaceDFA(DataHandler):
         self.DefaultParams()
         self.InitParams(**kwargs)
 
-
     def InitVars(self):
         # initialize the variables
 
         # preprocessed data matrices
-        self.Xf = np.array([])
-        self.Xp = np.array([])
+        #self.Xf = np.array([])
+        #self.Xp = np.array([])
+
+        # intermediate data for computing prediction matrix F without saving all data into memory directly
+        # all parameters are saved without any data normalization 
+        # mean and variance are computed after (from the sums) and used to adjust phi and psi
+        self.phi = np.array([])
+        self.psi = np.array([])
+        self._sum = np.array([]) # running sum of data
+        self._sum2 = np.array([]) # running sum of squared data
+        self._count = 0. # total number of data points added to sums
 
         # primitive model operators
         self.F = np.array([])
@@ -33,13 +42,9 @@ class SubspaceDFA(DataHandler):
         self.K = np.array([])
 
         # data vars
-        #self.art_hist = np.array([])
-        #self.area_function = np.array([])
-        #self.sound_wave = np.array([])
         self._data = np.array([]) # internal data var
         self.Features = None # init to nothing
         self.data.clear() # do I want or need this here?
-
 
     def DefaultParams(self):
         # internal variables for tracking dimensions of past and future histories and internal state dimension
@@ -136,7 +141,7 @@ class SubspaceDFA(DataHandler):
             else:
                 self.data[key] = self.data[key][:, size:]
 
-    def PreprocessData(self, overlap=False, normalize=True):
+    def PreprocessData(self, overlap=False):
         #TODO: Remove option for normalize - assume always true 
         #       Remove from SubspaceDFA.py too.
 
@@ -167,30 +172,39 @@ class SubspaceDFA(DataHandler):
 
         # Better normalization method is outlined in my notebook: 
         # page 111-113
+        self._std = np.std(data_chunks, axis=1)
+        self._ave = np.mean(data_chunks, axis=1)
 
-        if normalize:
-            # need to deal with normalization 
-            # right now this is only local stats
-            # may cause convergence problems
-            self._std = np.std(data_chunks, axis=1)
-            self._ave = np.mean(data_chunks, axis=1)
-
-            # shift to zero mean and  normalize by standard deviation
-            data_chunks = ((data_chunks.T-self._ave)/self._std).T
-
-            # don't normalize here, save summations for computing mean and variance
-            #  mean -> sum(data_chunks, axis=1)
-            #  var -> sum(data_chunks**2, axis=1)
-            #  total_count += data_chunks.shape[1]
-
-        
+        # shift to zero mean and  normalize by standard deviation
+        normed_data_chunks = ((data_chunks.T-self._ave)/self._std).T
 
         # format data into Xf and Xp matrices
-        Xl = data_chunks[:, :chunks*(self._past+self._future)].T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+        Xl = normed_data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+        Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
+        Xp = Xl[0:(self._past*dim), :]
         print Xl.shape
 
-        self.Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
-        self.Xp = Xl[0:(self._past*dim), :]
+        # don't normalize here, save summations for computing mean and variance
+        #  mean -> sum(data_chunks, axis=1)
+        #  var -> sum(data_chunks**2, axis=1)
+        #  total_count += data_chunks.shape[1]
+        if self._count == 0:
+            self._sum = np.sum(data_chunks, axis=1)
+            self._sum2 = np.sum(np.abs(data_chunks)**2, axis=1)
+            self._count = data_chunks.shape[1]
+            print "Computing phi"
+            self.phi = np.dot(Xf, Xp.T)
+            print "Computing psi"
+            self.psi = np.dot(Xp, Xp.T)
+        else:
+            self._sum += np.sum(data_chunks, axis=1)
+            self._sum2 += np.sum(np.abs(data_chunks)**2, axis=1)
+            self._count += data_chunks.shape[1]
+            self.phi += np.dot(Xf, Xp.T)
+            self.psi += np.dot(Xp, Xp.T)
+
+        print Xf.shape
+        print Xp.shape
 
         # save summation matrices:
         # sum over Xf and Xp (along dim 1?)
@@ -204,8 +218,18 @@ class SubspaceDFA(DataHandler):
 
         self._dim = k
 
+        # compute mean and variance
+
+        # normalize phi and psi
+
         # compute predictor matrix
-        self.F = np.dot(self.Xf, ln.pinv(self.Xp))
+        #self.F = np.dot(self.Xf, ln.pinv(self.Xp))
+        print "Computing F"
+        print self.psi.shape
+        #print ln.matrix_rank(self.phi)
+        
+        # use scipy.linalg.pinvh to speed up inverting symmetric matrix
+        self.F = np.dot(self.phi, ln.pinvh(self.psi))
         print self.F.shape
 
         #gamma_f = ln.cholesky(np.cov(Xf))

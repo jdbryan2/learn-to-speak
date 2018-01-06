@@ -61,7 +61,7 @@ plt.plot(inc_ss.h.T)
 plt.figure()
 plt.plot(ss.h.T)
 plt.figure()
-plt.plot(ss.h.T-inc_ss.h.T)
+plt.plot(np.abs(ss.h.T)-np.abs(inc_ss.h.T))
 plt.show()
 
 ss.SavePrimitives(dirname+'/primitives')
