@@ -124,7 +124,6 @@ class SubspaceDFA(DataHandler):
 
         # does it really matter if we return the data? 
         #return _data
-        print self._data.shape
         self.PreprocessData()
 
     def ClearExcessData(self, size=None):
