@@ -10,7 +10,11 @@ import os
 
 
 class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
+""" Load data files from simulator output 
 
+TODO: 
+    Fix tubes so that it is global variable to all classes
+"""
     def __init__(self, **kwargs):
         # define tube sections from PRAAT
         self.tubes = {}
