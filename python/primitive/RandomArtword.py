@@ -20,7 +20,9 @@ class RandomArtword:
         self.previous_target = np.zeros((aw.kArt_muscle.MAX, 2))
 
         self.time = 0.
-        self.sample_period = kwargs.get("sample_period", 0.) # in seconds
+        self.sample_freq = kwargs.get("sample_freq", 8000.) # in seconds
+        self.sample_period = kwargs.get("sample_period", 1./self.sample_freq) # in seconds
+        self.manual_targets = {}
 
     def RandomTimeIncrement(self):
         return np.random.random() * \
@@ -57,23 +59,43 @@ class RandomArtword:
         # check if any targets are no longer in the future
         out_of_date = np.nonzero(self.current_target[:, 0] < self.time)[0]
         #print out_of_date
-        for art in out_of_date:
+        for muscle in out_of_date:
             #print "Art: ", art
-            # save current target as previous target
-            self.previous_target[art, :] = np.copy(self.current_target[art, :])
 
-            # generate new set point
-            time_inc, target = self.RandomTarget(self.previous_target[art, 1])
-            self.current_target[art, 0] = self.previous_target[art, 0]+time_inc
-            self.current_target[art, 1] = target
+            # save current target as previous target
+            self.previous_target[muscle, :] = np.copy(self.current_target[muscle, :])
+
+            if muscle in self.manual_targets:
+                times = self.manual_targets[muscle][:, 0]
+                targets = self.manual_targets[muscle][:, 1]
+                mask = times > self.time
+                if np.sum(mask):
+                    ind = np.argmin(times[mask])
+                    self.current_target[muscle, 0] = (times[mask])[ind]
+                    self.current_target[muscle, 1] = (targets[mask])[ind]
+                else:
+                    # if we don't have any more targets, leave constant and set target time to infinite
+                    # this will prevent it from getting marked as "out_of_date"
+                    self.current_target[muscle, 0] = np.infty
+
+            else:
+                # generate new set point
+                time_inc, target = self.RandomTarget(self.previous_target[muscle, 1])
+                self.current_target[muscle, 0] = self.previous_target[muscle, 0]+time_inc
+                self.current_target[muscle, 1] = target
 
 
         # update targets with new random set point
         return 0
 
-    def SetManualTarget(self, articulator, time, target):
-        print "Manual Targets are not yet supported"
-        return 0
+    def SetManualTarget(self, muscle, target, time):
+
+        # add manual target to the list
+        if muscle in self.manual_targets:
+            self.manual_targets[muscle] = np.vstack((self.manual_targets[muscle], [time, target]))
+        else:
+            self.manual_targets[muscle] = np.array([time, target])
+
 
     def UpdateTime(self, now):
         # set current time to now
@@ -100,18 +122,25 @@ class RandomArtword:
 
     # function wrapper to match original Artword class
     def intoArt(self, art, time):
-        art = self.GetArt(time)
+        _art = self.GetArt(time)
+        for k in range(len(art)):
+           art[k] = _art[k]
 
 if __name__ == '__main__':
-    rand = RandomArtword(sample_period=1./8000,
-                        initial_art=np.random.random(aw.kArt_muscle.MAX))
+    rand = RandomArtword(sample_period=1./8000)
+                        #initial_art=np.random.random(aw.kArt_muscle.MAX))
+
+    rand.SetManualTarget(0, 0.0, 0.5)
+    rand.SetManualTarget(0, 0.5, 1.)
     N= 10000
     x = np.zeros((N, aw.kArt_muscle.MAX))
 
     for n in range(N): 
         time = 1.*n/8000
 
-        articulation = rand.GetArt(time)
+        articulation = np.zeros(aw.kArt_muscle.MAX)
+        rand.intoArt(articulation, time)
+        #articulation = rand.GetArt(time)
         x[n,:] = np.copy(articulation)
 
     
