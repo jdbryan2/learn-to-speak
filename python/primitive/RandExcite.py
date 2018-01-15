@@ -11,7 +11,6 @@ import pylab as plt
 # TODO: Add this to constants in library
 MAX_NUMBER_OF_TUBES = 89
 
-# TODO: UPDATE to inherit Utterance.py
 
 class RandExcite(Utterance):
 

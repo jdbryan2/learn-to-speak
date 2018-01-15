@@ -149,11 +149,6 @@ TODO:
         #print fname
         self.InitParams(**kwargs)
 
-        # clear internal data dictionary and 
-        # load data file according to parent class
-        ## No longer clearing before we start, leftovers are now important
-        #self.data.clear()
-
         # if soundwave key does not exist
         # create it and fill with zero padding
         if 'sound_wave' not in self.data:
@@ -162,30 +157,19 @@ TODO:
         # load data and append to self.data dictionary
         super(SubspaceDFA, self).LoadDataFile(fname)
         
-        # count number of sample periods in data dictionary
-        #total_periods = (self.data['sound_wave'].shape[1] - 
-        #                 self.Features.min_sound_length) / self.sample_period
-        #total_periods = int(np.floor(total_periods))
-        
+        # extract features and throw into _data array
         _data = self.Features.Extract(self.data, sample_period=self.sample_period)
-        # features needs function that returns the size of the used data
-        #print total_periods, _data.shape
 
+        # append to or initialize data array
         if self._data.size==0:
             self._data = _data
         else: 
             self._data = np.append(self._data, _data, axis=1)
-
-        #print _data.shape
-
-        # clear out the raw data dictionary to save space
-        #self.data.clear() 
         
         # remove all but the necessary bits
         self.ClearExcessData(size=_data.shape[1]*self.sample_period)
 
-        # does it really matter if we return the data? 
-        #return _data
+        # compute intermediate matrices for inferring primitive operators
         self.PreprocessData()
 
     def ClearExcessData(self, size=None):
@@ -199,7 +183,14 @@ TODO:
         """
         # clear excess data
 
-        # set size to the full length of data if not set
+        ################################################################################################################
+        # NOTE: 
+        # sound_wave gets padded with extra zeros at start of LoadDataFile, since we trim off the same length from 
+        # all data arrays, the extra padding length always stays there. No need to treat sound_wave different.
+        ################################################################################################################
+
+        # Set size to the full length of data if not set.
+        # This will remove everything from all arrays except the extra padding in sound_wave.
         if size == None: 
             size = self.data['sound_wave'].shape[1]-self.Features.min_sound_length
 
