@@ -8,13 +8,15 @@ class RandomArtword:
         self.min_increment = kwargs.get("min_increment", 0.01)  # sec
         self.max_delta_target = kwargs.get("max_delta_target", 0.5)  
 
-        self.initial_art = kwargs.get("initial_art", np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')))
+        #self.initial_art = kwargs.get("initial_art", np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')))
 
-        self._art = np.copy(self.initial_art)
+        #self._art = np.copy(self.initial_art)
         
         # target[articulator, 0] = time 
         # target[articulator, 1] = position
         self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
+        self.current_target[:, 1] = kwargs.get("initial_art", np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')))
+
         self.previous_target = np.zeros((aw.kArt_muscle.MAX, 2))
 
         self.time = 0.
@@ -29,10 +31,11 @@ class RandomArtword:
         return (np.random.random()-0.5)*self.max_delta_target
 
     def RandomTarget(self, target):
-        increment = self.RandomIncrement()
+        increment = self.RandomTimeIncrement()
         delta = self.RandomDeltaTarget()
 
         # if we're at the boundary, force delta to drive inward
+        #print target
         if target == 1.0:
             delta = -1.0 * abs(delta)
         elif target == 0.0:
@@ -52,9 +55,10 @@ class RandomArtword:
 
     def UpdateTargets(self):
         # check if any targets are no longer in the future
-        out_of_date = np.nonzero(self.current_target[:, 0] < self.time)
-        print out_of_date
+        out_of_date = np.nonzero(self.current_target[:, 0] < self.time)[0]
+        #print out_of_date
         for art in out_of_date:
+            #print "Art: ", art
             # save current target as previous target
             self.previous_target[art, :] = np.copy(self.current_target[art, :])
 
@@ -81,6 +85,7 @@ class RandomArtword:
     def GetArt(self, time = None):
         if not time == None: 
             self.UpdateTime(time)
+            self.UpdateTargets()
 
         # return articulation array 
         articulation = np.zeros(aw.kArt_muscle.MAX)
@@ -98,5 +103,21 @@ class RandomArtword:
         art = self.GetArt(time)
 
 if __name__ == '__main__':
-    rand = RandomArtword()
+    rand = RandomArtword(sample_period=1./8000,
+                        initial_art=np.random.random(aw.kArt_muscle.MAX))
+    N= 10000
+    x = np.zeros((N, aw.kArt_muscle.MAX))
+
+    for n in range(N): 
+        time = 1.*n/8000
+
+        articulation = rand.GetArt(time)
+        x[n,:] = np.copy(articulation)
+
+    
+    import pylab as plt
+    for k in range(x.shape[1]):
+        plt.plot(x[:, k])
+    plt.show()
+
 
