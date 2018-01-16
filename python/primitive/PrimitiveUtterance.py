@@ -151,7 +151,6 @@ class PrimitiveUtterance(Utterance):
 
     def GetFeatures(self):
 
-
         # TODO: figure out a way of generalizing the 'art_hist' variable to a
         # more general control_action variable as done in the feature extractor
         _data = {}

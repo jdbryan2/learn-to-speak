@@ -10,11 +10,11 @@ import os
 
 
 class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
-""" Load data files from simulator output 
-
-TODO: 
-    Fix tubes so that it is global variable to all classes
-"""
+#""" Load data files from simulator output 
+#
+#TODO: 
+#    Fix tubes so that it is global variable to all classes
+#"""
     def __init__(self, **kwargs):
         # define tube sections from PRAAT
         self.tubes = {}
@@ -37,17 +37,27 @@ TODO:
     def LoadDataFile(self, fname, sample_period=1):
         # note: sample_period is only used by child classes
         
-        _error = True
 
         # load the data from fname, store in class variable
         file_data = np.load(fname)
 
+        # TODO: fix how this works - currently returns false if everything went well...
+        _error = self.AppendData(file_data)
+
+        # print error message before we're done.
+        if _error:
+            print "Warning: No data found in file."
+
+    def AppendData(self, data_dict):
+        _error = True
+
         # load the data from file and append the dictionary to internal dictionary
-        for key, value in file_data.iteritems():
+        for key, value in data_dict.iteritems():
 
             # if any data is found, we don't print an error message
             if len(value) > 0:
                 _error = False
+
 
             # handle data according to whether the dictionary has the key or not
             if key in self.data:
@@ -64,9 +74,8 @@ TODO:
                 else:
                     self.data[key] = value
 
-        # print error message before we're done.
-        if _error:
-            print "Warning: No data found in file."
+        return _error
+
 
     def LoadParams(self, dirname):
         

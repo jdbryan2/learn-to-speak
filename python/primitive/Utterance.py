@@ -109,7 +109,7 @@ class Utterance(object):
 
             # Initialize artword for driving a manual sequence
             total_length = self.utterance_length*self.loops
-            self.articulation = aw.Artword(total_length)
+            self._art = aw.Artword(total_length)
 
             self._art_init = True  # flag for whether self.InitializeArticulation has been called
 
@@ -125,7 +125,7 @@ class Utterance(object):
 
 
         for t in range(len(targets)):
-            self.articulation.setTarget(muscle, times[t], targets[t])
+            self._art.setTarget(muscle, times[t], targets[t])
     
     def SaveOutputs(self):
         # Save sound data point
@@ -144,7 +144,7 @@ class Utterance(object):
         while self.speaker.NotDone():
 
             # pass the current articulation in
-            self.articulation.intoArt(articulation, self.speaker.NowSecondsLooped())
+            self._art.intoArt(articulation, self.speaker.NowSecondsLooped())
             self.speaker.SetArticulation(articulation)
 
             self.speaker.IterateSim()

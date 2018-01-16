@@ -17,6 +17,7 @@ class RandExcite(Utterance):
 
     home_dir = 'data'  # changes to this changes all instances of the class
 
+
     def __init__(self, **kwargs):
         self.DefaultParams()
         self.InitializeParams(**kwargs)
@@ -37,6 +38,9 @@ class RandExcite(Utterance):
         self.manual_targets = {}
         self.manual_times = {}
 
+        # flag for seeing if simulation has already been initialized
+        self._sim_init = False
+
     def InitializeParams(self, **kwargs):
     
         # call parent method first
@@ -44,14 +48,14 @@ class RandExcite(Utterance):
 
         # initialize random excitation params
         if self.method == "gesture":
-            self.articulation = raw.RandomArtword(**kwargs)
+            self._art = raw.RandomArtword(**kwargs)
             self._art_init = True
 
 
         else:
             print "Unknown method type: %s" % self.method
             print "Gesture exploration method initializing."
-            self.articulation = raw.RandomArtword(**kwargs)
+            self._art = raw.RandomArtword(**kwargs)
             self._art_init = True
             self.method = "gesture"
 
@@ -68,7 +72,7 @@ class RandExcite(Utterance):
             print "Invalid targets/times for muscle ID: " + str(muscle)
 
         for k in range(times.shape[0]):
-            self.articulation.SetManualTarget(muscle, targets[k], times[k])
+            self._art.SetManualTarget(muscle, targets[k], times[k])
 
 
     def SaveParams(self):
@@ -81,9 +85,25 @@ class RandExcite(Utterance):
                  glottal_masses=self.glottal_masses,
                  method=self.method,
                  loops=self.loops,
-                 max_delta_target=self.articulation.max_delta_target)
+                 max_delta_target=self._art.max_delta_target)
 
     def Run(self, **kwargs):
+        self.InitializeAll(**kwargs)
+
+        for k in range(self.loops):
+            print "Loop: " + str(k)
+            self.Simulate()
+            self.Save()
+
+    def IsInitialized(self):
+        return self._sim_init
+
+    def InitializeAll(self, **kwargs):
+        if not self._sim_init: 
+            self._sim_init = True
+        else: 
+            print "Resetting simulation..."
+
         # initialize parameters if anything new is passed in
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
@@ -99,10 +119,6 @@ class RandExcite(Utterance):
             #print "Excitation method is undefined: " + self.method
             #return False
 
-        for k in range(self.loops):
-            print "Loop: " + str(k)
-            self.Simulate()
-            self.Save()
 
 
 if __name__ == "__main__":
