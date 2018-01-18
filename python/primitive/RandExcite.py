@@ -20,7 +20,8 @@ class RandExcite(Utterance):
 
     def __init__(self, **kwargs):
         self.DefaultParams()
-        self.InitializeParams(**kwargs)
+        #self.InitializeParams(**kwargs)
+        self.InitializeAll(**kwargs)
 
     def DefaultParams(self):
         # load parent defaults first
@@ -101,12 +102,14 @@ class RandExcite(Utterance):
     def InitializeAll(self, **kwargs):
         if not self._sim_init: 
             self._sim_init = True
+            print "Setting up simulation..."
         else: 
             print "Resetting simulation..."
 
         # initialize parameters if anything new is passed in
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+        #if len(kwargs.keys()):
+        #    self.InitializeParams(**kwargs)
+        self.InitializeParams(**kwargs)
 
         self.InitializeDir(self.dirname)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else

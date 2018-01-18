@@ -13,28 +13,29 @@ MAX_NUMBER_OF_TUBES = 89
 
 class Utterance(object):
 
-    home_dir = 'data'  # changes to this changes all instances of the class
 
     def __init__(self, **kwargs):
         self.DefaultParams()
         self.InitializeParams(**kwargs)
 
     def DefaultParams(self):
-        self.dirname="utterance" # default directory name ../data/utterance_<current dts>
+        self.home_dir = None
+        self.dirname="data/utterance" # default directory name data/utterance_<current dts>
 
         self.gender = "Female"
         self.sample_freq = 8000
         self.oversamp = 70
         self.glottal_masses = 2
         self.utterance_length = 1.0  # seconds
-        self.loops = 10
+        self.loops = 1
 
-        self.initial_art = np.zeros(aw.kArt_muscle.MAX,
-                                    dtype=np.dtype('double'))
+        #self.initial_art = np.zeros(aw.kArt_muscle.MAX,
+                                    #dtype=np.dtype('double'))
 
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
 
     def InitializeParams(self, **kwargs):
+        self.home_dir = kwargs.get("home_dir", self.home_dir)
         self.dirname = kwargs.get("dirname", self.dirname)
 
         self.gender = kwargs.get("gender", self.gender)
@@ -44,26 +45,28 @@ class Utterance(object):
         self.utterance_length = kwargs.get("utterance_length",
                                            self.utterance_length)
         self.loops = kwargs.get("loops", self.loops)
+        #self.initial_art = kwargs.get("initial_art", self.initial_art)
+        #print self.initial_art
 
 
         self.ResetOutputVars()
 
     def ResetOutputVars(self):
         self.sound_wave = np.zeros(int(np.ceil(self.sample_freq *
-                                           self.utterance_length+1)))
+                                           self.utterance_length)))
 
         self.area_function = np.zeros((MAX_NUMBER_OF_TUBES,
                                        int(np.ceil(self.sample_freq *
-                                               self.utterance_length+1))))
+                                               self.utterance_length))))
 
         self.pressure_function = np.zeros((MAX_NUMBER_OF_TUBES,
                                        int(np.ceil(self.sample_freq *
-                                               self.utterance_length+1))))
+                                               self.utterance_length))))
 
 
         self.art_hist = np.zeros((aw.kArt_muscle.MAX,
                                   int(np.ceil(self.sample_freq *
-                                          self.utterance_length+1))))
+                                          self.utterance_length))))
 
     def InitializeDir(self, dirname, addDTS=True):
         # setup directory for saving files
@@ -72,10 +75,10 @@ class Utterance(object):
         else:
             self.directory = dirname
 
-        if not os.path.exists(self.home_dir):
-            os.makedirs(self.home_dir)
+        #if (not os.path.exists(self.home_dir)) and (not self.home_dir == None): 
+        #    os.makedirs(self.home_dir)
 
-        self.directory = self.home_dir + '/' + self.directory
+        #self.directory = self.home_dir + '/' + self.directory
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
@@ -96,12 +99,22 @@ class Utterance(object):
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
 
-        self.speaker.InitSim(self.utterance_length, self.initial_art)
+        if not self._art_init:
+            for k in range(5):
+                print "####################"
+            print "No articulator has been initialized."
+            print "Simulator cannot run without articulator."
+            for k in range(5):
+                print "####################"
+
+        initial_art = self._art.GetArt() # defaults to getting articulation at t=0
+        self.speaker.InitSim(self.utterance_length, initial_art)
 
         # element zero of output arrays will be filled with initial value of
         # simulator variables. 
-        self.SaveOutputs()
-        self.art_hist[:,0] = np.copy(self.initial_art)
+        #self.SaveOutputs()
+        #self.art_hist[:,0] = np.copy(initial_art)
+        #print self.art_hist[:, 0]
 
     def InitializeArticulation(self):
         # note: changing speaker params requires calling InitializeSpeaker
@@ -127,35 +140,41 @@ class Utterance(object):
         for t in range(len(targets)):
             self._art.setTarget(muscle, times[t], targets[t])
     
-    def SaveOutputs(self):
+    def SaveOutputs(self, index=0):
         # Save sound data point
-        self.sound_wave[self.speaker.Now()] = self.speaker.GetLastSample()
+        self.sound_wave[index] = self.speaker.GetLastSample()
 
-        self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()])
+        self.speaker.GetAreaFcn(self.area_function[:, index])
 
-        self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()])
+        self.speaker.GetPressureFcn(self.pressure_function[:, index])
 
     def Simulate(self):
 
         self.ResetOutputVars()
+        #self.SaveOutputs()
 
-        articulation = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
+        #articulation = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double'))
 
         while self.speaker.NotDone():
 
             # pass the current articulation in
-            self._art.intoArt(articulation, self.speaker.NowSecondsLooped())
+            #self._art.intoArt(articulation, self.speaker.NowSecondsLooped())
+            articulation = self._art.GetArt(self.speaker.NowSecondsLooped())
             self.speaker.SetArticulation(articulation)
-
             self.speaker.IterateSim()
 
+            # save output data
+            # save new articulation
+            self.art_hist[:, self.speaker.Now()-1] = np.copy(articulation) # save
+            self.SaveOutputs(self.speaker.Now()-1)
+
             # Save sound data point
-            self.SaveOutputs()
+            #self.SaveOutputs()
             #self.sound_wave[self.speaker.Now()-1] = self.speaker.GetLastSample()
             #self.speaker.GetAreaFcn(self.area_function[:, self.speaker.Now()-1])
             #self.speaker.GetPressureFcn(self.pressure_function[:, self.speaker.Now()-1])
 
-            self.art_hist[:, self.speaker.Now()-1] = np.copy(articulation)
+            #self.art_hist[:, self.speaker.Now()] = np.copy(articulation)
 
         self.speaker.LoopBack()
         self.iteration += 1

@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.signal as signal
-#import numpy.linalg as ln
 import scipy.linalg as ln
 import os
 import pylab as plt
@@ -10,11 +9,62 @@ from matplotlib2tikz import save as tikz_save
 from DataHandler import DataHandler
 
 class SubspaceDFA(DataHandler):
-#""" Subspace Method for inferring primitive operators
-#
-#TODO:
-#
-#"""
+    """ Subspace Method for inferring primitive operators
+
+    Methods: 
+        __init__ -- initialize class
+            InitVars -- initialize internal variables
+            DefaultParams -- defaults for all DFA parameters
+            InitParams -- initialize DFA parameters
+        SetFeatures -- initialize feature extractor class
+
+        LoadDataFile -- routine for loading data from file
+            ClearExcessData -- clear excess preprocessed data from memory
+            PreprocessData -- extract features, compute intermediate matrices for subspace DFA
+
+        GenerateData -- generate data from utterance object
+            LoadDataChunk -- routine for loading data from dictionary of arrays
+
+        LoadRawData -- pass data in without preprocessing (depreciated)
+
+        SubspaceDFA -- compute primitive operators
+        LoadPrimitives -- load primitive operators from file
+        SavePrimitives -- save primitive operators to file
+        EstimateStateHistory -- estimate state history from raw data based on current primitive operators
+
+
+    Attributes: 
+        _past --  number of past samples used in history
+        _future -- number of future predicted samples
+        _dim -- internal dimension of primitive space
+        sample_period -- period of downsampling operator
+        homedir -- base directory 
+        Features -- feature extractor class object (must inherit from BaseFeatures)
+
+        _data -- array of feature vectors extracted from raw data
+        _std -- standard deviation of _data
+        _ave -- mean of _data
+        _sum -- sum over all time samples of _data
+        _sum_f -- 
+        _sum_p -- 
+        _sum2 -- sum over all time samples of _data**2
+        _sum2_f -- 
+        _sum2_p -- 
+        _count -- number of time samples of _data
+        phi -- intermediate matrix for computing primitive operators
+        psi -- intermediate matrix for computing primitive operators
+
+        F -- linear prediction matrix
+        O -- primitive output operator
+        K -- primitive input operator
+
+
+
+
+    TODO:
+        - Add check in EstimateStateHistory so that it returns error or prints out when no primitive operators exist
+
+    """
 
     def __init__(self, **kwargs):
         """ Class initialization
@@ -32,7 +82,6 @@ class SubspaceDFA(DataHandler):
         """
 
         super(SubspaceDFA, self).__init__(**kwargs)
-        #DataHandler.__init__(self, **kwargs)
 
         self.InitVars()
         self.DefaultParams()
@@ -88,6 +137,7 @@ class SubspaceDFA(DataHandler):
         self._future = 0
         self._dim = 0
         self.sample_period=1
+        self._verbose = True
         return 0
 
     def InitParams(self, **kwargs):
@@ -107,6 +157,7 @@ class SubspaceDFA(DataHandler):
         self._past = kwargs.get('past', self._past)
         self._future = kwargs.get('future', self._future)
         self._dim = kwargs.get('dim', self._dim)
+        self._verbose = kwargs.get('verbose', self._verbose)
         # period over which data is downsampled
         self.sample_period = kwargs.get('sample_period', self.sample_period)
 
@@ -235,15 +286,11 @@ class SubspaceDFA(DataHandler):
             Xf, Xp -- used to compute primitive operators
 
         """
-        #TODO: Remove option for normalize - assume always true 
-        #       Remove from SubspaceDFA.py too.
 
-        # note: axis 0 is parameter dimension, axis 1 is time
-        #       sample_period is measured in milliseconds
+        # NOTE: 
+        #    _data axis 0 is parameter dimension, axis 1 is time
+        #    sample_period is measured in milliseconds
 
-        # save past, future values for later use
-        #self._past = past
-        #self._future = future
         if overlap:
             print "Overlap is currently not supported. No overlap used."
 
@@ -274,29 +321,22 @@ class SubspaceDFA(DataHandler):
 
         # get dimension of feature space
         dim = data_chunks.shape[0]
-        #print dim,data_chunks.shape
-
-
-        # Better normalization method is outlined in my notebook: 
-        # page 111-113
-        self._std = np.std(data_chunks, axis=1)
-        self._ave = np.mean(data_chunks, axis=1)
-
-        # shift to zero mean and  normalize by standard deviation
-        normed_data_chunks = ((data_chunks.T-self._ave)/self._std).T
 
         # format data into Xf and Xp matrices
-        #Xl = normed_data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
         Xl = data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
         Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
         Xp = Xl[0:(self._past*dim), :]
-        #print Xl.shape
 
-        # don't normalize here, save summations for computing mean and variance
+        # save summation matrices:
+        # use to compute normalization at start of SubspaceDFA
         #  mean -> sum(data_chunks, axis=1)
         #  var -> sum(data_chunks**2, axis=1)
         #  total_count += data_chunks.shape[1]
+        #  sum over Xf and Xp 
+        #  sum over Xf**2 and Xp**2
+        #  save phi=dot(Xf, Xp.T) and psi=dot(Xp, Xp.T)
         if self._count == 0:
+
             self._sum = np.sum(data_chunks, axis=1)
             self._sum2 = np.sum(np.abs(data_chunks)**2, axis=1)
             self._count = data_chunks.shape[1]
@@ -308,7 +348,9 @@ class SubspaceDFA(DataHandler):
             self._sum2_f = np.sum(np.abs(Xf)**2, axis=1)
             self._sum2_p = np.sum(np.abs(Xp)**2, axis=1)
             self._count_fp = Xl.shape[1]
+
         else:
+
             self._sum += np.sum(data_chunks, axis=1)
             self._sum2 += np.sum(np.abs(data_chunks)**2, axis=1)
             self._count += data_chunks.shape[1]
@@ -320,23 +362,24 @@ class SubspaceDFA(DataHandler):
             self._sum2_f += np.sum(np.abs(Xf)**2, axis=1)
             self._sum2_p += np.sum(np.abs(Xp)**2, axis=1)
             self._count_fp += Xl.shape[1]
-        print self._count, self._count_fp
 
+        # debug printouts to make sure indexing is correct
+        #print self._count, self._count_fp
         #print Xf.shape
         #print Xp.shape
+        if self._verbose:
+            print "Preprocessing: %i chunks (%i total)" % (Xl.shape[1], self._count_fp)
 
-        # save summation matrices:
-        # sum over Xf and Xp (along dim 1?)
-        # sum over Xf**2 and Xp**2
-        # save phi=dot(Xf, Xp.T) and psi=dot(Xp, Xp.T)
 
-        # use to compute normalization at start of SubspaceDFA
-
-    def GenerateData(self, utterance, loops, save_data=True):
+    def GenerateData(self, utterance, loops, save_data=True, fname=None):
         # utterance should be completely initialized before getting passed in
         # data is simply generated for some number of loops and passed to SubspaceDFA
         utterance.ResetOutputVars()
         for k in range(loops):
+            if self._verbose:
+                msg = "\nSimulating iteration %i / %i"% (k, loops)
+                print msg
+                print "-"*len(msg)
             utterance.Simulate()
 
             data = {'sound_wave': utterance.sound_wave,
@@ -347,9 +390,10 @@ class SubspaceDFA(DataHandler):
             self.LoadDataChunk(data)
 
             if save_data:
-                utterance.Save()
-
-
+                if not fname==None:
+                    utterance.Save(fname)
+                else: 
+                    utterance.Save()
 
     def SubspaceDFA(self, k):
         """Estimate linear prediction matrix and decompose into primitive operators 
@@ -371,56 +415,43 @@ class SubspaceDFA(DataHandler):
         self._dim = k
 
         # compute mean and variance
-        _mean = self._sum/self._count
-        #_std = np.sqrt(np.abs(self._sum2-np.abs(self._sum)**2)/self._count)
-        _std = np.sqrt(np.abs(self._sum2/self._count-np.abs(_mean)**2))
-        self._ave = _mean
-        self._std = _std
+        self._ave = self._sum/self._count
+        self._std = np.sqrt(np.abs(self._sum2/self._count-np.abs(self._ave)**2))
+
         # Normalization works when I use these values
-        #_mean = self._ave
-        #_std = self._std
-        _mean_f = np.tile(_mean, self._future)
-        _mean_p = np.tile(_mean, self._past)
-        _std_f = np.tile(_std, self._future)
-        _std_p = np.tile(_std, self._past)
+        _mean_f = np.tile(self._ave, self._future)
+        _mean_p = np.tile(self._ave, self._past)
+        _std_f = np.tile(self._std, self._future)
+        _std_p = np.tile(self._std, self._past)
 
-        #_mean_f = self._sum_f/self._count_fp
-        #_std_f = np.sqrt(np.abs(self._sum2_f-np.abs(self._sum_f)**2)/self._count_fp)
-        #_mean_p = self._sum_p/self._count_fp
-        #_std_p = np.sqrt(np.abs(self._sum2_p-np.abs(self._sum_p)**2)/self._count_fp)
 
-        self._mean_f = _mean_f
-        self._mean_p = _mean_p
-        self._std_f = _std_f
-        self._std_p = _std_p
+        # make visible outside the class for debugging
+        #self._mean_f = _mean_f
+        #self._mean_p = _mean_p
+        #self._std_f = _std_f
+        #self._std_p = _std_p
 
-        # normalize phi and psi
-        #self.phi -= self._count*np.outer(_mean_f, _mean_p)
-        #self.phi /= np.outer(_std_f, _std_p)
-
-        #self.psi -= self._count*np.outer(_mean_p, _mean_p)
-        #self.psi /= np.outer(_std_p, _std_p)
-        
+        # normalize phi 
         self.phi -= np.outer(self._sum_f, _mean_p)
         self.phi -= np.outer(_mean_f, self._sum_p)
-        self.phi += self._count_fp*np.outer(_mean_f, self._mean_p)
+        self.phi += self._count_fp*np.outer(_mean_f, _mean_p)
         self.phi /= np.outer(_std_f, _std_p)
 
+        # normalize psi 
         self.psi -= np.outer(self._sum_p, _mean_p)
         self.psi -= np.outer(_mean_p, self._sum_p)
-        self.psi += self._count_fp*np.outer(_mean_p, self._mean_p)
+        self.psi += self._count_fp*np.outer(_mean_p, _mean_p)
         self.psi /= np.outer(_std_p, _std_p)
 
         # compute predictor matrix
-        ####self.F = np.dot(self.Xf, ln.pinv(self.Xp))
-        print "Computing F"
+        if self._verbose:
+            print "Computing F(%i, %i)..."%(self.phi.shape[0], self.psi.shape[1])
         
         # use scipy.linalg.pinvh to speed up inverting symmetric matrix
         self.F = np.dot(self.phi, ln.pinvh(self.psi))
-        #print self.F.shape
 
-        #gamma_f = ln.cholesky(np.cov(Xf))
-        #gamma_p = ln.cholesky(np.cov(Xp))
+        if self._verbose: 
+            print "Decomposing F into O and K with rank %i..." % self._dim
 
         [U, S, Vh] = ln.svd(self.F)
         self._U = np.copy(U)
@@ -428,15 +459,10 @@ class SubspaceDFA(DataHandler):
         self._S = np.copy(S)
 
         U = U[:, 0:k]
-        # plt.plot(S)
-        # plt.show()
         S = np.diag(S[0:k])
         Vh = Vh[0:k, :]
 
-        #K = np.dot(np.dot(np.sqrt(S), Vh), ln.pinv(gamma_p))
         self.K = np.dot(np.sqrt(S), Vh)
-
-        #O = np.dot(np.dot(gamma_f, U), np.sqrt(S))
         self.O = np.dot(U, np.sqrt(S))
 
     def SavePrimitives(self, fname=None):
@@ -456,7 +482,8 @@ class SubspaceDFA(DataHandler):
         if fname==None:
             fname = 'primitives'
 
-        np.savez(os.path.join(self.home_dir, str(fname)),
+        #np.savez(os.path.join(self.home_dir, str(fname)),
+        np.savez(fname, 
                  K=self.K,
                  O=self.O,
                  ave=self._ave,
@@ -532,22 +559,19 @@ if __name__ == "__main__":
     utterance_length = 1.0
     full_utterance = loops*utterance_length
 
-    rando = RandExcite(home_dir='../data', dirname="full_random_5", 
-                       method="gesture",
-                       loops=loops,
+    rando = RandExcite(dirname="../data/IDFA_test", 
                        utterance_length=utterance_length,
                        initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
                        max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
 
-    rando.InitializeAll()
+    #rando.InitializeAll()
 
 
     dim = 8
     sample_period = 10*8 # (*8) -> ms
 
 
-    ss = SubspaceDFA(home_dir='../data', sample_period=sample_period, past=10, future=10)
-    print "loading features class"
+    ss = SubspaceDFA(sample_period=sample_period, past=10, future=10)
 
     ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
     #ss.SetFeatures(SpectralAcousticFeatures)
@@ -556,7 +580,17 @@ if __name__ == "__main__":
 
     ss.SubspaceDFA(dim)
 
-    ss.EstimateStateHistory(ss._data)
-    plt.plot(ss.h.T)
+    plt.figure()
+    plt.imshow(np.abs(ss.F))
+    plt.figure()
+    plt.imshow(np.abs(ss.O))
+    plt.figure()
+    plt.imshow(np.abs(ss.K))
     plt.show()
+
+
+
+    #ss.EstimateStateHistory(ss._data)
+    #plt.plot(ss.h.T)
+    #plt.show()
 

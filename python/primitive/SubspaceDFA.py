@@ -9,11 +9,11 @@ from matplotlib2tikz import save as tikz_save
 from DataHandler import DataHandler
 
 class SubspaceDFA(DataHandler):
-""" Subspace Method for inferring primitive operators
+    """ Subspace Method for inferring primitive operators
 
-TODO:
+    TODO:
 
-"""
+    """
 
     def __init__(self, **kwargs):
         """ Class initialization

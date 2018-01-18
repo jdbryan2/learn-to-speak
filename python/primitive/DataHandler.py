@@ -80,7 +80,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
     def LoadParams(self, dirname):
         
         # append home_dir to the front of dirname
-        full_dirname = os.path.join(self.home_dir, dirname)
+        #full_dirname = os.path.join(self.home_dir, dirname)
+        full_dirname = dirname
 
         # load up data parameters before anything else
         self.params = {}
@@ -97,7 +98,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         # is the audio saved in the numpy data? ---> Yes
 
         # append home_dir to the front of dirname
-        full_dirname = os.path.join(self.home_dir, dirname)
+        #full_dirname = os.path.join(self.home_dir, dirname)
+        full_dirname = dirname 
 
         # load up data parameters before anything else
         self.LoadParams(dirname)
