@@ -19,8 +19,8 @@ class Utterance(object):
         self.InitializeParams(**kwargs)
 
     def DefaultParams(self):
-        self.home_dir = None
-        self.dirname="data/utterance" # default directory name data/utterance_<current dts>
+        self.directory="data/utterance" # default directory name data/utterance_<current dts>
+        self._dir_DTS=True
 
         self.gender = "Female"
         self.sample_freq = 8000
@@ -33,10 +33,13 @@ class Utterance(object):
                                     #dtype=np.dtype('double'))
 
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
+        
+        self._sim_init = False  # flag for seeing if simulation has already been initialized
 
     def InitializeParams(self, **kwargs):
-        self.home_dir = kwargs.get("home_dir", self.home_dir)
-        self.dirname = kwargs.get("dirname", self.dirname)
+        self.directory = kwargs.get("dirname", self.directory) # keeps backward compatible
+        self.directory = kwargs.get("directory", self.directory)
+        self._dir_DTS=kwargs.get("addDTS", self._dir_DTS)
 
         self.gender = kwargs.get("gender", self.gender)
         self.sample_freq = kwargs.get("sample_freq", self.sample_freq)
@@ -68,12 +71,12 @@ class Utterance(object):
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
 
-    def InitializeDir(self, dirname, addDTS=True):
+    def InitializeDir(self, directory, addDTS=True):
         # setup directory for saving files
         if addDTS:
-            self.directory = dirname + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
+            self.directory = directory + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
         else:
-            self.directory = dirname
+            self.directory = directory
 
         #if (not os.path.exists(self.home_dir)) and (not self.home_dir == None): 
         #    os.makedirs(self.home_dir)
@@ -84,6 +87,7 @@ class Utterance(object):
 
         self.directory = self.directory + '/'
 
+    #TODO: Do speaker and sim need to be initialized separately? 
     def InitializeSpeaker(self, **kwargs):
         if len(kwargs.keys()):
             self.InitializeParams(**kwargs)
@@ -203,21 +207,34 @@ class Utterance(object):
                  glottal_masses=self.glottal_masses,
                  loops=self.loops)
 
-    def Run(self, **kwargs):
-        # initialize parameters if anything new is passed in
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+    def IsInitialized(self):
+        return self._sim_init
 
-        #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dirname)  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
-        self.InitializeSpeaker()
+    def InitializeAll(self, **kwargs):
+        # initialize parameters if anything new is passed in
+        self.InitializeParams(**kwargs)
+
+        # Quick message to let us know whether we are initializing for a second time
+        if not self._sim_init: 
+            self._sim_init = True
+            print "Setting up simulation..."
+        else: 
+            print "Resetting simulation..."
 
         if self._art_init == False:
             print "No articulations to simulate."
             return False
 
+        self.InitializeDir(self.directory)  # appends DTS to folder name
+        self.SaveParams()  # save parameters before anything else
+
+        self.InitializeSpeaker()
         self.InitializeSim()
+
+    def Run(self, **kwargs):
+        # initialize parameters if anything new is passed in
+        
+        self.InitializeAll(**kwargs)
 
         for k in range(self.loops):
             print "Loop: " + str(k)

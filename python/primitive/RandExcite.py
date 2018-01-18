@@ -1,3 +1,5 @@
+#from config import *
+import config
 import os
 import time
 import numpy as np
@@ -10,13 +12,10 @@ from Utterance import Utterance
 import pylab as plt
 
 # TODO: Add this to constants in library
-MAX_NUMBER_OF_TUBES = 89
+#MAX_NUMBER_OF_TUBES = 89
 
 
 class RandExcite(Utterance):
-
-    home_dir = 'data'  # changes to this changes all instances of the class
-
 
     def __init__(self, **kwargs):
         self.DefaultParams()
@@ -28,7 +27,9 @@ class RandExcite(Utterance):
         Utterance.DefaultParams(self)
 
         # change default dirname
-        self.dirname="random" # default directory name ../data/random_<current dts>
+        # DTS is automatically tacked on to file name
+        # change by passing addDTS=False on initialization
+        self.directory="data/random" # default directory name data/random_<current dts>
 
         # gesture default params
         self.method = "gesture"
@@ -78,6 +79,10 @@ class RandExcite(Utterance):
 
     def SaveParams(self):
         # TODO: 
+        #   find better way to just add more parameters to what is already saved in parent class
+
+
+        # TODO: 
         #   Add remaining parameters for RandomArtword
         np.savez(self.directory + 'params',
                  gender=self.gender,
@@ -88,40 +93,13 @@ class RandExcite(Utterance):
                  loops=self.loops,
                  max_delta_target=self._art.max_delta_target)
 
-    def Run(self, **kwargs):
-        self.InitializeAll(**kwargs)
+    #def Run(self, **kwargs):
+    #    self.InitializeAll(**kwargs)
 
-        for k in range(self.loops):
-            print "Loop: " + str(k)
-            self.Simulate()
-            self.Save()
-
-    def IsInitialized(self):
-        return self._sim_init
-
-    def InitializeAll(self, **kwargs):
-        if not self._sim_init: 
-            self._sim_init = True
-            print "Setting up simulation..."
-        else: 
-            print "Resetting simulation..."
-
-        # initialize parameters if anything new is passed in
-        #if len(kwargs.keys()):
-        #    self.InitializeParams(**kwargs)
-        self.InitializeParams(**kwargs)
-
-        self.InitializeDir(self.dirname)  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
-        self.InitializeSpeaker()
-        self.InitializeSim()
-        #self.InitializeArticulation()
-        #if self.method == "gesture":
-            #self.GenerateGestureSequence()
-        #else:
-            #print "Excitation method is undefined: " + self.method
-            #return False
-
+    #    for k in range(self.loops):
+    #        print "Loop: " + str(k)
+    #        self.Simulate()
+    #        self.Save()
 
 
 if __name__ == "__main__":

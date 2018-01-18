@@ -1,4 +1,5 @@
 import numpy as np
+import config
 
 def moving_average(a, n=3):
     ret = np.cumsum(a, axis=1, dtype=float)
@@ -17,10 +18,10 @@ class BaseFeatures(object):
         self.control_action = 'art_hist'
         self.sample_period = 8
         self.min_sound_length = 0
+        self.tubes = config.TUBES
 
     def InitializeParams(self, **kwargs):
         # Pass tube segments dictionary through 
-        self.tubes = kwargs.get("tubes", self.tubes)
         self.control_action = kwargs.get("control_action", self.control_action)
         self.pointer = kwargs.get("pointer", self.pointer)
         self.sample_period = kwargs.get("sample_period", self.sample_period)

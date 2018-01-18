@@ -1,3 +1,4 @@
+import config 
 import numpy as np
 # import numpy.linalg as ln
 import matplotlib.pyplot as plt
@@ -6,7 +7,6 @@ import matplotlib.animation as animation
 import os
 
 
-# TODO: create simple class that loads data files, use as parent for prim class
 
 
 class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
@@ -17,22 +17,34 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 #"""
     def __init__(self, **kwargs):
         # define tube sections from PRAAT
-        self.tubes = {}
-        self.tubes['lungs'] = np.append(np.arange(6, 17), 23)
-        self.tubes['full_lungs'] = np.arange(6, 23)
-        self.tubes['bronchi'] = np.arange(23, 29)
-        self.tubes['trachea'] = np.arange(29, 35)
-        self.tubes['glottis'] = np.arange(35, 37)
-        self.tubes['tract'] = np.arange(37, 64)
-        self.tubes['glottis_to_velum'] = np.arange(35, 65)
-        self.tubes['nose'] = np.arange(64, 78)
-        self.tubes['all'] = np.arange(6, 65)  # include velum, exclude nasal cavity
-        self.tubes['all_no_lungs'] = np.arange(23, 65)  # include velum, exclude nasal cavity
+        self.tubes = config.TUBES # defined in config/constants.py
 
         # initialize the variables
         self.data = {}
 
-        self.home_dir = kwargs.get("home_dir", "data")
+        self.directory = kwargs.get("directory", "data")
+        self.directory = kwargs.get("home_dir", self.directory)
+
+        self.InitVars()
+        self.DefaultParams()
+        self.InitParams(**kwargs)
+
+    def InitVars(self):
+        self.tubes = config.TUBES # defined in config/constants.py
+
+        # initialize the variables
+        self.data = {}
+
+    def DefaultParams(self):
+        self.directory = "data"
+        self._verbose = True
+
+    def InitParams(self, **kwargs):
+        # stupid backward compatibility because I can't decide on a variable name
+        self.directory = kwargs.get("directory", self.directory)
+        self.directory = kwargs.get("home_dir", self.directory)
+        self.directory = kwargs.get("dirname", self.directory)
+        
 
     def LoadDataFile(self, fname, sample_period=1):
         # note: sample_period is only used by child classes
@@ -77,15 +89,11 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         return _error
 
 
-    def LoadParams(self, dirname):
-        
-        # append home_dir to the front of dirname
-        #full_dirname = os.path.join(self.home_dir, dirname)
-        full_dirname = dirname
+    def LoadDataParams(self, dirname):
 
         # load up data parameters before anything else
         self.params = {}
-        params = np.load(os.path.join(full_dirname, 'params.npz'))
+        params = np.load(os.path.join(dirname, 'params.npz'))
 
         for key in params.keys():
             if not params[key].shape:
@@ -93,20 +101,18 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             else:
                 self.params[key] = params[key]
 
-    def LoadDataDir(self, dirname, sample_period=None, verbose = False):
+    def LoadDataDir(self, **kwargs):#dirname, sample_period=None, verbose = False):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
-        # append home_dir to the front of dirname
-        #full_dirname = os.path.join(self.home_dir, dirname)
-        full_dirname = dirname 
+        self.InitParams(**kwargs)
 
         # load up data parameters before anything else
-        self.LoadParams(dirname)
+        self.LoadDataParams(dirname)
 
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
-        for filename in os.listdir(full_dirname):
+        for filename in os.listdir(dirname):
             if filename.startswith('data') and filename.endswith(".npz"):
                 index_list.append(int(filter(str.isdigit, filename)))
 
@@ -119,12 +125,13 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         for index in index_list:
             if verbose:
-                print os.path.join(full_dirname, 'data'+str(index)+'.npz')
-            if sample_period == None:
-                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'))
+                print os.path.join(dirname, 'data'+str(index)+'.npz')
+            #if sample_period == None:
+            if 'sample_period' in kwargs:
+                self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
             else: 
-                self.LoadDataFile(os.path.join(full_dirname, 'data'+str(index)+'.npz'),
-                                  sample_period=sample_period)
+                self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'),
+                                  sample_period=kwargs['sample_period'])
 
 
 
@@ -132,7 +139,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         # should probably clean this up...
         fname = kwargs.get('fname', 'video')
         dirname = kwargs.get('dirname', '')
-        dirname = os.path.join(self.home_dir, dirname)
+        dirname = kwargs.get('directory', '')
+        #dirname = os.path.join(self.home_dir, dirname)
         fname = os.path.join(dirname, fname)
 
         # lungs are far larger than the rest of the apparatus

@@ -98,6 +98,7 @@ class SubspaceDFA(DataHandler):
 
         """
         # initialize the variables
+        super(SubspaceDFA, self).InitVars()
 
         # preprocessed data matrices
         #self.Xf = np.array([])
@@ -132,6 +133,8 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
+        super(SubspaceDFA, self).DefaultParams()
+
         # internal variables for tracking dimensions of past and future histories and internal state dimension
         self._past = 0
         self._future = 0
@@ -153,6 +156,7 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
+        super(SubspaceDFA, self).InitParams(**kwargs)
 
         self._past = kwargs.get('past', self._past)
         self._future = kwargs.get('future', self._future)
@@ -161,7 +165,7 @@ class SubspaceDFA(DataHandler):
         # period over which data is downsampled
         self.sample_period = kwargs.get('sample_period', self.sample_period)
 
-    def SetFeatures(self, feature_class):
+    def SetFeatures(self, feature_class, **kwargs):
         """ Set feature extractor class
 
         Arguments: 
@@ -170,7 +174,7 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
-        self.Features = feature_class(tubes=self.tubes)
+        self.Features = feature_class(**kwargs)
 
     def LoadRawData(self, raw_data):
         """ Pass raw data into internal data array without feature extraction or downsampling. Used only for external
@@ -370,14 +374,13 @@ class SubspaceDFA(DataHandler):
         if self._verbose:
             print "Preprocessing: %i chunks (%i total)" % (Xl.shape[1], self._count_fp)
 
-
     def GenerateData(self, utterance, loops, save_data=True, fname=None):
         # utterance should be completely initialized before getting passed in
         # data is simply generated for some number of loops and passed to SubspaceDFA
         utterance.ResetOutputVars()
         for k in range(loops):
             if self._verbose:
-                msg = "\nSimulating iteration %i / %i"% (k, loops)
+                msg = "\nSimulating iteration %i / %i"% (k+1, loops)
                 print msg
                 print "-"*len(msg)
             utterance.Simulate()

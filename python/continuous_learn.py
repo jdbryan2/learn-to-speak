@@ -24,11 +24,11 @@ from primitive.RandExcite import RandExcite
 from test_params import *
 
 ################################################################################
-loops = 1000
+loops = 1
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
-rando = RandExcite(dirname="data/continuous_"+str(loops), 
+rando = RandExcite(directory="data/continuous_"+str(loops), 
                    method="gesture",
                    loops=loops,
                    utterance_length=utterance_length,
@@ -41,7 +41,8 @@ inc_ss = IncrementalDFA(sample_period=sample_period, past=past, future=future)
 #inc_ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-inc_ss.Features = ArtFeatures(tubes=inc_ss.tubes) # set feature extractor
+#inc_ss.Features = ArtFeatures(tubes=inc_ss.tubes) # set feature extractor
+inc_ss.Features = ArtFeatures()
 #inc_ss.Features = SpectralAcousticFeatures(tubes=inc_ss.tubes,
                                        #sample_period=sample_period) # set feature extractor
 
