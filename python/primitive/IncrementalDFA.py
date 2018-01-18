@@ -485,19 +485,31 @@ class SubspaceDFA(DataHandler):
         if fname==None:
             fname = 'primitives'
 
-        #np.savez(os.path.join(self.home_dir, str(fname)),
-        np.savez(fname, 
-                 K=self.K,
-                 O=self.O,
-                 ave=self._ave,
-                 std=self._std,
-                 past=self._past,
-                 future=self._future, 
-                 control_period=self.sample_period, 
-                 features=self.Features.__class__.__name__, # feature extractor parameters (don't like this way of passing them through)
-                 feature_pointer=self.Features.pointer,
-                 feature_tubes=self.Features.tubes,
-                 control_action=self.Features.control_action)
+        kwargs = {}
+        kwargs['K']=self.K
+        kwargs['O']=self.O
+        kwargs['ave']=self._ave
+        kwargs['std']=self._std
+        kwargs['past']=self._past
+        kwargs['future']=self._future
+        kwargs['control_period']=self.sample_period
+        kwargs['features']=self.Features.__class__.__name__ # feature extractor parameters (don't like this way of passing them through)
+        kwargs['feature_pointer']=self.Features.pointer
+        kwargs['feature_tubes']=self.Features.tubes
+        kwargs['control_action']=self.Features.control_action
+
+        np.savez(fname, **kwargs)
+                 #K=self.K,
+                 #O=self.O,
+                 #ave=self._ave,
+                 #std=self._std,
+                 #past=self._past,
+                 #future=self._future, 
+                 #control_period=self.sample_period, 
+                 #features=self.Features.__class__.__name__, # feature extractor parameters (don't like this way of passing them through)
+                 #feature_pointer=self.Features.pointer,
+                 #feature_tubes=self.Features.tubes,
+                 #control_action=self.Features.control_action)
 
     def LoadPrimitives(self, fname=None):
         """Load primitive operators from file

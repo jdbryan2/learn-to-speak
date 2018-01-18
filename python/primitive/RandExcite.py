@@ -77,29 +77,14 @@ class RandExcite(Utterance):
             self._art.SetManualTarget(muscle, targets[k], times[k])
 
 
-    def SaveParams(self):
-        # TODO: 
-        #   find better way to just add more parameters to what is already saved in parent class
+    def SaveParams(self, **kwargs):
 
+        kwargs['method'] = self.method
+        kwargs['max_delta_target'] = self._art.max_delta_target
+        kwargs['max_increment'] = self._art.max_increment
+        kwargs['min_increment'] = self._art.min_increment
 
-        # TODO: 
-        #   Add remaining parameters for RandomArtword
-        np.savez(self.directory + 'params',
-                 gender=self.gender,
-                 sample_freq=self.sample_freq,
-                 oversamp=self.oversamp,
-                 glottal_masses=self.glottal_masses,
-                 method=self.method,
-                 loops=self.loops,
-                 max_delta_target=self._art.max_delta_target)
-
-    #def Run(self, **kwargs):
-    #    self.InitializeAll(**kwargs)
-
-    #    for k in range(self.loops):
-    #        print "Loop: " + str(k)
-    #        self.Simulate()
-    #        self.Save()
+        super(RandExcite, self).SaveParams(**kwargs)
 
 
 if __name__ == "__main__":

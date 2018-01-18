@@ -199,13 +199,15 @@ class Utterance(object):
                  pressure_function=self.pressure_function,
                  art_hist=self.art_hist)
 
-    def SaveParams(self):
-        np.savez(self.directory + 'params',
-                 gender=self.gender,
-                 sample_freq=self.sample_freq,
-                 oversamp=self.oversamp,
-                 glottal_masses=self.glottal_masses,
-                 loops=self.loops)
+    def SaveParams(self, **kwargs):
+        
+        kwargs['gender'] = self.gender
+        kwargs['sample_freq'] = self.sample_freq
+        kwargs['oversamp'] = self.oversamp
+        kwargs['glottal_masses'] = self.glottal_masses
+        kwargs['loops'] = self.loops
+
+        np.savez(self.directory + 'params', **kwargs)
 
     def IsInitialized(self):
         return self._sim_init
