@@ -10,6 +10,7 @@ from Utterance import Utterance
 
 # TODO: Add functionality to automatically load feature extractor based on primitive meta data
 
+# this should actually take "utterance" as an attribute, not an inheritance
 class PrimitiveUtterance(Utterance):
 
     def __init__(self, **kwargs):
@@ -138,17 +139,6 @@ class PrimitiveUtterance(Utterance):
         predicted = ((predicted.T*self._std)+self._ave).T
         return self.ClipArticulation(predicted[self.Features.pointer['art_hist']])
 
-    #def GetFeatures_old(self):
-    #    area_function = np.zeros(self.area_function.shape[0])
-    #    pressure_function = np.zeros(self.pressure_function.shape[0])
-    #    self.speaker.GetAreaFcn(area_function) # grab initial area_function
-    #    self.speaker.GetPressureFcn(pressure_function) # grab initial area_function
-    #    articulation = self.art_hist[:, self.speaker.Now()-1] 
-
-    #    return self.Features.DirectExtract(articulation,
-    #                                       area_function, 
-    #                                       pressure_function)
-
     def GetFeatures(self):
 
         # TODO: figure out a way of generalizing the 'art_hist' variable to a
@@ -160,7 +150,6 @@ class PrimitiveUtterance(Utterance):
         _data['sound_wave'] = self.sound_wave[:self.speaker.Now()+1]
 
         return self.Features.ExtractLast(_data)
-                             
 
     def ClipArticulation(self, articulation):
         articulation[articulation<0] = 0.
