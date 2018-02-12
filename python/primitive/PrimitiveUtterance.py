@@ -11,7 +11,8 @@ from Utterance import Utterance
 # TODO: Add functionality to automatically load feature extractor based on primitive meta data
 
 # this should actually take "utterance" as an attribute, not an inheritance
-class PrimitiveUtterance(Utterance):
+#class PrimitiveUtterance(Utterance):
+class PrimitiveUtterance(object):
 
     def __init__(self, **kwargs):
 
@@ -31,9 +32,9 @@ class PrimitiveUtterance(Utterance):
         self._dim = 0
 
         # data vars
-        self.art_hist = np.array([])
-        self.area_function = np.array([])
-        self.sound_wave = np.array([])
+        #self.art_hist = np.array([])
+        #self.area_function = np.array([])
+        #self.sound_wave = np.array([])
         self._data = np.array([]) # internal data var
         self.features = {}
 
@@ -49,7 +50,16 @@ class PrimitiveUtterance(Utterance):
         if not prim_fname == None:
             self.LoadPrimitives(prim_fname)
 
-        super(PrimitiveUtterance, self).__init__(**kwargs)
+        #super(PrimitiveUtterance, self).__init__(**kwargs)
+        #self.utterance = Utterance(**kwargs) # default utterance object
+        #self.utterance = kwargs.get('utterance', self.utterance)
+
+    def SetUtterance(self, utterance):
+        self.utterance = utterance
+
+    def InitializeDir(self, directory, addDTS=True):
+        self.utterance.IntializeDir(directory, addDTS)
+
 
     def LoadPrimitives(self, fname=None):
 
@@ -144,30 +154,40 @@ class PrimitiveUtterance(Utterance):
         # TODO: figure out a way of generalizing the 'art_hist' variable to a
         # more general control_action variable as done in the feature extractor
         _data = {}
-        _data['art_hist'] = self.art_hist[:, :self.speaker.Now()+1] 
-        _data['area_function'] = self.area_function[:, :self.speaker.Now()+1]
-        _data['pressure_function'] = self.pressure_function[:, :self.speaker.Now()+1]
-        _data['sound_wave'] = self.sound_wave[:self.speaker.Now()+1]
+        _data['art_hist'] = self.utterance.art_hist[:, :self.speaker.Now()+1] 
+        _data['area_function'] = self.utterance.area_function[:, :self.speaker.Now()+1]
+        _data['pressure_function'] = self.utterance.pressure_function[:, :self.speaker.Now()+1]
+        _data['sound_wave'] = self.utterance.sound_wave[:self.speaker.Now()+1]
 
         return self.Features.ExtractLast(_data)
 
-    def ClipArticulation(self, articulation):
-        articulation[articulation<0] = 0.
-        articulation[articulation>1] = 1.
-        return articulation
+    def ClipControl(self, action, lower=0., upper=1.):
+        action[action<lower] = lower 
+        action[action>upper] = upper 
+        return action
 
-    def SaveParams(self):
-        np.savez(self.directory + 'params',
-                 gender=self.gender,
-                 sample_freq=self.sample_freq,
-                 oversamp=self.oversamp,
-                 glottal_masses=self.glottal_masses,
-                 loops=self.loops, 
-                 primitives=self.fname)
+    def SaveParams(self, **kwargs):
+
+        # add pointer to primitive operators
+        kwargs['primitives_'+str(self.Level())] = self.fname
+
+        # pass down the chain
+        self.utterance.SaveParams(**kwargs)
+        #np.savez(self.directory + 'params', **kwargs)
+
+    def Save(self, fname=None, wav_file=True, **kwargs):
+
+        # state and state-level control action
+        kwargs['state_hist_'+str(self.Level())] = self.state_hist
+        kwargs['action_hist_'+str(self.Level())] = self.action_hist
+
+        # pass down the chain
+        self.utterance.Save(fname=fname, wav_file=wav_file, **kwargs)
 
     def ResetOutputVars(self):
         # reset the normal utterance output vars
-        super(PrimitiveUtterance, self).ResetOutputVars()
+        #super(PrimitiveUtterance, self).ResetOutputVars()
+        self.utterance.ResetOutputVars()
         
         # internal primitive state "h"
         self.state_hist = np.zeros((self.K.shape[0],
@@ -224,8 +244,8 @@ class PrimitiveUtterance(Utterance):
         
         # initialize features and articulation
         features = np.zeros(self.past_data.shape[0])
-        articulation = np.zeros(target.shape[0])
-        last_art = self.art_hist[:, self.speaker.Now()-1] # used for interpolation
+        action = np.zeros(target.shape[0])
+        prev_target = self.utterance.GetLastControl()
 
         # loop over control period and implement interpolated articulation
         for t in range(self.control_period):
@@ -233,10 +253,12 @@ class PrimitiveUtterance(Utterance):
 
                 # interpolate to target in order to make smooth motions
                 for k in range(target.size):
-                    articulation[k] = np.interp(t, [0, self.control_period-1], [last_art[k], target[k]])
+                    action[k] = np.interp(t, [0, self.control_period-1], [prev_target[k], target[k]])
 
-                self.speaker.SetArticulation(articulation)
-                self.speaker.IterateSim()
+                #self.speaker.SetArticulation(articulation)
+                #self.speaker.IterateSim()
+                self.utterance.SetControl(articulation)
+                self.utterance.IterateSim()
 
                 self.SaveOutputs()
                 # Save sound data point
@@ -244,7 +266,7 @@ class PrimitiveUtterance(Utterance):
                 #area_function += control.area_function[:, control.speaker.Now()-1]/down_sample/8.
                 #last_art += articulation/down_sample/8.
 
-                self.art_hist[:, self.speaker.Now()-1] = articulation
+                self.art_hist[:, self.utterance.Now()-1] = action
 
             #features += self.GetFeatures()/self.control_period
         features = self.GetFeatures()
@@ -257,10 +279,28 @@ class PrimitiveUtterance(Utterance):
         self.current_state = self.EstimateState(self.past_data, normalize=True)
 
         # save control action and state
-        self.state_hist[:, self.speaker.Now()/self.control_period-1] = self.current_state
-        self.action_hist[:, self.speaker.Now()/self.control_period-1] = control_action
+        self.state_hist[:, self.utterance.Now()/self.control_period-1] = self.current_state
+        self.action_hist[:, self.utterance.Now()/self.control_period-1] = control_action
 
         return self.current_state
+
+
+# wrapper functions for driving the simulator
+# PrimitiveUtterance can be used as the utterance attribute
+    def SetControl(self, action):
+        self.utterance.SetControl(action)
+
+    def GetLastControl(self):
+        return self.utterance.GetLastControl()
+        
+    def IterateSim(self):
+        self.utterance.IterateSim()
+
+    def Now(self):
+        return self.utterance.Now()
+
+    def Level(self):
+        return self.utterance.Level()+1
 
 
 if __name__ == "__main__":

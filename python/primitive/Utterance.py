@@ -87,17 +87,6 @@ class Utterance(object):
 
         self.directory = self.directory + '/'
 
-    #TODO: Do speaker and sim need to be initialized separately? 
-    def InitializeSpeaker(self, **kwargs):
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
-
-        self.speaker = vt.Speaker(self.gender,
-                                  self.glottal_masses,
-                                  self.sample_freq,
-                                  self.oversamp)
-        self.iteration = 0  # reset counter
-
     def InitializeSim(self, **kwargs):
         # note: changing speaker params requires calling InitializeSpeaker
         if len(kwargs.keys()):
@@ -110,6 +99,16 @@ class Utterance(object):
             print "Simulator cannot run without articulator."
             for k in range(5):
                 print "####################"
+
+        # reset counter
+        self.iteration = 0  
+
+        # initialize speaker 
+        self.speaker = vt.Speaker(self.gender,
+                                  self.glottal_masses,
+                                  self.sample_freq,
+                                  self.oversamp)
+        
 
         initial_art = self._art.GetArt() # defaults to getting articulation at t=0
         self.speaker.InitSim(self.utterance_length, initial_art)
@@ -183,21 +182,28 @@ class Utterance(object):
         self.speaker.LoopBack()
         self.iteration += 1
 
-    def Save(self, fname = None):
+    # not totally sure that this use of kwargs will work properly
+    def Save(self, fname = None, wav_file=True, **kwargs):
 
         if fname == None: 
             fname = self.iteration
 
-        scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
-        write(self.directory + 'audio' + str(fname) + '.wav',
-              self.sample_freq,
-              scaled)
+        if wave_file:
+            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
+            write(self.directory + 'audio' + str(fname) + '.wav',
+                  self.sample_freq,
+                  scaled)
 
-        np.savez(self.directory + 'data' + str(fname),
-                 sound_wave=self.sound_wave,
-                 area_function=self.area_function,
-                 pressure_function=self.pressure_function,
-                 art_hist=self.art_hist)
+        kwargs['sound_wave'] = self.sound_wave
+        kwargs['area_function'] = self.area_function
+        kwargs['pressure_function'] = self.pressure_function
+        kwargs['art_hist'] = self.art_hist
+
+        np.savez(self.directory + 'data' + str(fname), **kwargs)
+                 #sound_wave=self.sound_wave,
+                 #area_function=self.area_function,
+                 #pressure_function=self.pressure_function,
+                 #art_hist=self.art_hist)
 
     def SaveParams(self, **kwargs):
         
@@ -254,7 +260,22 @@ class Utterance(object):
         self.InitializeSpeaker()
 
         self.InitializeSim()
+
+# wrapper functions for driving the simulator
+    def SetControl(self, action):
+        self.speaker.SetArticulation(action)
+
+    def GetLastControl(self):
+        return self.art_hist[:, self.speaker.Now()-1]
         
+    def IterateSim(self):
+        self.speaker.IterateSim()
+
+    def Now(self):
+        return self.speaker.Now()
+
+    def Level(self):
+        return 0
 
 
 if __name__ == "__main__":
