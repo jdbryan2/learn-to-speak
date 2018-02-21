@@ -57,10 +57,6 @@ class PrimitiveUtterance(object):
     def SetUtterance(self, utterance):
         self.utterance = utterance
 
-    def InitializeDir(self, directory, addDTS=True):
-        self.utterance.IntializeDir(directory, addDTS)
-
-
     def LoadPrimitives(self, fname=None):
 
         if fname==None:
@@ -166,41 +162,6 @@ class PrimitiveUtterance(object):
         action[action>upper] = upper 
         return action
 
-    def SaveParams(self, **kwargs):
-
-        # add pointer to primitive operators
-        kwargs['primitives_'+str(self.Level())] = self.fname
-
-        # pass down the chain
-        self.utterance.SaveParams(**kwargs)
-        #np.savez(self.directory + 'params', **kwargs)
-
-    def Save(self, fname=None, wav_file=True, **kwargs):
-
-        # state and state-level control action
-        kwargs['state_hist_'+str(self.Level())] = self.state_hist
-        kwargs['action_hist_'+str(self.Level())] = self.action_hist
-
-        # pass down the chain
-        self.utterance.Save(fname=fname, wav_file=wav_file, **kwargs)
-
-    def ResetOutputVars(self):
-        # reset the normal utterance output vars
-        #super(PrimitiveUtterance, self).ResetOutputVars()
-        self.utterance.ResetOutputVars()
-        
-        # internal primitive state "h"
-        self.state_hist = np.zeros((self.K.shape[0],
-                                  int(np.ceil(self.sample_freq *
-                                              self.utterance_length / 
-                                              self.control_period))))
-
-        # action_hist = high level control actions
-        self.action_hist = np.zeros((self.K.shape[0],
-                                  int(np.ceil(self.sample_freq *
-                                              self.utterance_length /
-                                              self.control_period))))
-
     def InitializeControl(self, **kwargs):
         # initialize parameters if anything new is passed in
         if len(kwargs.keys()):
@@ -254,6 +215,9 @@ class PrimitiveUtterance(object):
                 # interpolate to target in order to make smooth motions
                 for k in range(target.size):
                     action[k] = np.interp(t, [0, self.control_period-1], [prev_target[k], target[k]])
+                    # it may be worth wrapping this function too
+                    # effectively, it would do something like getting the control from the lower level controller
+                    # in order to reach the desired target. 
 
                 #self.speaker.SetArticulation(articulation)
                 #self.speaker.IterateSim()
@@ -285,8 +249,59 @@ class PrimitiveUtterance(object):
         return self.current_state
 
 
-# wrapper functions for driving the simulator
-# PrimitiveUtterance can be used as the utterance attribute
+    # wrapper functions for driving the simulator
+    # PrimitiveUtterance can be used as the utterance attribute
+    def Level(self):
+        return self.utterance.Level()+1
+
+    def SaveParams(self, **kwargs):
+
+        # add pointer to primitive operators
+        kwargs['primitives_'+str(self.Level())] = self.fname
+
+        # pass down the chain
+        self.utterance.SaveParams(**kwargs)
+        #np.savez(self.directory + 'params', **kwargs)
+
+    def Save(self, fname=None, wav_file=True, **kwargs):
+
+        # state and state-level control action
+        kwargs['state_hist_'+str(self.Level())] = self.state_hist
+        kwargs['action_hist_'+str(self.Level())] = self.action_hist
+
+        # pass down the chain
+        self.utterance.Save(fname=fname, wav_file=wav_file, **kwargs)
+
+    def ResetOutputVars(self):
+        # reset the normal utterance output vars
+        #super(PrimitiveUtterance, self).ResetOutputVars()
+        self.utterance.ResetOutputVars()
+        
+        # internal primitive state "h"
+        self.state_hist = np.zeros((self.K.shape[0],
+                                  int(np.ceil(self.sample_freq *
+                                              self.utterance_length / 
+                                              self.control_period))))
+
+        # action_hist = high level control actions
+        self.action_hist = np.zeros((self.K.shape[0],
+                                  int(np.ceil(self.sample_freq *
+                                              self.utterance_length /
+                                              self.control_period))))
+
+    def SaveOutputs(self, index=0):
+        self.utterance.SaveOutputs(self.Now()-1)
+
+        # Save sound data point
+        self.sound_wave[index] = self.speaker.GetLastSample()
+
+        self.speaker.GetAreaFcn(self.area_function[:, index])
+
+        self.speaker.GetPressureFcn(self.pressure_function[:, index])
+
+    def InitializeDir(self, directory, addDTS=True):
+        self.utterance.IntializeDir(directory, addDTS)
+
     def SetControl(self, action):
         self.utterance.SetControl(action)
 
@@ -299,8 +314,6 @@ class PrimitiveUtterance(object):
     def Now(self):
         return self.utterance.Now()
 
-    def Level(self):
-        return self.utterance.Level()+1
 
 
 if __name__ == "__main__":

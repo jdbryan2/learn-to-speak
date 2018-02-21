@@ -129,6 +129,44 @@ class Utterance(object):
 
             self._art_init = True  # flag for whether self.InitializeArticulation has been called
 
+    def IsInitialized(self):
+        return self._sim_init
+
+    # is there are functional difference between InitializeAll and InitializeManualControl?
+    def InitializeAll(self, **kwargs):
+        # initialize parameters if anything new is passed in
+        self.InitializeParams(**kwargs)
+
+        # Quick message to let us know whether we are initializing for a second time
+        if not self._sim_init: 
+            self._sim_init = True
+            print "Setting up simulation..."
+        else: 
+            print "Resetting simulation..."
+
+        if self._art_init == False:
+            print "No articulations to simulate."
+            return False
+
+        self.InitializeDir(self.directory)  # appends DTS to folder name
+        self.SaveParams()  # save parameters before anything else
+
+        #self.InitializeSpeaker()
+        self.InitializeSim() # speaker now initialized in sim
+
+    def InitializeManualControl(self, **kwargs):
+        # initialize parameters if anything new is passed in
+        if len(kwargs.keys()):
+            self.InitializeParams(**kwargs)
+
+        #self.InitializeDir(self.method)  # appends DTS to folder name
+        self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
+        self.SaveParams()  # save parameters before anything else
+        self.InitializeSpeaker()
+
+        self.InitializeSim()
+
+    # set control targets in old Artword style
     def SetManualArticulation(self, muscle, times, targets):
 
         self.InitializeArticulation()
@@ -142,14 +180,6 @@ class Utterance(object):
 
         for t in range(len(targets)):
             self._art.setTarget(muscle, times[t], targets[t])
-    
-    def SaveOutputs(self, index=0):
-        # Save sound data point
-        self.sound_wave[index] = self.speaker.GetLastSample()
-
-        self.speaker.GetAreaFcn(self.area_function[:, index])
-
-        self.speaker.GetPressureFcn(self.pressure_function[:, index])
 
     def Simulate(self):
 
@@ -215,30 +245,6 @@ class Utterance(object):
 
         np.savez(self.directory + 'params', **kwargs)
 
-    def IsInitialized(self):
-        return self._sim_init
-
-    def InitializeAll(self, **kwargs):
-        # initialize parameters if anything new is passed in
-        self.InitializeParams(**kwargs)
-
-        # Quick message to let us know whether we are initializing for a second time
-        if not self._sim_init: 
-            self._sim_init = True
-            print "Setting up simulation..."
-        else: 
-            print "Resetting simulation..."
-
-        if self._art_init == False:
-            print "No articulations to simulate."
-            return False
-
-        self.InitializeDir(self.directory)  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
-
-        self.InitializeSpeaker()
-        self.InitializeSim()
-
     def Run(self, **kwargs):
         # initialize parameters if anything new is passed in
         
@@ -249,19 +255,17 @@ class Utterance(object):
             self.Simulate()
             self.Save()
 
-    def InitializeManualControl(self, **kwargs):
-        # initialize parameters if anything new is passed in
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
-
-        #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
-        self.InitializeSpeaker()
-
-        self.InitializeSim()
 
 # wrapper functions for driving the simulator
+    
+    def SaveOutputs(self, index=0):
+        # Save sound data point
+        self.sound_wave[index] = self.speaker.GetLastSample()
+
+        self.speaker.GetAreaFcn(self.area_function[:, index])
+
+        self.speaker.GetPressureFcn(self.pressure_function[:, index])
+
     def SetControl(self, action):
         self.speaker.SetArticulation(action)
 
