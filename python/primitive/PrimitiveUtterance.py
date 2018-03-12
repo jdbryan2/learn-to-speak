@@ -162,10 +162,11 @@ class PrimitiveUtterance(object):
         action[action>upper] = upper 
         return action
 
+    # TODO: InitControl needs updating to the new cascaded class format
     def InitializeControl(self, **kwargs):
         # initialize parameters if anything new is passed in
         if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+            self.UpdateParams(**kwargs)
 
         print "Controller period:", self.control_period
 
@@ -224,7 +225,7 @@ class PrimitiveUtterance(object):
                 self.utterance.SetControl(articulation)
                 self.utterance.IterateSim()
 
-                self.SaveOutputs()
+                self.UpdateOutputs()
                 # Save sound data point
 
                 #area_function += control.area_function[:, control.speaker.Now()-1]/down_sample/8.
@@ -289,15 +290,13 @@ class PrimitiveUtterance(object):
                                               self.utterance_length /
                                               self.control_period))))
 
-    def SaveOutputs(self, index=0):
+    def UpdateOutputs(self, index=0):
         self.utterance.SaveOutputs(self.Now()-1)
 
-        # Save sound data point
-        self.sound_wave[index] = self.speaker.GetLastSample()
-
-        self.speaker.GetAreaFcn(self.area_function[:, index])
-
-        self.speaker.GetPressureFcn(self.pressure_function[:, index])
+        ## Save sound data point
+        #self.sound_wave[index] = self.speaker.GetLastSample()
+        #self.speaker.GetAreaFcn(self.area_function[:, index])
+        #self.speaker.GetPressureFcn(self.pressure_function[:, index])
 
     def InitializeDir(self, directory, addDTS=True):
         self.utterance.IntializeDir(directory, addDTS)

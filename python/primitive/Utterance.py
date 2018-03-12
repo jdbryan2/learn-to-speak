@@ -4,6 +4,7 @@ import numpy as np
 from scipy.io.wavfile import write
 import PyRAAT as vt
 import Artword as aw
+import RandomArtword as rand_aw
 
 import pylab as plt
 
@@ -16,7 +17,7 @@ class Utterance(object):
 
     def __init__(self, **kwargs):
         self.DefaultParams()
-        self.InitializeParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
     def DefaultParams(self):
         self.directory="data/utterance" # default directory name data/utterance_<current dts>
@@ -36,7 +37,7 @@ class Utterance(object):
         
         self._sim_init = False  # flag for seeing if simulation has already been initialized
 
-    def InitializeParams(self, **kwargs):
+    def UpdateParams(self, **kwargs):
         self.directory = kwargs.get("dirname", self.directory) # keeps backward compatible
         self.directory = kwargs.get("directory", self.directory)
         self._dir_DTS=kwargs.get("addDTS", self._dir_DTS)
@@ -55,19 +56,20 @@ class Utterance(object):
         self.ResetOutputVars()
 
     def ResetOutputVars(self):
-        self.sound_wave = np.zeros(int(np.ceil(self.sample_freq *
-                                           self.utterance_length)))
+        # outputs are directly saved as dictionary
+        # makes saving much quicker and allows expansion of outputs without adding attributes to class
 
-        self.area_function = np.zeros((MAX_NUMBER_OF_TUBES,
-                                       int(np.ceil(self.sample_freq *
-                                               self.utterance_length))))
+        self.data = {}
+        self.data['sound_wave'] = np.zeros(int(np.ceil(self.sample_freq * self.utterance_length)))
 
-        self.pressure_function = np.zeros((MAX_NUMBER_OF_TUBES,
-                                       int(np.ceil(self.sample_freq *
-                                               self.utterance_length))))
+        self.data['area_function'] = np.zeros((MAX_NUMBER_OF_TUBES, 
+                                       int(np.ceil(self.sample_freq * self.utterance_length))))
+
+        self.data['pressure_function'] = np.zeros((MAX_NUMBER_OF_TUBES,
+                                       int(np.ceil(self.sample_freq * self.utterance_length))))
 
 
-        self.art_hist = np.zeros((aw.kArt_muscle.MAX,
+        self.data['art_hist'] = np.zeros((aw.kArt_muscle.MAX,
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
 
@@ -90,15 +92,13 @@ class Utterance(object):
     def InitializeSim(self, **kwargs):
         # note: changing speaker params requires calling InitializeSpeaker
         if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+            self.UpdateParams(**kwargs)
 
         if not self._art_init:
-            for k in range(5):
-                print "####################"
+            print "####################\n"*3
             print "No articulator has been initialized."
             print "Simulator cannot run without articulator."
-            for k in range(5):
-                print "####################"
+            print "####################\n"*3
 
         # reset counter
         self.iteration = 0  
@@ -119,13 +119,15 @@ class Utterance(object):
         #self.art_hist[:,0] = np.copy(initial_art)
         #print self.art_hist[:, 0]
 
-    def InitializeArticulation(self):
+    def InitializeArticulation(self, **kwargs):
         # note: changing speaker params requires calling InitializeSpeaker
         if self._art_init == False:
 
             # Initialize artword for driving a manual sequence
-            total_length = self.utterance_length*self.loops
-            self._art = aw.Artword(total_length)
+            #total_length = self.utterance_length*self.loops
+            #self._art = aw.Artword(total_length)
+            self._art = rand_aw.Artword(**kwargs)
+            #self._art.Randomize(False) # turn off randomized targets
 
             self._art_init = True  # flag for whether self.InitializeArticulation has been called
 
@@ -135,7 +137,7 @@ class Utterance(object):
     # is there are functional difference between InitializeAll and InitializeManualControl?
     def InitializeAll(self, **kwargs):
         # initialize parameters if anything new is passed in
-        self.InitializeParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
         # Quick message to let us know whether we are initializing for a second time
         if not self._sim_init: 
@@ -144,9 +146,7 @@ class Utterance(object):
         else: 
             print "Resetting simulation..."
 
-        if self._art_init == False:
-            print "No articulations to simulate."
-            return False
+        self.InitializeArticulation(**kwargs)
 
         self.InitializeDir(self.directory)  # appends DTS to folder name
         self.SaveParams()  # save parameters before anything else
@@ -154,19 +154,19 @@ class Utterance(object):
         #self.InitializeSpeaker()
         self.InitializeSim() # speaker now initialized in sim
 
-    def InitializeManualControl(self, **kwargs):
-        # initialize parameters if anything new is passed in
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
+    #def InitializeManualControl(self, **kwargs):
+    #    # initialize parameters if anything new is passed in
+    #    if len(kwargs.keys()):
+    #        self.InitializeParams(**kwargs)
 
-        #self.InitializeDir(self.method)  # appends DTS to folder name
-        self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
-        self.InitializeSpeaker()
+    #    #self.InitializeDir(self.method)  # appends DTS to folder name
+    #    self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
+    #    self.SaveParams()  # save parameters before anything else
+    #    self.InitializeSpeaker()
 
-        self.InitializeSim()
+    #    self.InitializeSim()
 
-    # set control targets in old Artword style
+    ## set control targets in old Artword style
     def SetManualArticulation(self, muscle, times, targets):
 
         self.InitializeArticulation()
@@ -179,7 +179,8 @@ class Utterance(object):
 
 
         for t in range(len(targets)):
-            self._art.setTarget(muscle, times[t], targets[t])
+            #self._art.SetManualTarget(muscle, times[t], targets[t])
+            self._art.SetManualTarget(muscle, targets[t], times[t])
 
     def Simulate(self):
 
@@ -198,8 +199,8 @@ class Utterance(object):
 
             # save output data
             # save new articulation
-            self.art_hist[:, self.speaker.Now()-1] = np.copy(articulation) # save
-            self.SaveOutputs(self.speaker.Now()-1)
+            self.data['art_hist'][:, self.speaker.Now()-1] = np.copy(articulation) # save
+            self.UpdateOutputs(self.speaker.Now()-1)
 
             # Save sound data point
             #self.SaveOutputs()
@@ -213,27 +214,24 @@ class Utterance(object):
         self.iteration += 1
 
     # not totally sure that this use of kwargs will work properly
-    def Save(self, fname = None, wav_file=True, **kwargs):
+    # previously named Save
+    def SaveData(self, fname = None, wav_file=True, **kwargs):
 
         if fname == None: 
             fname = self.iteration
 
-        if wave_file:
-            scaled = np.int16(self.sound_wave/np.max(np.abs(self.sound_wave))*32767)
+        if wav_file:
+            scaled = np.int16(self.data['sound_wave']/np.max(np.abs(self.data['sound_wave']))*32767)
             write(self.directory + 'audio' + str(fname) + '.wav',
                   self.sample_freq,
                   scaled)
 
-        kwargs['sound_wave'] = self.sound_wave
-        kwargs['area_function'] = self.area_function
-        kwargs['pressure_function'] = self.pressure_function
-        kwargs['art_hist'] = self.art_hist
+        #kwargs['sound_wave'] = self.sound_wave
+        #kwargs['area_function'] = self.area_function
+        #kwargs['pressure_function'] = self.pressure_function
+        #kwargs['art_hist'] = self.art_hist
 
-        np.savez(self.directory + 'data' + str(fname), **kwargs)
-                 #sound_wave=self.sound_wave,
-                 #area_function=self.area_function,
-                 #pressure_function=self.pressure_function,
-                 #art_hist=self.art_hist)
+        np.savez( self.directory + 'data' + str(fname), **(self.data) )
 
     def SaveParams(self, **kwargs):
         
@@ -253,24 +251,24 @@ class Utterance(object):
         for k in range(self.loops):
             print "Loop: " + str(k)
             self.Simulate()
-            self.Save()
+            self.SaveData()
 
 
 # wrapper functions for driving the simulator
-    
-    def SaveOutputs(self, index=0):
+    # this needs a new name, something other than save
+    def UpdateOutputs(self, index=0):
         # Save sound data point
-        self.sound_wave[index] = self.speaker.GetLastSample()
+        self.data['sound_wave'][index] = self.speaker.GetLastSample()
 
-        self.speaker.GetAreaFcn(self.area_function[:, index])
+        self.speaker.GetAreaFcn(self.data['area_function'][:, index])
 
-        self.speaker.GetPressureFcn(self.pressure_function[:, index])
+        self.speaker.GetPressureFcn(self.data['pressure_function'][:, index])
 
     def SetControl(self, action):
         self.speaker.SetArticulation(action)
 
     def GetLastControl(self):
-        return self.art_hist[:, self.speaker.Now()-1]
+        return self.data['art_hist'][:, self.speaker.Now()-1]
         
     def IterateSim(self):
         self.speaker.IterateSim()
@@ -285,7 +283,7 @@ class Utterance(object):
 if __name__ == "__main__":
     
     # Default initial_art is all zeros
-    apa = Utterance(dirname="apa",
+    apa = Utterance(directory="../data/apa",
                     loops=1,
                     utterance_length=0.5)
 
@@ -298,14 +296,14 @@ if __name__ == "__main__":
     apa.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.2], 
                                                 [0.1, 0.0])
 
-    apa.SetManualArticulation(aw.kArt_muscle.MASSETER, [0.25], [0.7])
+    apa.SetManualArticulation(aw.kArt_muscle.MASSETER, [0., 0.25, 0.5], [0., 0.7, 0.])
 
-    apa.SetManualArticulation(aw.kArt_muscle.ORBICULARIS_ORIS, [0.25], [0.2])
+    apa.SetManualArticulation(aw.kArt_muscle.ORBICULARIS_ORIS, [0., 0.25, 0.5], [0., 0.2, 0.])
 
     apa.Run()
 
     ############################################################################
-    sigh = Utterance(dirname="sigh",
+    sigh = Utterance(directory="../data/sigh",
                     loops=1,
                     utterance_length=0.5)
 
@@ -319,7 +317,7 @@ if __name__ == "__main__":
 
     sigh.Run()
     ############################################################################
-    ejective = Utterance(dirname="ejective",
+    ejective = Utterance(directory="../data/ejective",
                     loops=1,
                     utterance_length=0.5)
 
@@ -348,7 +346,7 @@ if __name__ == "__main__":
     ejective.Run()
     ############################################################################
 
-    click = Utterance(dirname="click",
+    click = Utterance(dirname="../data/click",
                     loops=1,
                     utterance_length=0.5)
 

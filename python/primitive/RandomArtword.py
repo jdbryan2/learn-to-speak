@@ -1,28 +1,49 @@
 import numpy as np
 import Artword as aw
 
-class RandomArtword:
+class Artword:
 
     def __init__(self, **kwargs):
-        self.max_increment = kwargs.get("max_increment", 0.1)  # sec
-        self.min_increment = kwargs.get("min_increment", 0.01)  # sec
-        self.max_delta_target = kwargs.get("max_delta_target", 0.5)  
+        self.DefaultParams()
+        self.UpdateParams(**kwargs)
 
-        #self.initial_art = kwargs.get("initial_art", np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')))
+    def UpdateParams(self, **kwargs):
 
-        #self._art = np.copy(self.initial_art)
+        self.max_increment = kwargs.get("max_increment", self.max_increment)  # sec
+        self.min_increment = kwargs.get("min_increment", self.min_increment)  # sec
+        self.max_delta_target = kwargs.get("max_delta_target", self.max_delta_target)  
+
+        self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
+
+        self.previous_target = np.copy(self.current_target)
         
-        # target[articulator, 0] = time 
-        # target[articulator, 1] = position
-        self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
-        self.current_target[:, 1] = kwargs.get("initial_art", np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')))
-
-        self.previous_target = np.zeros((aw.kArt_muscle.MAX, 2))
 
         self.time = 0.
-        self.sample_freq = kwargs.get("sample_freq", 8000.) # in seconds
+        # note: only sample_period is actually used
+        self.sample_freq = kwargs.get("sample_freq", self.sample_freq) # in seconds
         self.sample_period = kwargs.get("sample_period", 1./self.sample_freq) # in seconds
+
+        self._random = kwargs.get("random", self._random) # flag for generating random targets (or not)
+
+
+    def DefaultParams(self):
+        self.max_increment = 0.1  # sec
+        self.min_increment = 0.01  # sec
+        self.max_delta_target = 0.5 
+
+        self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
+        self.previous_target = np.zeros((aw.kArt_muscle.MAX, 2))
+        
+
+        self.time = 0.
+        self.sample_freq = 8000. # in seconds
+        self.sample_period =  1./self.sample_freq # in seconds
         self.manual_targets = {}
+        self._random = True # flag for generating random targets (or not)
+
+
+    def Randomize(self, flag=True):
+        self._random = flag
 
     def RandomTimeIncrement(self):
         return np.random.random() * \
@@ -54,7 +75,6 @@ class RandomArtword:
 
         return increment, target+delta
 
-
     def UpdateTargets(self):
         # check if any targets are no longer in the future
         out_of_date = np.nonzero(self.current_target[:, 0] < self.time)[0]
@@ -79,23 +99,34 @@ class RandomArtword:
                     self.current_target[muscle, 0] = np.infty
 
             else:
+                if self._random:
                 # generate new set point
-                time_inc, target = self.RandomTarget(self.previous_target[muscle, 1])
-                self.current_target[muscle, 0] = self.previous_target[muscle, 0]+time_inc
-                self.current_target[muscle, 1] = target
+                    time_inc, target = self.RandomTarget(self.previous_target[muscle, 1])
+                    self.current_target[muscle, 0] = self.previous_target[muscle, 0]+time_inc
+                    self.current_target[muscle, 1] = target
+                else:
+                    self.current_target[muscle, 0] = np.infty # never change, never go out of date
+
 
 
         # update targets with new random set point
         return 0
 
     def SetManualTarget(self, muscle, target, time):
+        if self.time == 0. and time == 0.:
+            self.current_target[muscle, 0] = 0.;
+            self.current_target[muscle, 1] = target;
 
         # add manual target to the list
         if muscle in self.manual_targets:
             self.manual_targets[muscle] = np.vstack((self.manual_targets[muscle], [time, target]))
         else:
-            self.manual_targets[muscle] = np.array([time, target])
+            self.manual_targets[muscle] = np.array([[time, target]])
 
+        sort_ind = np.argsort(self.manual_targets[muscle][:, 0])
+        self.manual_targets[muscle][:, 0] = self.manual_targets[muscle][sort_ind, 0]
+        self.manual_targets[muscle][:, 1] = self.manual_targets[muscle][sort_ind, 1]
+    
 
     def UpdateTime(self, now):
         # set current time to now
