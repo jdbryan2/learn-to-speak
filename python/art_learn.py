@@ -4,10 +4,14 @@
 
 import numpy as np
 import pylab as plt
-from primitive.SubspaceDFA import SubspaceDFA
-from primitive.IncrementalDFA import SubspaceDFA as IncrementalDFA
+#from primitive.SubspaceDFA import SubspaceDFA
+from primitive.IncrementalDFA import SubspaceDFA 
+from primitive.RandExcite import RandExcite
 from features.ArtFeatures import ArtFeatures
 from features.SpectralAcousticFeatures import SpectralAcousticFeatures
+
+import Artword as aw
+
 ## pretty sure these aren't used ##
 #import scipy.signal as signal
 #import numpy.linalg as ln
@@ -22,76 +26,41 @@ from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 # call in all the necessary global variables
 from test_params import *
 
-inc_ss = IncrementalDFA(sample_period=sample_period, past=past, future=future)
-#inc_ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
-#ss.LoadDataDir(dirname)
-#ss.ConvertData(sample_period)
-#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-inc_ss.Features = SpectralAcousticFeatures(tubes=inc_ss.tubes,
-                                       sample_period=sample_period) # set feature extractor
-#ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
-inc_ss.LoadDataDir(dirname, verbose=True)
-#inc_ss.PreprocessData()
-#inc_ss.PreprocessData(past,future)
-inc_ss.SubspaceDFA(dim)
+loops = 100
+utterance_length = 1.0
+full_utterance = loops*utterance_length
 
-# internal data gets cleared so this doesn't work right now.
-inc_ss.EstimateStateHistory(inc_ss._data)
+rando = RandExcite(dirname=dirname+"_"+str(loops), 
+                   utterance_length=utterance_length,
+                   initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
+                   max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
 
-#ss.SavePrimitives(dirname+'/primitives')
+#rando.InitializeAll()
+
+
+dim = 8
+sample_period = 10*8 # (*8) -> ms
+
 
 ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
-#ss.LoadDataDir(dirname)
-#ss.ConvertData(sample_period)
-#ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-ss.Features = SpectralAcousticFeatures(tubes=ss.tubes,
-                                       sample_period=sample_period,
-                                       past=past, 
-                                       future=future) # set feature extractor
-#ss.LoadDataDir(dirname, sample_period=sample_period, verbose=True)
-ss.LoadDataDir(dirname, verbose=True)
-ss.PreprocessData(past, future)
+
+ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+#ss.SetFeatures(SpectralAcousticFeatures)
+
+ss.GenerateData(rando, loops)
+
 ss.SubspaceDFA(dim)
 
-ss.EstimateStateHistory(ss._data)
-inc_ss.EstimateStateHistory(ss._data) # estimate state history off other data
-
 plt.figure()
-plt.plot(inc_ss.h.T)
+plt.imshow(np.abs(ss.F))
 plt.figure()
-plt.plot(ss.h.T)
+plt.imshow(np.abs(ss.O))
 plt.figure()
-plt.plot(np.abs(ss.h.T)-np.abs(inc_ss.h.T))
+plt.imshow(np.abs(ss.K))
 plt.show()
 
-ss.SavePrimitives(dirname+'/primitives')
-
-#for k in range(dim):
-#    plt.figure();
-#    plt.imshow(ss.K[k, :].reshape(ss._past, 88))
-#    plt.title('Input: '+str(k))
-
-#for k in range(dim):
-#    plt.figure();
-#    plt.imshow(ss.O[:, k].reshape(ss._future, 88), aspect=2)
-#    plt.title('Output: '+str(k))
-
-##for k in range(dim):
-##    plt.figure();
-##    K = ss.K[k,:].reshape(ss._past, 88)
-##    for p in range(ss._past):
-##        plt.plot(K[p, :], 'b-', alpha=1.*(p+1)/(ss._past+1))
-##    plt.title('Input: '+str(k))
-##
-##for k in range(dim):
-##    plt.figure();
-##    O = ss.O[:, k].reshape(ss._future, 88)
-##    for f in range(ss._future):
-##        dat = O[f, :]
-##        dat = ((dat.T*ss._std)+ss._ave).T
-##
-##        plt.plot(dat, 'b-', alpha=1.*(ss._future-f+1)/(ss._future+1))
-##    plt.title('Output: '+str(k))
-##
-##plt.show()
+plt.figure()
+state_history = ss.StateHistoryFromFile(rando.directory+"data1.npz")
+plt.plot(state_history.T)
+plt.show()
 

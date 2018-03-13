@@ -321,7 +321,7 @@ class SubspaceDFA(DataHandler):
         # used data removed from self._data
         chunks = int(np.floor(self._data.shape[1]/(self._past+self._future)))
         data_chunks = self._data[:, :chunks*(self._past+self._future)]
-        self._data = self._data[:, chunks*(self._past+self._future):]
+        self._data = self._data[:, chunks*(self._past+self._future):] # remove indeces for chunks we're using
 
         # get dimension of feature space
         dim = data_chunks.shape[0]
@@ -385,18 +385,18 @@ class SubspaceDFA(DataHandler):
                 print "-"*len(msg)
             utterance.Simulate()
 
-            data = {'sound_wave': utterance.sound_wave,
-                    'area_function':utterance.area_function,
-                    'pressure_function':utterance.pressure_function,
-                    'art_hist':utterance.art_hist}
+            #data = {'sound_wave': utterance.sound_wave,
+            #        'area_function':utterance.area_function,
+            #        'pressure_function':utterance.pressure_function,
+            #        'art_hist':utterance.art_hist}
 
-            self.LoadDataChunk(data)
+            self.LoadDataChunk(utterance.data)
 
             if save_data:
                 if not fname==None:
-                    utterance.Save(fname)
+                    utterance.SaveData(fname)
                 else: 
-                    utterance.Save()
+                    utterance.SaveData()
 
     def SubspaceDFA(self, k):
         """Estimate linear prediction matrix and decompose into primitive operators 
@@ -536,6 +536,44 @@ class SubspaceDFA(DataHandler):
         self._std = primitives['std']
         self._past = primitives['past'].item()
         self._future = primitives['future'].item()
+
+    def StateHistoryFromFile(self, fname):
+        """Estimate primitive state history from data file
+
+        Arguments: 
+            fname -- name of data file (must include directory)
+
+        Outputs:
+            N/A
+            
+        Affected Attributes: 
+            h -- primitive state history array, first dim is primitive index, second is time
+
+        """
+        
+        # reset internal data vars
+        self.data.clear() # do I want or need this here?
+        self._data = np.array([]) # internal data var
+
+
+        super(SubspaceDFA, self).LoadDataFile(fname)
+
+        self._data = self.Features.Extract(self.data, sample_period=self.sample_period)
+
+
+        # has to be normalized before processing state history
+        data= ((self._data.T-self._ave)/self._std).T
+
+        h = np.zeros((self.K.shape[0], data.shape[1]))
+
+        #for t in range(0, self._past):
+        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
+
+        for t in range(self._past, data.shape[1]):
+            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
+            h[:, t] = np.dot(self.K, _Xp).flatten()
+
+        return h
 
     def EstimateStateHistory(self, data):
         """Estimate primitive state history from data

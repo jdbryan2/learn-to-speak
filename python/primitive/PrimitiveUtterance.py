@@ -55,6 +55,12 @@ class PrimitiveUtterance(object):
         #self.utterance = kwargs.get('utterance', self.utterance)
 
     def SetUtterance(self, utterance):
+        """
+        Pass an utterance object to the controller.
+        Object can be an instance of this PrimitiveUtterance class.
+
+        """
+        # function is somewhat trivial 
         self.utterance = utterance
 
     def LoadPrimitives(self, fname=None):
