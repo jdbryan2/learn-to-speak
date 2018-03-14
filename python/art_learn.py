@@ -26,7 +26,7 @@ import Artword as aw
 # call in all the necessary global variables
 from test_params import *
 
-loops = 100
+loops = 10
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
@@ -47,20 +47,34 @@ ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
 ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
 #ss.SetFeatures(SpectralAcousticFeatures)
 
-ss.GenerateData(rando, loops)
+error = np.zeros(50)
+for k in range(error.size):
+    
+    print "#"*20
+    print "Round " + str(k+1)
+    print "#"*20
+    ss.GenerateData(rando, loops)
 
-ss.SubspaceDFA(dim)
+    ss.SubspaceDFA(dim)
 
-plt.figure()
-plt.imshow(np.abs(ss.F))
-plt.figure()
-plt.imshow(np.abs(ss.O))
-plt.figure()
-plt.imshow(np.abs(ss.K))
-plt.show()
+    if k>0:
+        error[k] = np.sum(np.sum(np.abs(F-ss.F)**2))
+        print "Update Delta: " + str(error[k])
 
-plt.figure()
+    F = np.copy(ss.F)
+
+    #plt.figure()
+    #plt.imshow(np.abs(ss.F))
+    #plt.figure()
+    #plt.imshow(np.abs(ss.O))
+    #plt.figure()
+    #plt.imshow(np.abs(ss.K))
+    #plt.show()
+
+#plt.figure()
 state_history = ss.StateHistoryFromFile(rando.directory+"data1.npz")
 plt.plot(state_history.T)
+plt.figure()
+plt.plot(error[1:])
 plt.show()
 
