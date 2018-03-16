@@ -106,13 +106,14 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         # is the audio saved in the numpy data? ---> Yes
 
         self.InitParams(**kwargs)
+        verbose = kwargs.get('verbose', False)
 
         # load up data parameters before anything else
-        self.LoadDataParams(dirname)
+        self.LoadDataParams(self.directory)
 
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
-        for filename in os.listdir(dirname):
+        for filename in os.listdir(self.directory):
             if filename.startswith('data') and filename.endswith(".npz"):
                 index_list.append(int(filter(str.isdigit, filename)))
 
@@ -125,13 +126,15 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         for index in index_list:
             if verbose:
-                print os.path.join(dirname, 'data'+str(index)+'.npz')
+                print os.path.join(self.directory, 'data'+str(index)+'.npz')
             #if sample_period == None:
-            if 'sample_period' in kwargs:
-                self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'))
-            else: 
-                self.LoadDataFile(os.path.join(dirname, 'data'+str(index)+'.npz'),
-                                  sample_period=kwargs['sample_period'])
+            #if 'sample_period' in kwargs:
+            #    self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'))
+            #else: 
+            #    self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'),
+            #                      sample_period=kwargs['sample_period'])
+
+            self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'))
 
 
 

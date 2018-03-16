@@ -7,6 +7,7 @@ dirname = 'data/random'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
 past = 100
 past = 50
+past = 10
 future = 10
 v_ = 5
 

@@ -79,6 +79,7 @@ class SubspaceDFA(DataHandler):
 
         """
 
+        super(SubspaceDFA, self).DefaultParams()
         # internal paramters 
         # dimensions of past and future histories and internal state dimension
         # sample period of downsampling operator
@@ -102,6 +103,7 @@ class SubspaceDFA(DataHandler):
 
         """
 
+        super(SubspaceDFA, self).InitParams(**kwargs)
         self._past = kwargs.get('past', self._past)
         self._future = kwargs.get('future', self._future)
         self._dim = kwargs.get('dim', self._dim)
