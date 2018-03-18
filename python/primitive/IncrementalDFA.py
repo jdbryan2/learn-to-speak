@@ -366,6 +366,7 @@ class SubspaceDFA(DataHandler):
             self._sum2_f += np.sum(np.abs(Xf)**2, axis=1)
             self._sum2_p += np.sum(np.abs(Xp)**2, axis=1)
             self._count_fp += Xl.shape[1]
+        print self._count, self._count_fp
 
         # debug printouts to make sure indexing is correct
         #print self._count, self._count_fp

@@ -24,7 +24,7 @@ from primitive.RandExcite import RandExcite
 from test_params import *
 
 ################################################################################
-loops = 3
+loops = 5 
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
