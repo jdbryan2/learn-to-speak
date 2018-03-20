@@ -25,7 +25,7 @@ from test_params import *
 
 ################################################################################
 COMPARE_OUTPUT = False
-loops = 1
+loops = 3 
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 

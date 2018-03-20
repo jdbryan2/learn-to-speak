@@ -379,6 +379,9 @@ class SubspaceDFA(DataHandler):
             self.phi -= np.outer(self._sum_f, delta_mean_p)
             self.phi += self._count_fp*np.outer(delta_mean_f, delta_mean_p)
 
+            #print "Incrents of Phi"
+            #print np.dot(Xf, Xp.T), np.outer(delta_mean_f, self._sum_p), np.outer(self._sum_f, delta_mean_p), self._count_fp*np.outer(delta_mean_f, delta_mean_p)
+
             self.psi += np.dot(Xp, Xp.T)
             self.psi -= np.outer(delta_mean_p, self._sum_p) 
             self.psi -= np.outer(self._sum_p, delta_mean_p)
@@ -453,36 +456,20 @@ class SubspaceDFA(DataHandler):
         self._std = np.sqrt(self._var)
 
         # Normalization works when I use these values
-        _mean_f = np.tile(self._ave, self._future)
-        _mean_p = np.tile(self._ave, self._past)
+        #_mean_f = np.tile(self._ave, self._future)
+        #_mean_p = np.tile(self._ave, self._past)
         _std_f = np.tile(self._std, self._future)
         _std_p = np.tile(self._std, self._past)
 
-
-        # make visible outside the class for debugging
-        #self._mean_f = _mean_f
-        #self._mean_p = _mean_p
-        #self._std_f = _std_f
-        #self._std_p = _std_p
-
-        # normalize phi 
-        #self.phi -= np.outer(self._sum_f, _mean_p)
-        #self.phi -= np.outer(_mean_f, self._sum_p)
-        #self.phi += self._count_fp*np.outer(_mean_f, _mean_p)
-        self.phi /= np.outer(_std_f, _std_p)
-
-        # normalize psi 
-        #self.psi -= np.outer(self._sum_p, _mean_p)
-        #self.psi -= np.outer(_mean_p, self._sum_p)
-        #self.psi += self._count_fp*np.outer(_mean_p, _mean_p)
-        self.psi /= np.outer(_std_p, _std_p)
+        # note: phi and psi must not be changed by this function call so that this can be called multiple times while
+        # additional data is loaded.
 
         # compute predictor matrix
         if self._verbose:
             print "Computing F(%i, %i)..."%(self.phi.shape[0], self.psi.shape[1])
         
         # use scipy.linalg.pinvh to speed up inverting symmetric matrix
-        self.F = np.dot(self.phi, ln.pinvh(self.psi))
+        self.F = np.dot(self.phi/np.outer(_std_f, _std_p), ln.pinvh(self.psi/np.outer(_std_p, _std_p)))
 
         if self._verbose: 
             print "Decomposing F into O and K with rank %i..." % self._dim
