@@ -24,7 +24,8 @@ from primitive.RandExcite import RandExcite
 from test_params import *
 
 ################################################################################
-loops = 5 
+COMPARE_OUTPUT = False
+loops = 1
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
@@ -53,21 +54,24 @@ inc_ss.SubspaceDFA(dim)
 inc_ss.SavePrimitives(rando.directory+'primitives')
 
 
+if COMPARE_OUTPUT: 
 # Run old subspace DFA method and compare estimated state spaces
-ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
-ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-ss.LoadDataDir(directory=rando.directory, verbose=True)
-ss.PreprocessData(past, future)
-ss.SubspaceDFA(dim)
-ss.EstimateStateHistory(ss._data)
+    ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
+    ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+    ss.LoadDataDir(directory=rando.directory, verbose=True)
+    ss.PreprocessData(past, future)
+    ss.SubspaceDFA(dim)
+    print ss._ave, ss._std
+    print inc_ss._ave, inc_ss._std
+    ss.EstimateStateHistory(ss._data)
 
-inc_ss.EstimateStateHistory(ss._data) # estimate state history off other data
+    inc_ss.EstimateStateHistory(ss._data) # estimate state history off other data
 
-plt.figure()
-plt.plot(inc_ss.h.T)
-plt.figure()
-plt.plot(ss.h.T)
-plt.figure()
-plt.plot(abs(ss.h.T)-abs(inc_ss.h.T))
-plt.show()
+    plt.figure()
+    plt.plot(inc_ss.h.T)
+    plt.figure()
+    plt.plot(ss.h.T)
+    plt.figure()
+    plt.plot(abs(ss.h.T)-abs(inc_ss.h.T))
+    plt.show()
 

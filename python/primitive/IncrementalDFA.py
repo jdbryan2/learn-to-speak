@@ -113,6 +113,10 @@ class SubspaceDFA(DataHandler):
         self._sum2 = np.array([]) # running sum of squared data
         self._count = 0. # total number of data points added to sums
 
+        self._mean = 0.
+        self._2nd_moment = 1.
+        self._std = 1.
+
         # primitive model operators
         self.F = np.array([])
         self.O = np.array([])
@@ -326,6 +330,18 @@ class SubspaceDFA(DataHandler):
         # get dimension of feature space
         dim = data_chunks.shape[0]
 
+        # compute delta mean, save previous mean for some computations
+        delta_mean = np.sum((data_chunks.T-self._mean).T, axis=1)/(self._count+data_chunks.shape[1])
+        #old_mean = np.copy(self._mean) # don't think it's actually necessary
+        self._mean += delta_mean 
+        self._delta_mean = delta_mean
+
+        # compute second moment or variance update
+        delta_second_moment = np.sum(data_chunks, axis=1)/(self._count+data_chunks.shape[1])
+
+        # normalize data chunks with new mean estimate
+        data_chunks = (data_chunks.T-self._mean).T
+
         # format data into Xf and Xp matrices
         Xl = data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
         Xf = Xl[(self._past*dim):((self._past+self._future)*dim), :]
@@ -341,31 +357,45 @@ class SubspaceDFA(DataHandler):
         #  save phi=dot(Xf, Xp.T) and psi=dot(Xp, Xp.T)
         if self._count == 0:
 
-            self._sum = np.sum(data_chunks, axis=1)
-            self._sum2 = np.sum(np.abs(data_chunks)**2, axis=1)
-            self._count = data_chunks.shape[1]
             self.phi = np.dot(Xf, Xp.T)
             self.psi = np.dot(Xp, Xp.T)
 
             self._sum_f = np.sum(Xf, axis=1)
             self._sum_p = np.sum(Xp, axis=1)
-            self._sum2_f = np.sum(np.abs(Xf)**2, axis=1)
-            self._sum2_p = np.sum(np.abs(Xp)**2, axis=1)
             self._count_fp = Xl.shape[1]
 
+            # stuff for computing variance update
+            self._var = np.sum(data_chunks**2, axis=1)/(data_chunks.shape[1])
+            self._sum = np.sum(data_chunks, axis=1) # zero mean sum
+
         else:
+            # new incremental updates
+            delta_mean_f = np.tile(delta_mean, self._future)
+            delta_mean_p = np.tile(delta_mean, self._past)
 
-            self._sum += np.sum(data_chunks, axis=1)
-            self._sum2 += np.sum(np.abs(data_chunks)**2, axis=1)
-            self._count += data_chunks.shape[1]
-            self.phi += np.dot(Xf, Xp.T)
+            self.phi += np.dot(Xf, Xp.T) 
+            #print  np.dot(delta_mean_f, self._sum_p.T) 
+            self.phi -= np.outer(delta_mean_f, self._sum_p) 
+            self.phi -= np.outer(self._sum_f, delta_mean_p)
+            self.phi += self._count_fp*np.outer(delta_mean_f, delta_mean_p)
+
             self.psi += np.dot(Xp, Xp.T)
+            self.psi -= np.outer(delta_mean_p, self._sum_p) 
+            self.psi -= np.outer(self._sum_p, delta_mean_p)
+            self.psi += self._count_fp*np.outer(delta_mean_p, delta_mean_p)
 
-            self._sum_f += np.sum(Xf, axis=1)
-            self._sum_p += np.sum(Xp, axis=1)
-            self._sum2_f += np.sum(np.abs(Xf)**2, axis=1)
-            self._sum2_p += np.sum(np.abs(Xp)**2, axis=1)
+            self._sum_f += np.sum(Xf, axis=1) - self._count_fp*delta_mean_f 
+            self._sum_p += np.sum(Xp, axis=1) - self._count_fp*delta_mean_p
             self._count_fp += Xl.shape[1]
+
+            # stuff for computing variance update
+            self._var += (np.sum(data_chunks**2, axis=1)-data_chunks.shape[1]*self._var)/(data_chunks.shape[1]+self._count)
+            self._var += self._count/(self._count+data_chunks.shape[1])*delta_mean**2
+            self._var -= 2.*delta_mean/(self._count+data_chunks.shape[1])*self._sum
+            self._sum += np.sum(data_chunks, axis=1) - self._count*delta_mean # zero mean sum
+
+        self._count += data_chunks.shape[1]
+        
         print self._count, self._count_fp
 
         # debug printouts to make sure indexing is correct
@@ -419,8 +449,8 @@ class SubspaceDFA(DataHandler):
         self._dim = k
 
         # compute mean and variance
-        self._ave = self._sum/self._count
-        self._std = np.sqrt(np.abs(self._sum2/self._count-np.abs(self._ave)**2))
+        self._ave = self._mean
+        self._std = np.sqrt(self._var)
 
         # Normalization works when I use these values
         _mean_f = np.tile(self._ave, self._future)
@@ -436,15 +466,15 @@ class SubspaceDFA(DataHandler):
         #self._std_p = _std_p
 
         # normalize phi 
-        self.phi -= np.outer(self._sum_f, _mean_p)
-        self.phi -= np.outer(_mean_f, self._sum_p)
-        self.phi += self._count_fp*np.outer(_mean_f, _mean_p)
+        #self.phi -= np.outer(self._sum_f, _mean_p)
+        #self.phi -= np.outer(_mean_f, self._sum_p)
+        #self.phi += self._count_fp*np.outer(_mean_f, _mean_p)
         self.phi /= np.outer(_std_f, _std_p)
 
         # normalize psi 
-        self.psi -= np.outer(self._sum_p, _mean_p)
-        self.psi -= np.outer(_mean_p, self._sum_p)
-        self.psi += self._count_fp*np.outer(_mean_p, _mean_p)
+        #self.psi -= np.outer(self._sum_p, _mean_p)
+        #self.psi -= np.outer(_mean_p, self._sum_p)
+        #self.psi += self._count_fp*np.outer(_mean_p, _mean_p)
         self.psi /= np.outer(_std_p, _std_p)
 
         # compute predictor matrix

@@ -26,11 +26,12 @@ import Artword as aw
 # call in all the necessary global variables
 from test_params import *
 
-loops = 10
+rounds = 100
+loops_per_round = 10
 utterance_length = 1.0
-full_utterance = loops*utterance_length
+#full_utterance = loops_per_round*utterance_length
 
-rando = RandExcite(dirname=dirname+"_"+str(loops), 
+rando = RandExcite(dirname=dirname+"_"+str(loops_per_round*rounds), 
                    utterance_length=utterance_length,
                    initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
                    max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
@@ -47,13 +48,14 @@ ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
 ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
 #ss.SetFeatures(SpectralAcousticFeatures)
 
-error = np.zeros(50)
+error = np.zeros(rounds)
 for k in range(error.size):
     
+    print ""
     print "#"*20
     print "Round " + str(k+1)
     print "#"*20
-    ss.GenerateData(rando, loops)
+    ss.GenerateData(rando, loops_per_round)
 
     ss.SubspaceDFA(dim)
 
@@ -62,6 +64,10 @@ for k in range(error.size):
         print "Update Delta: " + str(error[k])
 
     F = np.copy(ss.F)
+
+    print "Incremental variable magnitudes:"
+    print np.max(np.abs(ss.phi)),np.max(np.abs(ss.psi)), np.max(np.abs(ss._mean)), np.max(np.abs(ss._var)), np.max(np.abs(ss._sum))
+
 
     #plt.figure()
     #plt.imshow(np.abs(ss.F))
@@ -74,7 +80,9 @@ for k in range(error.size):
 #plt.figure()
 state_history = ss.StateHistoryFromFile(rando.directory+"data1.npz")
 plt.plot(state_history.T)
+plt.title("State History")
 plt.figure()
 plt.plot(error[1:])
+plt.title("Magnitude of error in estimate of F")
 plt.show()
 
