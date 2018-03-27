@@ -108,6 +108,11 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         self.InitParams(**kwargs)
         verbose = kwargs.get('verbose', False)
 
+        # minimum and maximum index values for data files to be loaded from directory
+        # files with indexes equal to the min and max will be included in the loading
+        _min = kwargs.get('min', 0)
+        _max = kwargs.get('max', np.infty)
+
         # load up data parameters before anything else
         self.LoadDataParams(self.directory)
 
@@ -119,6 +124,10 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         # sort numerically and load files in order
         index_list = sorted(index_list)
+
+        # trim off the indexes outside of min and max index range
+        index_list = index_list[index_list >= _min_index]
+        index_list = index_list[index_list <= _max_index]
         #print index_list
 
         if verbose: 

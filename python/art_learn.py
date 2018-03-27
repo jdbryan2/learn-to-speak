@@ -26,7 +26,7 @@ import Artword as aw
 # call in all the necessary global variables
 from test_params import *
 
-rounds = 100
+rounds = 500
 loops_per_round = 10
 utterance_length = 1.0
 #full_utterance = loops_per_round*utterance_length
@@ -60,7 +60,7 @@ for k in range(error.size):
     ss.SubspaceDFA(dim)
 
     if k>0:
-        error[k] = np.sum(np.sum(np.abs(F-ss.F)**2))
+        error[k] = np.sum(np.sum(np.abs(F-ss.F)))/np.sum(np.sum(ss.F))
         print "Update Delta: " + str(error[k])
 
     F = np.copy(ss.F)
