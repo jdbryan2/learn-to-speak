@@ -221,7 +221,7 @@ class Utterance(object):
             fname = self.iteration
 
         if wav_file:
-            scaled = np.int16(self.data['sound_wave']/np.max(np.abs(self.data['sound_wave']))*32767)
+            scaled = np.int16(self.data['sound_wave']/np.nanmax(np.abs(self.data['sound_wave']))*32767)
             write(self.directory + 'audio' + str(fname) + '.wav',
                   self.sample_freq,
                   scaled)

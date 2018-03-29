@@ -3,6 +3,7 @@ import numpy as np
 # import numpy.linalg as ln
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from scipy.io.wavfile import write
 # import scipy.signal as signal
 import os
 
@@ -110,8 +111,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
         # minimum and maximum index values for data files to be loaded from directory
         # files with indexes equal to the min and max will be included in the loading
-        _min = kwargs.get('min', 0)
-        _max = kwargs.get('max', np.infty)
+        _min = kwargs.get('min_index', 0)
+        _max = kwargs.get('max_index', np.infty)
 
         # load up data parameters before anything else
         self.LoadDataParams(self.directory)
@@ -123,11 +124,11 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
                 index_list.append(int(filter(str.isdigit, filename)))
 
         # sort numerically and load files in order
-        index_list = sorted(index_list)
+        index_list = np.array(sorted(index_list))
 
         # trim off the indexes outside of min and max index range
-        index_list = index_list[index_list >= _min_index]
-        index_list = index_list[index_list <= _max_index]
+        index_list = index_list[index_list >= _min]
+        index_list = index_list[index_list <= _max]
         #print index_list
 
         if verbose: 
@@ -150,10 +151,10 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
     def SaveAnimation(self, **kwargs):
         # should probably clean this up...
         fname = kwargs.get('fname', 'video')
-        dirname = kwargs.get('dirname', '')
-        dirname = kwargs.get('directory', '')
+        self.directory = kwargs.get('dirname', '')
+        self.directory = kwargs.get('directory', '')
         #dirname = os.path.join(self.home_dir, dirname)
-        fname = os.path.join(dirname, fname)
+        fname = os.path.join(self.directory, fname)
 
         # lungs are far larger than the rest of the apparatus
         # scale them by this factor to make the animation look better
@@ -219,6 +220,19 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         # save in the same folder as data was loaded from (see top of function)
         line_ani.save(fname+'.mp4', writer=writer)
 
+    def SaveWav(self, **kwargs):
+        fname = kwargs.get('fname', 'concat')
+        self.directory = kwargs.get('dirname', '')
+        self.directory = kwargs.get('directory', '')
+        #dirname = os.path.join(self.home_dir, dirname)
+        fname = os.path.join(self.directory, fname)
+
+
+        # nanmax ignores any nan values that may have occured
+        scaled = np.int16(self.data['sound_wave']/np.nanmax(np.abs(self.data['sound_wave']))*32767)
+        write(str(fname) + '.wav', self.params['sample_freq'], scaled)
+
+
 
     def ClearData(self):
         self.data = {}
@@ -228,11 +242,12 @@ if __name__ == "__main__":
     #print "Do stuff"
 
     # directory = 'gesture_2017-05-10-20-16-18'
-    directory = 'full_random_100_primv5'
-    dh = DataHandler(home_dir='../data')
-    dh.LoadDataDir(directory)
-    #dh.SaveAnimation(dirname=directory)
-    print 'done'
+    #directory = '../data/exploded'
+    dh = DataHandler(directory='../data/exploded')
+    dh.LoadDataDir(min_index=1350, verbose=True)
+    #dh.SaveAnimation(dirname='../',fname='exploded')
+    #print 'done'
+    dh.SaveWav(fname='../concat')
 
     area_std = np.std(dh.data['area_function'], axis=1)
     pressure_std = np.std(dh.data['pressure_function'], axis=1)
@@ -250,14 +265,22 @@ if __name__ == "__main__":
     area = (area.T-area_ave[dh.tubes['all']]).T
     area = (area.T/area_std[dh.tubes['all']]).T
 
+    #for k in dh.tubes['all']:
+    #    plt.figure()
+    #    plt.plot(dh.data['area_function'][k])
+    #    plt.title(k)
+    #    plt.figure()
+    #    plt.plot(dh.data['pressure_function'][k])
+    #    plt.title(k)
+    #    plt.show()
 
-    plt.figure()
-    plt.plot(area_std)
-    plt.figure()
-    plt.plot(art_std)
-    plt.figure()
-    plt.plot(pressure_std)
+    #plt.figure()
+    #plt.plot(area_std)
+    #plt.figure()
+    #plt.plot(art_std)
+    #plt.figure()
+    #plt.plot(pressure_std)
 
-    plt.show()
+    #plt.show()
 
 
