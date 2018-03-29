@@ -7,16 +7,19 @@ endif(COMMAND cmake_policy)
 
 PROJECT(VOCAL_TRACT)
 
-FIND_PACKAGE(YARP)
-FIND_PACKAGE(ICUB)
+#FIND_PACKAGE(YARP)
+#FIND_PACKAGE(ICUB)
 
 # add include directories
-INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ../vt-model)
+#INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ../vt-model)
+INCLUDE_DIRECTORIES(../vt-model)
 
 add_definitions(-std=c++11)
 
 # add required linker flags
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS} -lrt -lm -lasound -pthread")              
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS} -lrt -lm -lasound -pthread")              
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt -lm -lasound -pthread")              
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -funroll-loops")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O3 -funroll-loops")
 
@@ -26,11 +29,15 @@ ADD_EXECUTABLE(brownian_gesture brownian_gesture.cpp)
 ADD_EXECUTABLE(prim_control prim_control.cpp)
 
 # we now add the YARP and iCub libraries to our project.
-TARGET_LINK_LIBRARIES(main vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
-TARGET_LINK_LIBRARIES(rand_gesture vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
-TARGET_LINK_LIBRARIES(brownian_gesture vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
-TARGET_LINK_LIBRARIES(prim_control vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
-
-INSTALL(TARGETS main rand_gesture brownian_gesture prim_control DESTINATION /home/jacob/Projects/learn-to-speak/bin)
+#TARGET_LINK_LIBRARIES(main vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+#TARGET_LINK_LIBRARIES(rand_gesture vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+#TARGET_LINK_LIBRARIES(brownian_gesture vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+#TARGET_LINK_LIBRARIES(prim_control vtModel ${YARP_LIBRARIES} ${ICUB_LIBRARIES} portaudio)
+TARGET_LINK_LIBRARIES(main vtModel portaudio)
+TARGET_LINK_LIBRARIES(rand_gesture vtModel portaudio)
+TARGET_LINK_LIBRARIES(brownian_gesture vtModel portaudio)
+TARGET_LINK_LIBRARIES(prim_control vtModel portaudio)
+#INSTALL(TARGETS main rand_gesture brownian_gesture prim_control DESTINATION /home/jacob/Projects/learn-to-speak/bin)
+INSTALL(TARGETS main rand_gesture brownian_gesture prim_control DESTINATION ../../bin)
 #INSTALL(TARGETS vtSim DESTINATION ../bin)
 

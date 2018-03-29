@@ -17,6 +17,7 @@ bin/*
 python/data/*
 python/data*
 python/primitive/data/*
+python/uterances/data/*
 */.ropeproject/*
 
 # python compiled files
@@ -45,6 +46,12 @@ xcuserdata/
 *.m~
 *.prim
 *.alog
+*.rtf
+*.eps
+*converted-to.pdf
+*.avi
+*.wav
+*.mp4
 
 # Video/audio files
 ###################

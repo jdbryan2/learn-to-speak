@@ -23,7 +23,7 @@
 #include "Artword_def.h"
 
 #if _BOOST_
-#include <boost/python/numeric.hpp>
+#include <boost/python/numpy.hpp>
 #endif
 
 class Artword {
@@ -41,7 +41,7 @@ public:
     void resetTargets();
     void Copy(Artword* newArtword);
 #if _BOOST_
-    void py_intoArt(boost::python::numeric::array & art, double tim);
+    void py_intoArt(boost::python::numpy::ndarray & art, double tim);
 #endif
 };
 
@@ -59,7 +59,11 @@ public:
 BOOST_PYTHON_MODULE(Artword) // tells boost where to look
 {
 
-    boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+    //boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+    // Need these to avoid a segfault
+    Py_Initialize();
+    boost::python::numpy::initialize();
+
 
     boost::python::class_<Artword>("Artword", boost::python::init<double>())
        .def("Init", &Artword::Init)

@@ -171,9 +171,11 @@ class SubspaceDFA(DataHandler):
         # features needs function that returns the size of the used data
         #print total_periods, _data.shape
 
+        # TODO: Need to decide what this was intially intended for
+        # Disabled because it breaks loading of multiple unrelated files
         if self._data.size==0:
             self._data = _data
-        else: 
+        else:
             self._data = np.append(self._data, _data, axis=1)
 
         #print _data.shape

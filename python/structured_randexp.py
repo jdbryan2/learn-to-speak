@@ -9,7 +9,7 @@ from primitive.RandExcite import RandExcite
 import pylab as plt
 
     
-loops = 20
+loops = 100
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
@@ -17,14 +17,14 @@ rando = RandExcite(dirname="full_random_"+str(loops),
                 method="gesture",
                 loops=loops,
                 utterance_length=utterance_length,
-                initial_art=np.zeros((aw.kArt_muscle.MAX, )))
+                initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 
 # manually pump the lungs
 #rando.SetManualSequence(aw.kArt_muscle.LUNGS,
 #                        np.array([0.2, 0.0]),  # targets
 #                        np.array([0.0, 0.5]))  # times
 
-rando.Run(max_increment=0.3, min_increment=0.02, max_delta_target=0.2, dirname="full_random_"+str(loops))
+rando.Run(max_increment=0.3, min_increment=0.02, max_delta_target=0.2, dirname="full_random_"+str(loops), addDTS=False)
 
 
 ## manually open the jaw
