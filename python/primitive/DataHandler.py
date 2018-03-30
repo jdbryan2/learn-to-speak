@@ -39,12 +39,14 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
     def DefaultParams(self):
         self.directory = "data"
         self._verbose = True
+        self._params_loaded = False
 
     def InitParams(self, **kwargs):
         # stupid backward compatibility because I can't decide on a variable name
         self.directory = kwargs.get("directory", self.directory)
         self.directory = kwargs.get("home_dir", self.directory)
         self.directory = kwargs.get("dirname", self.directory)
+        self._verbose = kwargs.get("verbose", self._verbose)
         
 
     def LoadDataFile(self, fname, sample_period=1):
@@ -92,22 +94,57 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
     def LoadDataParams(self, dirname):
 
-        # load up data parameters before anything else
-        self.params = {}
-        params = np.load(os.path.join(dirname, 'params.npz'))
+        if not self._params_loaded:
+            if self._verbose: 
+                print "Loading data paramters."
 
-        for key in params.keys():
-            if not params[key].shape:
-                self.params[key] = params[key].item()
-            else:
-                self.params[key] = params[key]
+            # load up data parameters before anything else
+            self.params = {}
+            params = np.load(os.path.join(dirname, 'params.npz'))
+
+            for key in params.keys():
+                if not params[key].shape:
+                    self.params[key] = params[key].item()
+                else:
+                    self.params[key] = params[key]
+
+            self._params_loaded = True
+            return True
+
+        else:
+
+            if self._verbose: 
+                print "Verifying compatible data parameters."
+            # load up data parameters before anything else
+            params = np.load(os.path.join(dirname, 'params.npz'))
+
+            for key in self.params.keys():
+                value = None 
+                if key in params:
+                    if not params[key].shape:
+                        value = params[key].item()
+                    else:
+                        value = params[key]
+
+                if not value == self.params[key]:
+                    if self._verbose: 
+                        print "Data parameter mismatch in %s (%s, %s)"%(str(key), str(self.params[key]), str(value))
+                    return False
+
+            return True
+
 
     def LoadDataDir(self, **kwargs):#dirname, sample_period=None, verbose = False):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
+        # clear unused data from last directory
+        # prevents erroneous predictions based on discontinuous data
+        self.data = {}
+        self._data = np.array([])
+
+
         self.InitParams(**kwargs)
-        verbose = kwargs.get('verbose', False)
 
         # minimum and maximum index values for data files to be loaded from directory
         # files with indexes equal to the min and max will be included in the loading
@@ -115,7 +152,9 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         _max = kwargs.get('max_index', np.infty)
 
         # load up data parameters before anything else
-        self.LoadDataParams(self.directory)
+        if not self.LoadDataParams(self.directory):
+            if self._verbose: 
+                print "Data not loaded from %s" % self.directory
 
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
@@ -129,20 +168,13 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         # trim off the indexes outside of min and max index range
         index_list = index_list[index_list >= _min]
         index_list = index_list[index_list <= _max]
-        #print index_list
 
-        if verbose: 
+        if self._verbose: 
             print "Loading data files:"
 
         for index in index_list:
-            if verbose:
+            if self._verbose:
                 print os.path.join(self.directory, 'data'+str(index)+'.npz')
-            #if sample_period == None:
-            #if 'sample_period' in kwargs:
-            #    self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'))
-            #else: 
-            #    self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'),
-            #                      sample_period=kwargs['sample_period'])
 
             self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'))
 

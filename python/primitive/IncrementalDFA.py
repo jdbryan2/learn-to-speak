@@ -318,6 +318,7 @@ class SubspaceDFA(DataHandler):
         
         # remove all but the necessary bits from self.data (not self._data)
         # TODO: Fix confusing naming convention here
+        #       currently removes data from self.data but does not touch self._data
         self.ClearExcessData(size=_data.shape[1]*self.sample_period)
 
         # count how many chunks of data we can use
@@ -626,39 +627,50 @@ if __name__ == "__main__":
     from features.SpectralAcousticFeatures import SpectralAcousticFeatures
     from RandExcite import RandExcite
 
-    loops = 5 
-    utterance_length = 1.0
-    full_utterance = loops*utterance_length
+    #loops = 5 
+    #utterance_length = 1.0
+    #full_utterance = loops*utterance_length
 
-    rando = RandExcite(dirname="../data/IDFA_test", 
-                       utterance_length=utterance_length,
-                       initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
-                       max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
+    #rando = RandExcite(dirname="../data/IDFA_test", 
+    #                   utterance_length=utterance_length,
+    #                   initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
+    #                   max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
 
-    #rando.InitializeAll()
+    ##rando.InitializeAll()
 
 
     dim = 8
     sample_period = 10*8 # (*8) -> ms
 
 
-    ss = SubspaceDFA(sample_period=sample_period, past=10, future=10)
+    #ss = SubspaceDFA(sample_period=sample_period, past=10, future=10)
+
+    #ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+    ##ss.SetFeatures(SpectralAcousticFeatures)
+
+    #ss.GenerateData(rando, 5)
+
+    #ss.SubspaceDFA(dim)
+
+    #plt.figure()
+    #plt.imshow(np.abs(ss.F))
+    #plt.figure()
+    #plt.imshow(np.abs(ss.O))
+    #plt.figure()
+    #plt.imshow(np.abs(ss.K))
+    #plt.show()
+
+    ss = SubspaceDFA(sample_period=sample_period, past=50, future=10)
 
     ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
     #ss.SetFeatures(SpectralAcousticFeatures)
 
-    ss.GenerateData(rando, 5)
+    #ss.LoadDataDir(directory="../data/apa")
+    #ss.LoadDataDir(directory="../data/click")
+    ss.LoadDataDir(directory="../data/random_10")
+    ss.LoadDataDir(directory="../data/random_1000", max_index=10)
 
     ss.SubspaceDFA(dim)
-
-    plt.figure()
-    plt.imshow(np.abs(ss.F))
-    plt.figure()
-    plt.imshow(np.abs(ss.O))
-    plt.figure()
-    plt.imshow(np.abs(ss.K))
-    plt.show()
-
 
 
     #ss.EstimateStateHistory(ss._data)
