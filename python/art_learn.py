@@ -26,7 +26,7 @@ import Artword as aw
 # call in all the necessary global variables
 from test_params import *
 
-rounds = 500
+rounds = 1
 loops_per_round = 10
 utterance_length = 1.0
 #full_utterance = loops_per_round*utterance_length
