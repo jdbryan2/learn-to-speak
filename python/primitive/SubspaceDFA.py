@@ -63,9 +63,9 @@ class SubspaceDFA(DataHandler):
         #self.art_hist = np.array([])
         #self.area_function = np.array([])
         #self.sound_wave = np.array([])
-        self._data = np.array([]) # internal data var
+        self.feature_data = np.array([]) # internal data var
         self.Features = None # init to nothing
-        self.data.clear() # do I want or need this here?
+        self.raw_data.clear() # do I want or need this here?
 
 
     def DefaultParams(self):
@@ -133,7 +133,7 @@ class SubspaceDFA(DataHandler):
 
         """
         # directly pass array into class
-        self._data = np.copy(raw_data)
+        self.feature_data = np.copy(raw_data)
 
     def LoadDataFile(self, fname, **kwargs):
         """ Load data file, extract features, and downsample. Automatically called by LoadDataDir.
@@ -152,36 +152,36 @@ class SubspaceDFA(DataHandler):
         # clear internal data dictionary and 
         # load data file according to parent class
         ## No longer clearing before we start, leftovers are now important
-        #self.data.clear()
+        #self.raw_data.clear()
 
         # if soundwave key does not exist
         # create it and fill with zero padding
-        if 'sound_wave' not in self.data:
-            self.data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
+        if 'sound_wave' not in self.raw_data:
+            self.raw_data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
 
-        # load data and append to self.data dictionary
+        # load data and append to self.raw_data dictionary
         super(SubspaceDFA, self).LoadDataFile(fname)
         
         # count number of sample periods in data dictionary
-        #total_periods = (self.data['sound_wave'].shape[1] - 
+        #total_periods = (self.raw_data['sound_wave'].shape[1] - 
         #                 self.Features.min_sound_length) / self.sample_period
         #total_periods = int(np.floor(total_periods))
         
-        _data = self.Features.Extract(self.data, sample_period=self.sample_period)
+        _data = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
         # features needs function that returns the size of the used data
         #print total_periods, _data.shape
 
         # TODO: Need to decide what this was intially intended for
         # Disabled because it breaks loading of multiple unrelated files
-        if self._data.size==0:
-            self._data = _data
+        if self.feature_data.size==0:
+            self.feature_data = _data
         else:
-            self._data = np.append(self._data, _data, axis=1)
+            self.feature_data = np.append(self.feature_data, _data, axis=1)
 
         #print _data.shape
 
         # clear out the raw data dictionary to save space
-        #self.data.clear() 
+        #self.raw_data.clear() 
         
         # remove all but the necessary bits
         self.ClearExcessData(size=_data.shape[1]*self.sample_period)
@@ -199,7 +199,7 @@ class SubspaceDFA(DataHandler):
 
         # set size to the full length of data if not set
         if size == None: 
-            size = self.data['sound_wave'].shape[1]-self.Features.min_sound_length
+            size = self.raw_data['sound_wave'].shape[1]-self.Features.min_sound_length
 
         # always leave behind the minimum sound length (needed for spectral features)
         if self.Features.min_sound_length > 0:
@@ -207,11 +207,11 @@ class SubspaceDFA(DataHandler):
 
         # loop over each key in the dictionary and remove all data used to
         # generate features
-        for key in self.data:
+        for key in self.raw_data:
             if key == 'sound_wave':
-                self.data[key] = self.data[key][size:]
+                self.raw_data[key] = self.raw_data[key][size:]
             else:
-                self.data[key] = self.data[key][:, size:]
+                self.raw_data[key] = self.raw_data[key][:, size:]
 
 
     def PreprocessData(self, past, future, overlap=False, normalize=True):
@@ -240,10 +240,10 @@ class SubspaceDFA(DataHandler):
         # save past, future values for later use
         self._past = past
         self._future = future
-        chunks = int(np.floor(self._data.shape[1]/((self._past+self._future))))
-        data_chunks = self._data[:, :chunks*(self._past+self._future)]
+        chunks = int(np.floor(self.feature_data.shape[1]/((self._past+self._future))))
+        data_chunks = self.feature_data[:, :chunks*(self._past+self._future)]
 
-        if (len(self._data) == 0) and (len(self.data) == 0):
+        if (len(self.feature_data) == 0) and (len(self.raw_data) == 0):
             print "No data has been loaded."
             return 0
 
@@ -254,28 +254,28 @@ class SubspaceDFA(DataHandler):
             # shift to zero mean and  normalize by standard deviation
             data_chunks = ((data_chunks.T-self._ave)/self._std).T
         #if normalize:
-        #    self._std = np.std(self._data, axis=1)
-        #    self._ave = np.mean(self._data, axis=1)
+        #    self._std = np.std(self.feature_data, axis=1)
+        #    self._ave = np.mean(self.feature_data, axis=1)
 
         #    # shift to zero mean and  normalize by standard deviation
-        #    self._data = ((self._data.T-self._ave)/self._std).T
+        #    self.feature_data = ((self.feature_data.T-self._ave)/self._std).T
 
         
         # get dimension of input/output feature space
-        dim = data_chunks.shape[0] #self._data.shape[0]
+        dim = data_chunks.shape[0] #self.feature_data.shape[0]
 
         if overlap==False:
             # format data into Xf and Xp matrices
-            #Xl = self._data[:, :chunks*(self._past+self._future)].T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
+            #Xl = self.feature_data[:, :chunks*(self._past+self._future)].T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
             Xl = data_chunks.T.reshape(-1, (self._past+self._future)*dim).T  # reshape into column vectors of length past+future
             #print Xl.shape
         else:
             print ''
-            #chunks = int(np.floor(self._data.shape[1]/(self._past+future)))
-            Xl = self._data[:, :(chunks-1)*(self._past+self._future):self._future]
+            #chunks = int(np.floor(self.feature_data.shape[1]/(self._past+future)))
+            Xl = self.feature_data[:, :(chunks-1)*(self._past+self._future):self._future]
             print Xl.shape
             for k in range(1, past+future):
-                Xl = np.append(Xl, self._data[:, k:(chunks-1)*(self._past+self._future)+k:self._future], axis=0)
+                Xl = np.append(Xl, self.feature_data[:, k:(chunks-1)*(self._past+self._future)+k:self._future], axis=0)
                 #print Xl.shape
 
 

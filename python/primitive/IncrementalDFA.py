@@ -19,7 +19,7 @@ class SubspaceDFA(DataHandler):
         SetFeatures -- initialize feature extractor class
 
         LoadDataFile -- routine for loading data from file
-            ClearExcessData -- clear excess preprocessed data from memory
+            ClearRawData -- clear excess preprocessed data from memory
             PreprocessData -- extract features, compute intermediate matrices for subspace DFA
 
         GenerateData -- generate data from utterance object
@@ -123,9 +123,9 @@ class SubspaceDFA(DataHandler):
         self.K = np.array([])
 
         # data vars
-        self._data = np.array([]) # internal data var
+        self.feature_data = np.array([]) # internal data var
         self.Features = None # init to nothing
-        self.data.clear() # do I want or need this here?
+        self.raw_data.clear() # do I want or need this here?
 
     def DefaultParams(self):
         """ Set default parameters of subspace method
@@ -192,7 +192,7 @@ class SubspaceDFA(DataHandler):
 
         """
         # directly pass array into class
-        self._data = np.copy(raw_data)
+        self.feature_data = np.copy(raw_data)
 
     def LoadDataFile(self, fname, **kwargs):
         """ Load data file, extract features, and downsample. Automatically called by LoadDataDir.
@@ -210,8 +210,8 @@ class SubspaceDFA(DataHandler):
 
         # if soundwave key does not exist
         # create it and fill with zero padding
-        if 'sound_wave' not in self.data:
-            self.data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
+        if 'sound_wave' not in self.raw_data:
+            self.raw_data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
 
         # load data and append to self.data dictionary
         super(SubspaceDFA, self).LoadDataFile(fname)
@@ -235,8 +235,8 @@ class SubspaceDFA(DataHandler):
 
         # if soundwave key does not exist
         # create it and fill with zero padding
-        if 'sound_wave' not in self.data:
-            self.data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
+        if 'sound_wave' not in self.raw_data:
+            self.raw_data['sound_wave'] = np.zeros((1, self.Features.min_sound_length))
 
         # load data and append to self.data dictionary
         self.AppendData(data)
@@ -244,7 +244,7 @@ class SubspaceDFA(DataHandler):
         # compute intermediate matrices for inferring primitive operators
         self.PreprocessData()
 
-    def ClearExcessData(self, size=None):
+    def ClearRawData(self, size=None):
         """ Remove all data that has already been used to generate feature vectors. Always leaves 
 
         Arguments: 
@@ -264,15 +264,15 @@ class SubspaceDFA(DataHandler):
         # Set size to the full length of data if not set.
         # This will remove everything from all arrays except the extra padding in sound_wave.
         if size == None: 
-            size = self.data['sound_wave'].shape[1]-self.Features.min_sound_length
+            size = self.raw_data['sound_wave'].shape[1]-self.Features.min_sound_length
 
         # loop over each key in the dictionary and remove all data used to
         # generate features
-        for key in self.data:
+        for key in self.raw_data:
             if key=='sound_wave':
-                self.data[key] = self.data[key][size:]
+                self.raw_data[key] = self.raw_data[key][size:]
             else:
-                self.data[key] = self.data[key][:, size:]
+                self.raw_data[key] = self.raw_data[key][:, size:]
 
     def PreprocessData(self, overlap=False):
         """ Reshape data into chunks for subspace method
@@ -302,30 +302,30 @@ class SubspaceDFA(DataHandler):
         if overlap:
             print "Overlap is currently not supported. No overlap used."
 
-        if (len(self._data) == 0) and (len(self.data) == 0):
+        if (len(self.feature_data ) == 0) and (len(self.raw_data) == 0):
             print "No data has been loaded."
             return 0
 
 
         # extract features and throw into _data array
-        _data = self.Features.Extract(self.data, sample_period=self.sample_period)
+        extracted_features = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
 
         # append to or initialize data array
-        if self._data.size==0:
-            self._data = _data
+        if self.feature_data.size==0:
+            self.feature_data = extracted_features 
         else: 
-            self._data = np.append(self._data, _data, axis=1)
+            self.feature_data = np.append(self.feature_data , extracted_features , axis=1)
         
-        # remove all but the necessary bits from self.data (not self._data)
+        # remove all but the necessary bits from self.data (not self.feature_data)
         # TODO: Fix confusing naming convention here
-        self.ClearExcessData(size=_data.shape[1]*self.sample_period)
+        self.ClearRawData(size=extracted_features.shape[1]*self.sample_period)
 
         # count how many chunks of data we can use
         # data_chunks points to the useable chunks   
-        # used data removed from self._data
-        chunks = int(np.floor(self._data.shape[1]/(self._past+self._future)))
-        data_chunks = self._data[:, :chunks*(self._past+self._future)]
-        self._data = self._data[:, chunks*(self._past+self._future):] # remove indeces for chunks we're using
+        # used data removed from self.feature_data
+        chunks = int(np.floor(self.feature_data.shape[1]/(self._past+self._future)))
+        data_chunks = self.feature_data[:, :chunks*(self._past+self._future)]
+        self.feature_data = self.feature_data[:, chunks*(self._past+self._future):] # remove indeces for chunks we're using
 
         # get dimension of feature space
         dim = data_chunks.shape[0]
@@ -570,17 +570,17 @@ class SubspaceDFA(DataHandler):
         """
         
         # reset internal data vars
-        self.data.clear() # do I want or need this here?
-        self._data = np.array([]) # internal data var
+        self.raw_data.clear() # do I want or need this here?
+        self.feature_data = np.array([]) # internal data var
 
 
         super(SubspaceDFA, self).LoadDataFile(fname)
 
-        self._data = self.Features.Extract(self.data, sample_period=self.sample_period)
+        self.feature_data = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
 
 
         # has to be normalized before processing state history
-        data= ((self._data.T-self._ave)/self._std).T
+        data= ((self.feature_data.T-self._ave)/self._std).T
 
         h = np.zeros((self.K.shape[0], data.shape[1]))
 

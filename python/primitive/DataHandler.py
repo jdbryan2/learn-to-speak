@@ -21,7 +21,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         self.tubes = config.TUBES # defined in config/constants.py
 
         # initialize the variables
-        self.data = {}
+        self.raw_data = {}
 
         self.directory = kwargs.get("directory", "data")
         self.directory = kwargs.get("home_dir", self.directory)
@@ -34,7 +34,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         self.tubes = config.TUBES # defined in config/constants.py
 
         # initialize the variables
-        self.data = {}
+        self.raw_data = {}
 
     def DefaultParams(self):
         self.directory = "data"
@@ -73,19 +73,19 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
 
             # handle data according to whether the dictionary has the key or not
-            if key in self.data:
+            if key in self.raw_data:
                 if len(value.shape) < 2:
                     # reshape if it's audio
                     #self.data[key] = np.append(self.data[key], value.reshape((1, -1)), axis=1)
-                    self.data[key] = np.append(self.data[key], value)
+                    self.raw_data[key] = np.append(self.raw_data[key], value)
                 else:
-                    self.data[key] = np.append(self.data[key], value, axis=1)
+                    self.raw_data[key] = np.append(self.raw_data[key], value, axis=1)
             else:
                 if len(value.shape) < 2:
                     # reshape if it's audio
-                    self.data[key] = value.reshape((1, -1))
+                    self.raw_data[key] = value.reshape((1, -1))
                 else:
-                    self.data[key] = value
+                    self.raw_data[key] = value
 
         return _error
 
@@ -171,7 +171,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         _nose, = plt.plot([], [], 'g-')
 
         # cheap downsample, might be better to implement decimate function
-        area_function = self.data['area_function'][:, ::100]
+        area_function = self.raw_data['area_function'][:, ::100]
 
         # vertical offset for nasal tubes
         nasal_offset = np.amax(area_function[self.tubes['nose'], :])*1.5
@@ -229,13 +229,13 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
 
         # nanmax ignores any nan values that may have occured
-        scaled = np.int16(self.data['sound_wave']/np.nanmax(np.abs(self.data['sound_wave']))*32767)
+        scaled = np.int16(self.raw_data['sound_wave']/np.nanmax(np.abs(self.raw_data['sound_wave']))*32767)
         write(str(fname) + '.wav', self.params['sample_freq'], scaled)
 
 
 
     def ClearData(self):
-        self.data = {}
+        self.raw_data = {}
 
 
 if __name__ == "__main__":
