@@ -76,7 +76,6 @@ class RandExcite(Utterance):
         for k in range(times.shape[0]):
             self._art.SetManualTarget(muscle, targets[k], times[k])
 
-
     def SaveParams(self, **kwargs):
 
         kwargs['method'] = self.method

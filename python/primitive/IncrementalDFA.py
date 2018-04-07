@@ -180,20 +180,6 @@ class SubspaceDFA(DataHandler):
         """
         self.Features = feature_class(**kwargs)
 
-    def LoadRawData(self, raw_data):
-        """ Pass raw data into internal data array without feature extraction or downsampling. Used only for external
-        processing of data.
-
-        Arguments: 
-            raw_data -- data array that is copied into internal _data attribute
-
-        Outputs: 
-            N/A
-
-        """
-        # directly pass array into class
-        self.feature_data = np.copy(raw_data)
-
     def LoadDataFile(self, fname, **kwargs):
         """ Load data file, extract features, and downsample. Automatically called by LoadDataDir.
 
@@ -243,6 +229,10 @@ class SubspaceDFA(DataHandler):
         
         # compute intermediate matrices for inferring primitive operators
         self.PreprocessData()
+
+    def ResetDataVars(self):
+        self.feature_data = np.array([]) # internal data var
+        self.raw_data.clear() # do I want or need this here?
 
     def ClearRawData(self, size=None):
         """ Remove all data that has already been used to generate feature vectors. Always leaves 

@@ -41,6 +41,10 @@ class Artword:
         self.manual_targets = {}
         self._random = True # flag for generating random targets (or not)
 
+    def Reset(self, initial_art=np.zeros(self.current_target.shape)):
+        self.time=0.
+        self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
+        self.previous_target = np.copy(self.current_target)
 
     def Randomize(self, flag=True):
         self._random = flag

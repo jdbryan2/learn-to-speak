@@ -124,10 +124,7 @@ class Utterance(object):
         if self._art_init == False:
 
             # Initialize artword for driving a manual sequence
-            #total_length = self.utterance_length*self.loops
-            #self._art = aw.Artword(total_length)
             self._art = rand_aw.Artword(**kwargs)
-            #self._art.Randomize(False) # turn off randomized targets
 
             self._art_init = True  # flag for whether self.InitializeArticulation has been called
 
@@ -153,18 +150,6 @@ class Utterance(object):
 
         #self.InitializeSpeaker()
         self.InitializeSim() # speaker now initialized in sim
-
-    #def InitializeManualControl(self, **kwargs):
-    #    # initialize parameters if anything new is passed in
-    #    if len(kwargs.keys()):
-    #        self.InitializeParams(**kwargs)
-
-    #    #self.InitializeDir(self.method)  # appends DTS to folder name
-    #    self.InitializeDir(self.dirname, addDTS=kwargs.get('addDTS', False))  # appends DTS to folder name
-    #    self.SaveParams()  # save parameters before anything else
-    #    self.InitializeSpeaker()
-
-    #    self.InitializeSim()
 
     ## set control targets in old Artword style
     def SetManualArticulation(self, muscle, times, targets):
