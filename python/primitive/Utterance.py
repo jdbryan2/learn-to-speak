@@ -131,7 +131,6 @@ class Utterance(object):
     def IsInitialized(self):
         return self._sim_init
 
-    # is there are functional difference between InitializeAll and InitializeManualControl?
     def InitializeAll(self, **kwargs):
         # initialize parameters if anything new is passed in
         self.UpdateParams(**kwargs)
@@ -140,16 +139,26 @@ class Utterance(object):
         if not self._sim_init: 
             self._sim_init = True
             print "Setting up simulation..."
+            self.InitializeArticulation(**kwargs)
+            self.InitializeDir(self.directory)  # appends DTS to folder name
+            self.SaveParams()  # save parameters before anything else
+            self.InitializeSim() # speaker now initialized in sim
+
         else: 
             print "Resetting simulation..."
+            initial_art = kwargs.get("initial_art", None)
+            self.Reset(initial_art)
 
-        self.InitializeArticulation(**kwargs)
-
-        self.InitializeDir(self.directory)  # appends DTS to folder name
-        self.SaveParams()  # save parameters before anything else
 
         #self.InitializeSpeaker()
         self.InitializeSim() # speaker now initialized in sim
+
+    def Reset(self, initial_art=None):
+
+        print "Resetting simulation..."
+        self._art.Reset(initial_art)
+        self.InitializeSim()
+        self.ResetOutputVars()
 
     ## set control targets in old Artword style
     def SetManualArticulation(self, muscle, times, targets):

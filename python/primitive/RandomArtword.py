@@ -41,9 +41,16 @@ class Artword:
         self.manual_targets = {}
         self._random = True # flag for generating random targets (or not)
 
-    def Reset(self, initial_art=np.zeros(self.current_target.shape)):
+    def Reset(self, initial_art=None):
+        if initial_art == None 
+            if self._random:
+                initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+            else:
+                initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+
         self.time=0.
-        self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
+        self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
+        self.current_target[:, 1] = np.copy(initial_art)
         self.previous_target = np.copy(self.current_target)
 
     def Randomize(self, flag=True):
