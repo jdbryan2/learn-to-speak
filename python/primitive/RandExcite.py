@@ -20,6 +20,7 @@ class RandExcite(Utterance):
     def __init__(self, **kwargs):
         self.DefaultParams()
         #self.InitializeParams(**kwargs)
+        #self.UpdateParams(**kwargs)
         self.InitializeAll(**kwargs)
 
     def DefaultParams(self):
@@ -66,6 +67,7 @@ class RandExcite(Utterance):
 
         self.ResetOutputVars()
 
+    # depreciated?
     def SetManualArticulation(self, muscle, targets, times):
         if muscle > aw.kArt_muscle.MAX or muscle < 0:
             print "Invalid muscle ID: " + str(muscle)

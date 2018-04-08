@@ -480,7 +480,7 @@ class SubspaceDFA(DataHandler):
         self.K = np.dot(np.sqrt(S), Vh)
         self.O = np.dot(U, np.sqrt(S))
 
-    def SavePrimitives(self, fname=None):
+    def SavePrimitives(self, fname=None, directory=None):
         """Save primitive operators to file
 
         Arguments: 
@@ -493,6 +493,9 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
+
+        if directory != None: 
+            self.directory = directory
 
         if fname==None:
             fname = 'primitives'
@@ -519,6 +522,12 @@ class SubspaceDFA(DataHandler):
         kwargs['features']=self.Features #.__class__.__name__ # feature extractor parameters (don't like this way of passing them through)
         #kwargs['feature_pointer']=self.Features.pointer # what does this do?
         #kwargs['control_action']=self.Features.control_action
+
+        # create save directory if needed
+        if not os.path.exists(self.directory):
+            if self._verbose:
+                print "Creating output directory: " + self.directory
+            os.makedirs(self.directory)
 
         np.savez(os.path.join(self.directory, fname), **kwargs)
 
