@@ -231,8 +231,9 @@ class SubspaceDFA(DataHandler):
         self.PreprocessData()
 
     def ResetDataVars(self):
+        super(SubspaceDFA, self).ResetDataVars()
         self.feature_data = np.array([]) # internal data var
-        self.raw_data.clear() # do I want or need this here?
+        #self.raw_data.clear() # do I want or need this here?
 
     def ClearRawData(self, size=None):
         """ Remove all data that has already been used to generate feature vectors. Always leaves 
@@ -292,6 +293,11 @@ class SubspaceDFA(DataHandler):
         if overlap:
             print "Overlap is currently not supported. No overlap used."
 
+        # check if raw_data has nan values - remove and reset if that's the case
+        if not self.IsValid():
+            print "Invalid data detected and thrown out."
+            self.ResetDataVars()
+
         if (len(self.feature_data ) == 0) and (len(self.raw_data) == 0):
             print "No data has been loaded."
             return 0
@@ -306,8 +312,7 @@ class SubspaceDFA(DataHandler):
         else: 
             self.feature_data = np.append(self.feature_data , extracted_features , axis=1)
         
-        # remove all but the necessary bits from self.data (not self.feature_data)
-        # TODO: Fix confusing naming convention here
+        # remove all but the necessary bits from self.raw_data 
         self.ClearRawData(size=extracted_features.shape[1]*self.sample_period)
 
         # count how many chunks of data we can use
@@ -322,7 +327,6 @@ class SubspaceDFA(DataHandler):
 
         # compute delta mean, save previous mean for some computations
         delta_mean = np.sum((data_chunks.T-self._mean).T, axis=1)/(self._count+data_chunks.shape[1])
-        #old_mean = np.copy(self._mean) # don't think it's actually necessary
         self._mean += delta_mean 
         self._delta_mean = delta_mean
 
@@ -389,7 +393,7 @@ class SubspaceDFA(DataHandler):
 
         self._count += data_chunks.shape[1]
         
-        print self._count, self._count_fp
+        #print self._count, self._count_fp
 
         # debug printouts to make sure indexing is correct
         #print self._count, self._count_fp
@@ -442,7 +446,7 @@ class SubspaceDFA(DataHandler):
         self._dim = k
 
         # compute mean and variance
-        self._ave = self._mean
+        #self._ave = self._mean
         self._std = np.sqrt(self._var)
 
         # Normalization works when I use these values
@@ -494,32 +498,31 @@ class SubspaceDFA(DataHandler):
             fname = 'primitives'
 
         kwargs = {}
+        # incremental DFA parameters
+        kwargs['phi'] = self.phi
+        kwargs['psi'] = self.psi
+        kwargs['count'] = self._count
+        kwargs['var'] = self._var
+        kwargs['sum'] = self._sum
+        kwargs['sum_f'] = self._sum_f
+        kwargs['sum_p'] = self._sum_p
+        kwargs['count_fp'] = self._count_fp
+
+        kwargs['F']=self.F
         kwargs['K']=self.K
         kwargs['O']=self.O
-        kwargs['ave']=self._ave
+        kwargs['mean']=self._mean
         kwargs['std']=self._std
         kwargs['past']=self._past
         kwargs['future']=self._future
         kwargs['control_period']=self.sample_period
-        kwargs['features']=self.Features.__class__.__name__ # feature extractor parameters (don't like this way of passing them through)
-        kwargs['feature_pointer']=self.Features.pointer
-        kwargs['feature_tubes']=self.Features.tubes
-        kwargs['control_action']=self.Features.control_action
+        kwargs['features']=self.Features #.__class__.__name__ # feature extractor parameters (don't like this way of passing them through)
+        #kwargs['feature_pointer']=self.Features.pointer # what does this do?
+        #kwargs['control_action']=self.Features.control_action
 
-        np.savez(fname, **kwargs)
-                 #K=self.K,
-                 #O=self.O,
-                 #ave=self._ave,
-                 #std=self._std,
-                 #past=self._past,
-                 #future=self._future, 
-                 #control_period=self.sample_period, 
-                 #features=self.Features.__class__.__name__, # feature extractor parameters (don't like this way of passing them through)
-                 #feature_pointer=self.Features.pointer,
-                 #feature_tubes=self.Features.tubes,
-                 #control_action=self.Features.control_action)
+        np.savez(os.path.join(self.directory, fname), **kwargs)
 
-    def LoadPrimitives(self, fname=None):
+    def LoadPrimitives(self, fname=None, directory=None):
         """Load primitive operators from file
 
         Arguments: 
@@ -533,17 +536,36 @@ class SubspaceDFA(DataHandler):
 
         """
 
+        if directory != None: 
+            self.directory = directory
+
         if fname==None:
             fname = 'primitives.npz'
 
-        primitives = np.load(os.path.join(self.home_dir, fname))
+        if fname[-4:] != ".npz":
+            fname += ".npz"
 
+        primitives = np.load(os.path.join(self.directory, fname))
+
+        # incremental DFA parameters
+        self.phi = primitives['phi']      
+        self.psi = primitives['psi']      
+        self._count = primitives['count']    
+        self._var = primitives['var']      
+        self._sum = primitives['sum']      
+        self._sum_f = primitives['sum_f']    
+        self._sum_p = primitives['sum_p']    
+        self._count_fp = primitives['count_fp'] 
+
+        self.F = primitives['F']
         self.K = primitives['K']
         self.O = primitives['O']
-        self._ave = primitives['ave']
+        self._mean = primitives['mean']
         self._std = primitives['std']
         self._past = primitives['past'].item()
         self._future = primitives['future'].item()
+        self.sample_period = primitives['control_period'].item() 
+        self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
 
     def StateHistoryFromFile(self, fname):
         """Estimate primitive state history from data file
@@ -649,17 +671,27 @@ if __name__ == "__main__":
     #plt.imshow(np.abs(ss.K))
     #plt.show()
 
-    ss = SubspaceDFA(sample_period=sample_period, past=50, future=10)
+    ss = SubspaceDFA(sample_period=sample_period, past=10, future=10)
 
-    ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+    ss.Features = ArtFeatures() # set feature extractor
     #ss.SetFeatures(SpectralAcousticFeatures)
 
-    #ss.LoadDataDir(directory="../data/apa")
-    #ss.LoadDataDir(directory="../data/click")
-    ss.LoadDataDir(directory="../data/random_10")
+    #ss.LoadDataDir(directory="../data/random_10")
     ss.LoadDataDir(directory="../data/random_1000", max_index=10)
+    ss.SavePrimitives(fname="round1")
+    ss.LoadDataDir(directory="../data/random_1000", min_index=10, max_index=20)
 
     ss.SubspaceDFA(dim)
+
+    s2 = SubspaceDFA(sample_period=sample_period, past=10, future=10, directory="../data/random_1000")
+    #s2.Features = ArtFeatures() # set feature extractor
+    s2.LoadPrimitives(fname="round1") # automatically loads feature extractor
+    s2.LoadDataDir(directory="../data/random_1000", min_index=10, max_index=20)
+    s2.SavePrimitives(fname="round2")
+    s2.SubspaceDFA(dim)
+    print s2.F
+    print s2.F-ss.F
+
 
 
     #ss.EstimateStateHistory(ss._data)

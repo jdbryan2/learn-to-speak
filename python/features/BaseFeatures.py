@@ -13,7 +13,7 @@ class BaseFeatures(object):
         self.InitializeParams(**kwargs)
 
     def DefaultParams(self):
-        self.tubes = {}
+        #self.tubes = {}
         self.pointer = {}
         self.control_action = 'art_hist'
         self.sample_period = 8

@@ -178,8 +178,6 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
             self.LoadDataFile(os.path.join(self.directory, 'data'+str(index)+'.npz'))
 
-
-
     def SaveAnimation(self, **kwargs):
         # should probably clean this up...
         fname = kwargs.get('fname', 'video')
@@ -265,8 +263,16 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         write(str(fname) + '.wav', self.params['sample_freq'], scaled)
 
 
+    def IsValid(self):
+        _valid = True
+        for key in self.raw_data:
+            _valid = _valid and (np.any(np.isfinite(self.raw_data[key])))
 
-    def ClearData(self):
+        return _valid
+
+
+    #def ClearData(self):
+    def ResetDataVars(self):
         self.raw_data = {}
 
 
