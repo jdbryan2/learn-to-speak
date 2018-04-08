@@ -35,7 +35,7 @@ def get_last_round(directory):
         return 0
 
 ################################################################################
-loops = 1 
+loops = 60 
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 directory = "data/batch"
