@@ -171,36 +171,8 @@ class PrimitiveUtterance(object):
         _data['pressure_function'] = self.utterance.pressure_function[:, :self.speaker.Now()+1]
         _data['sound_wave'] = self.utterance.sound_wave[:self.speaker.Now()+1]
 
-<<<<<<< HEAD
         return self.Features.ExtractLast(_data)
-=======
-        # action_hist = high level control actions
-        self.action_hist = np.zeros((self.K.shape[0],
-                                  int(np.ceil(self.sample_freq *
-                                              self.utterance_length /
-                                              self.control_period))))
-    
-    # Note: I'm overiding the base class because I want to use the actual
-    #       initial_art that is passed in not the default artword at 0.0 seconds.
-    # TODO: Find a better way to do this. Possibly clean dependence on artwords
-    #       for Utterance classes.
-    def InitializeSim(self, **kwargs):
-        # note: changing speaker params requires calling InitializeSpeaker
-        if len(kwargs.keys()):
-            self.InitializeParams(**kwargs)
-        
-        # Set the initial_art that the sim will be initialized with
-        self.speaker.InitSim(self.utterance_length, self.initial_art)
 
-    # Note: I'm overiding the base class because I want to use the actual
-    #       initial_art that is passed in not the default artword at 0.0 seconds.
-    #       This is requred in addition to Initialize Sim so that I can pass in a
-    #       new intitial_art each time I want to start over the sim.
-    def InitializeParams(self, **kwargs):
-        if len(kwargs.keys()):
-            self.initial_art = kwargs.get("initial_art", self.initial_art)
-            super(PrimitiveUtterance, self).InitializeParams(**kwargs)
->>>>>>> master
 
     def ClipControl(self, action, lower=0., upper=1.):
         action[action<lower] = lower 
