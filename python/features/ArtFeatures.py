@@ -25,9 +25,11 @@ class ArtFeatures(BaseFeatures):
         # self.control_action is defaulted to "art_hist"
         # can be changed directly or by passing a new string into InitializeParams
 
-        area_function = data['area_function'][self.tubes['glottis_to_velum'], :]
-        lung_pressure = np.mean(data['pressure_function'][self.tubes['lungs'], :], axis=0)
-        nose_pressure = np.mean(data['pressure_function'][self.tubes['nose'], :], axis=0)
+        #area_function = data['area_function'][self.tubes['glottis_to_velum'], :]
+        area_function = data['area_function'][self.tubes['all'], :]
+        #lung_pressure = np.mean(data['pressure_function'][self.tubes['lungs'], :], axis=0)
+        #nose_pressure = np.mean(data['pressure_function'][self.tubes['nose'], :], axis=0)
+
 
         start = 0
         _data = data[self.control_action]
@@ -38,9 +40,9 @@ class ArtFeatures(BaseFeatures):
         self.pointer['area_function'] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
 
-        _data = np.append(_data, lung_pressure.reshape((1, -1)), axis=0)
-        self.pointer['lung_pressure'] = np.arange(start, _data.shape[0])
-        start=_data.shape[0]
+        #_data = np.append(_data, lung_pressure.reshape((1, -1)), axis=0)
+        #self.pointer['lung_pressure'] = np.arange(start, _data.shape[0])
+        #start=_data.shape[0]
         
         self.pointer['all'] = np.arange(0, _data.shape[0])
         self.pointer['all_out'] = np.arange(self.pointer[self.control_action][-1], _data.shape[0])
@@ -58,6 +60,8 @@ class ArtFeatures(BaseFeatures):
 
         # default start of control action to copy of first element if not
         # enough data provided
+        # First element is repeated because Extract method needs to take an average.
+        # Padding with zeros would skew the input value.
         for key in data:
             if key != 'sound_wave': # ignore sound_wave
 

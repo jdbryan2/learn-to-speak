@@ -419,6 +419,8 @@ class SubspaceDFA(DataHandler):
             #        'art_hist':utterance.art_hist}
 
             self.LoadDataChunk(utterance.data)
+            #plt.plot(utterance.data['art_hist'].T)
+            #plt.show()
 
             if save_data:
                 if not fname==None:

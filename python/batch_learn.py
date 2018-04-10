@@ -9,7 +9,9 @@ from primitive.IncrementalDFA import SubspaceDFA as IncrementalDFA
 from features.ArtFeatures import ArtFeatures
 from features.SpectralAcousticFeatures import SpectralAcousticFeatures
 from primitive.RandExcite import RandExcite
+#from primitive.Utterance import Utterance
 ## pretty sure these aren't used ##
+import Artword as aw
 import os
 
 #dim = 8
@@ -42,12 +44,15 @@ directory = "data/batch"
 
 last_round = get_last_round(directory)
 
-rando = RandExcite(directory=(directory+"/sim_params/round%i"%last_round),
-                   method="gesture",
+initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+#initial_art[0] = 0.2
+
+rando = RandExcite(directory=(directory+"/sim_params/round%i"%last_round), #method="gesture",
                    loops=loops,
-                   utterance_length=utterance_length,
-                   max_increment=0.3, min_increment=0.02, max_delta_target=0.2)
-                   #initial_art=np.zeros((aw.kArt_muscle.MAX, )),
+                   utterance_length=utterance_length)
+rando.InitializeAll(random=True, max_increment=0.3, min_increment=0.05, max_delta_target=0.15, initial_art=initial_art)
+# set lungs to always breath out
+#rando.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1], [0.2, 0.0])
 
 ################################################################################
 

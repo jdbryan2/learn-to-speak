@@ -73,6 +73,17 @@ class Utterance(object):
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
 
+    def GetOutputVars(self, time):
+        _data = {}
+        _data['art_hist'] = self.data['art_hist'][:, :time] 
+        _data['area_function'] = self.data['area_function'][:, :time]
+        _data['pressure_function'] = self.data['pressure_function'][:, :time]
+        _data['sound_wave'] = self.data['sound_wave'][:time]
+
+        return _data
+
+
+
     def InitializeDir(self, directory, addDTS=True):
         # setup directory for saving files
         if addDTS:
@@ -151,7 +162,7 @@ class Utterance(object):
 
 
         #self.InitializeSpeaker()
-        self.InitializeSim() # speaker now initialized in sim
+        #self.InitializeSim() # speaker now initialized in sim
 
     def Reset(self, initial_art=None):
 
@@ -193,8 +204,9 @@ class Utterance(object):
 
             # save output data
             # save new articulation
-            self.data['art_hist'][:, self.speaker.Now()-1] = np.copy(articulation) # save
-            self.UpdateOutputs(self.speaker.Now()-1)
+            #self.data['art_hist'][:, self.speaker.Now()-1] = np.copy(articulation) # save
+            self.UpdateActionHistory(articulation, self.Now()-1)
+            self.UpdateOutputs(self.Now()-1)
 
             # Save sound data point
             #self.SaveOutputs()
@@ -209,7 +221,7 @@ class Utterance(object):
 
     # not totally sure that this use of kwargs will work properly
     # previously named Save
-    def SaveData(self, fname = None, wav_file=True, **kwargs):
+    def SaveOutputs(self, fname = None, wav_file=True, **kwargs):
 
         if fname == None: 
             fname = self.iteration
@@ -245,11 +257,14 @@ class Utterance(object):
         for k in range(self.loops):
             print "Loop: " + str(k)
             self.Simulate()
-            self.SaveData()
+            self.SaveOutputs()
 
 
 # wrapper functions for driving the simulator
     # this needs a new name, something other than save
+    def UpdateActionHistory(self, action, index):
+        self.data['art_hist'][:, index] = np.copy(action)
+
     def UpdateOutputs(self, index=0):
         # Save sound data point
         self.data['sound_wave'][index] = self.speaker.GetLastSample()
@@ -269,6 +284,9 @@ class Utterance(object):
 
     def Now(self):
         return self.speaker.Now()
+
+    def NotDone(self):
+        return self.speaker.NotDone()
 
     def Level(self):
         return 0

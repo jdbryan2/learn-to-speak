@@ -13,7 +13,14 @@ class Artword:
         self.min_increment = kwargs.get("min_increment", self.min_increment)  # sec
         self.max_delta_target = kwargs.get("max_delta_target", self.max_delta_target)  
 
+        #initial_art = kwargs.get("initial_art", np.copy(self.current_target[:, 1])) 
+        #if np.any(initial_art == None):
+        #    if self._random:
+        #        initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+        #    else:
+        #        initial_art=np.zeros((aw.kArt_muscle.MAX, ))
         self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
+        #print self.current_target[:,1]
 
         self.previous_target = np.copy(self.current_target)
         
@@ -39,7 +46,7 @@ class Artword:
         self.sample_freq = 8000. # in seconds
         self.sample_period =  1./self.sample_freq # in seconds
         self.manual_targets = {}
-        self._random = True # flag for generating random targets (or not)
+        self._random = False # flag for generating random targets (or not)
 
     def Reset(self, initial_art=None):
         if initial_art == None:
@@ -48,6 +55,7 @@ class Artword:
             else:
                 initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 
+        #print intial_art
         self.time=0.
         self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
         self.current_target[:, 1] = np.copy(initial_art)

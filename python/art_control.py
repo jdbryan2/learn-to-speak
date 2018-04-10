@@ -5,11 +5,12 @@
 
 
 # for forcing floating point division
-from __future__ import division
+#from __future__ import division
 import os
 import numpy as np
 import pylab as plt
 from primitive.PrimitiveUtterance import PrimitiveUtterance
+from primitive.Utterance import Utterance 
 import Artword as aw
 from matplotlib2tikz import save as tikz_save
 
@@ -29,22 +30,24 @@ def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_sty
 
 #import test_params
 from test_params import *
-primdir = dirname+'_prim'
+#primdir = dirname+'_prim'
+primdir = "data/batch/"
+fname = "round109"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
+rnd = 30 
 
 
-
-control = PrimitiveUtterance(dir_name=primdir,
-                             prim_fname=load_fname,
-                             loops=1,
-                             utterance_length=3)
-
-#control.InitializeDir(dirname=primdir, addDTS=False)
+control = PrimitiveUtterance( prim_fname="data/batch/round%i"%rnd)
+control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=1.)
+#control.SetUtterance(utterance)
 
 print control.K
-control.InitializeControl()
+#initial_art=np.random.random((aw.kArt_muscle.MAX, ))
+initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+initial_art[0] = 0.2
+control.InitializeControl(initial_art=initial_art)
 
 
 Ts = 1000/(sample_period)
@@ -99,96 +102,100 @@ I_prev = np.zeros(current_state.shape)
 
 # Perform Control
 j=0
-while control.speaker.NotDone():
-    ## Compute control action
-    # Introduce a disturbance
-    #if j == 100:
-        #desired_state[test_dim] = 1
-    E = desired_state - current_state
-    # Proporational Contribution
-    P = Kp*E
-    # Integral Contribution (Leaky Trapezoidal)
-    # TODO: make a scaled by Ts
-    I = (a ) * I_prev + Ki * (E_prev + E)*Ts / 2
-    #print (a ) * I_prev + np.array([0.9,0,0,0,0,0,0,0]) * (E_prev + E) * Ts/2
-    # Peform anti-windup
-    for prim_num in np.arange(0,dim):
-        i = I[prim_num]
-        i_lim = I_lim[prim_num]
-        if i > i_lim:
-            print ("hit limit pos")
-            I[prim_num] = i_lim
-        elif i < -i_lim:
-            print ("hit limit neg")
-            I[prim_num] = -i_lim
-        if j < past:
-            I[prim_num]=0
-
-    """
-    # For running tests. helps to show system is non-linear and single state
-    # doesn't capture state of system.
-    prim_num = test_dim
-    if j == 50:
-        I[prim_num] = -5
-    elif j == 100:
-        I[prim_num] = 0
-    elif j == 150:
-        I[prim_num] = -5
-    elif j ==200:
-        I[prim_num] = 0
-    """
-
-    # Derivative Contribution
-    D = Kd * (E - E_prev) / Ts
-    # Set PID history variables
-    E_prev = E
-    I_prev = I
-    # Combine Terms
-    control_action = P + I + D
-    #control_action[test_dim] = -20
+while control.NotDone():
+#    ## Compute control action
+#    # Introduce a disturbance
+#    #if j == 100:
+#        #desired_state[test_dim] = 1
+#    E = desired_state - current_state
+#    # Proporational Contribution
+#    P = Kp*E
+#    # Integral Contribution (Leaky Trapezoidal)
+#    # TODO: make a scaled by Ts
+#    I = (a ) * I_prev + Ki * (E_prev + E)*Ts / 2
+#    #print (a ) * I_prev + np.array([0.9,0,0,0,0,0,0,0]) * (E_prev + E) * Ts/2
+#    # Peform anti-windup
+#    for prim_num in np.arange(0,dim):
+#        i = I[prim_num]
+#        i_lim = I_lim[prim_num]
+#        if i > i_lim:
+#            print ("hit limit pos")
+#            I[prim_num] = i_lim
+#        elif i < -i_lim:
+#            print ("hit limit neg")
+#            I[prim_num] = -i_lim
+#        if j < past:
+#            I[prim_num]=0
+#
+#    """
+#    # For running tests. helps to show system is non-linear and single state
+#    # doesn't capture state of system.
+#    prim_num = test_dim
+#    if j == 50:
+#        I[prim_num] = -5
+#    elif j == 100:
+#        I[prim_num] = 0
+#    elif j == 150:
+#        I[prim_num] = -5
+#    elif j ==200:
+#        I[prim_num] = 0
+#    """
+#
+#    # Derivative Contribution
+#    D = Kd * (E - E_prev) / Ts
+#    # Set PID history variables
+#    E_prev = E
+#    I_prev = I
+#    # Combine Terms
+#    control_action = P + I + D
+#    #control_action[test_dim] = -20
 
     ## Step Simulation
-    current_state = control.SimulatePeriod(control_action=control_action, control_period=0.)
+    current_state = control.SimulatePeriod() #control_action=control_action, control_period=0.)
     j+=1
 
-control.Save()
+plt.plot(control.utterance.data['sound_wave'])
+plt.show()
+plt.plot(control.state_hist.T)
+plt.show()
+control.SaveOutputs()
 #plt.plot(_h)
-savedir = 'data/' + primdir + '/figures/in_out/'
-if not os.path.exists(savedir):
-    os.makedirs(savedir)
+
+#savedir = 'data/' + primdir + '/figures/in_out/'
+#if not os.path.exists(savedir):
+#    os.makedirs(savedir)
 
 _h = control.state_hist
 
-"""
 PlotTraces(_h, np.arange(_h.shape[0]), _h.shape[1], sample_period, highlight=0)
 plt.grid(True)
-tikz_save(savedir + 'state_history.tikz',
-    figureheight = '\\figureheight',
-    figurewidth = '\\figurewidth')
+#tikz_save(savedir + 'state_history.tikz',
+#    figureheight = '\\figureheight',
+#    figurewidth = '\\figurewidth')
 
 plt.show()
-"""
-#plt.figure()
-#PlotTraces(control.art_hist, np.arange(control.art_hist.shape[0]), control.art_hist.shape[1], sample_period, highlight=0)
-#plt.plot(control.art_hist.T)
+plt.figure()
+art_hist = control.utterance.data['art_hist']
+PlotTraces(art_hist, np.arange(art_hist.shape[0]), art_hist.shape[1], sample_period, highlight=0)
+#plt.plot(art_hist.T)
+plt.show()
+
+#prim_nums = np.arange(0,dim)
+#prim_nums = np.arange(3)
+##prim_nums = np.array([test_dim])
+#colors = ['b','g','r','c','m','y','k','0.75']
+#markers = ['o','o','o','o','x','x','x','x']
+#fig = plt.figure()
+#for prim_num, c, m in zip(prim_nums,colors,markers):
+#    plt.plot(_h[prim_num][:],color=c)
+#    plt.plot(control.action_hist[prim_num][0:-1], color=str(0.5+0.2*prim_num/prim_nums[-1]))
+#
+#
+## Remove last element from plot because we didn't perform an action
+## after the last update of the state history.
+##plt.plot(control.action_hist[test_dim][0:-1], color="0.5")
 #plt.show()
-
-prim_nums = np.arange(0,dim)
-prim_nums = np.arange(3)
-#prim_nums = np.array([test_dim])
-colors = ['b','g','r','c','m','y','k','0.75']
-markers = ['o','o','o','o','x','x','x','x']
-fig = plt.figure()
-for prim_num, c, m in zip(prim_nums,colors,markers):
-    plt.plot(_h[prim_num][:],color=c)
-    plt.plot(control.action_hist[prim_num][0:-1], color=str(0.5+0.2*prim_num/prim_nums[-1]))
-
-
-# Remove last element from plot because we didn't perform an action
-# after the last update of the state history.
-#plt.plot(control.action_hist[test_dim][0:-1], color="0.5")
-plt.show()
-
+#
 
 
 
