@@ -13,6 +13,7 @@ class Artword:
         self.min_increment = kwargs.get("min_increment", self.min_increment)  # sec
         self.max_delta_target = kwargs.get("max_delta_target", self.max_delta_target)  
 
+        self.delayed_start = kwargs.get("delayed_start", self.delayed_start)
         #initial_art = kwargs.get("initial_art", np.copy(self.current_target[:, 1])) 
         #if np.any(initial_art == None):
         #    if self._random:
@@ -20,6 +21,7 @@ class Artword:
         #    else:
         #        initial_art=np.zeros((aw.kArt_muscle.MAX, ))
         self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
+        self.current_target[:, 0] = np.ones(aw.kArt_muscle.MAX)*self.delayed_start
         #print self.current_target[:,1]
 
         self.previous_target = np.copy(self.current_target)
@@ -38,7 +40,10 @@ class Artword:
         self.min_increment = 0.01  # sec
         self.max_delta_target = 0.5 
 
+        self.delayed_start = 0.
+
         self.current_target = np.zeros((aw.kArt_muscle.MAX, 2))
+        self.current_target[:, 0] += self.delayed_start
         self.previous_target = np.zeros((aw.kArt_muscle.MAX, 2))
         
 
@@ -177,7 +182,7 @@ class Artword:
            art[k] = _art[k]
 
 if __name__ == '__main__':
-    rand = RandomArtword(sample_period=1./8000)
+    rand = Artword(sample_period=1./8000, delayed_start = 0.3, random=True)
                         #initial_art=np.random.random(aw.kArt_muscle.MAX))
 
     rand.SetManualTarget(0, 0.0, 0.5)

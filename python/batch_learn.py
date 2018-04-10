@@ -50,7 +50,8 @@ initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 rando = RandExcite(directory=(directory+"/sim_params/round%i"%last_round), #method="gesture",
                    loops=loops,
                    utterance_length=utterance_length)
-rando.InitializeAll(random=True, max_increment=0.3, min_increment=0.05, max_delta_target=0.15, initial_art=initial_art)
+rando.InitializeAll(random=True, max_increment=0.3, min_increment=0.05, max_delta_target=0.15,
+                    delayed_start=np.random.random(), initial_art=initial_art)
 # set lungs to always breath out
 #rando.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1], [0.2, 0.0])
 

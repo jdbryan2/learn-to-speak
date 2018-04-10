@@ -36,7 +36,7 @@ fname = "round109"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 30 
+rnd = 1 
 
 
 control = PrimitiveUtterance( prim_fname="data/batch/round%i"%rnd)
