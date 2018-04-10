@@ -30,8 +30,8 @@ class Utterance(object):
         self.utterance_length = 1.0  # seconds
         self.loops = 1
 
-        #self.initial_art = np.zeros(aw.kArt_muscle.MAX,
-                                    #dtype=np.dtype('double'))
+        self.initial_art = np.zeros(aw.kArt_muscle.MAX,
+                                    dtype=np.dtype('double'))
 
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
         
@@ -49,7 +49,7 @@ class Utterance(object):
         self.utterance_length = kwargs.get("utterance_length",
                                            self.utterance_length)
         self.loops = kwargs.get("loops", self.loops)
-        #self.initial_art = kwargs.get("initial_art", self.initial_art)
+        self.initial_art = kwargs.get("initial_art", self.initial_art)
         #print self.initial_art
 
 
@@ -72,9 +72,12 @@ class Utterance(object):
         self.data['art_hist'] = np.zeros((aw.kArt_muscle.MAX,
                                   int(np.ceil(self.sample_freq *
                                           self.utterance_length))))
+        self.data['art_hist'][:, 0] = self.initial_art
 
     def GetOutputVars(self, time):
         _data = {}
+        #print time
+        #print self.data['art_hist'][:, 0]
         _data['art_hist'] = self.data['art_hist'][:, :time] 
         _data['area_function'] = self.data['area_function'][:, :time]
         _data['pressure_function'] = self.data['pressure_function'][:, :time]
@@ -123,11 +126,17 @@ class Utterance(object):
 
         initial_art = self._art.GetArt() # defaults to getting articulation at t=0
         self.speaker.InitSim(self.utterance_length, initial_art)
+        self.initial_art = np.copy(initial_art) # store for later use
+        #self.data['art_hist'][0] = np.copy(initial_art) # store for later use
 
         # element zero of output arrays will be filled with initial value of
         # simulator variables. 
         #self.SaveOutputs()
-        #self.art_hist[:,0] = np.copy(initial_art)
+        self.data['art_hist'][:,0] = np.copy(initial_art)
+        #print self.data['art_hist'][:, 0]
+        #plt.figure()
+        #plt.title('initial_art')
+        #plt.show()
         #print self.art_hist[:, 0]
 
     def InitializeArticulation(self, **kwargs):
@@ -168,6 +177,7 @@ class Utterance(object):
 
         print "Resetting simulation..."
         self._art.Reset(initial_art)
+        self.initial_art = initial_art
         self.InitializeSim()
         self.ResetOutputVars()
 
@@ -290,6 +300,9 @@ class Utterance(object):
 
     def Level(self):
         return 0
+
+    def GetInitialControl(self):
+        return self.data['art_hist'][:,0]
 
 
 if __name__ == "__main__":

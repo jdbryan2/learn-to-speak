@@ -177,7 +177,10 @@ class PrimitiveUtterance(object):
         #_data['area_function'] = self.utterance.area_function[:, :self.speaker.Now()+1]
         #_data['pressure_function'] = self.utterance.pressure_function[:, :self.speaker.Now()+1]
         #_data['sound_wave'] = self.utterance.sound_wave[:self.speaker.Now()+1]
-
+        
+        #print self.utterance.GetOutputVars(self.Now()+1)
+        #plt.figure()
+        #plt.show()
         return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()+1))
 
 
@@ -208,6 +211,8 @@ class PrimitiveUtterance(object):
         # setup feedback variables
         #self.control_target = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')) 
         features = self.GetFeatures()
+        plt.plot(features)
+        plt.show()
 
         # past_data stores history of features used to compute current state
         
@@ -218,14 +223,16 @@ class PrimitiveUtterance(object):
         # Either choose 1 or 2 for initializing past_data
         
         # 1.)Set all of past but last state to 0 then estimate state without normalization to avoid subtraction of mean
-        self.past_data = np.zeros((features.shape[0], self._past))
-        self.past_data[:,-1] = features
-        self.current_state = self.EstimateState(self.past_data, normalize=False)
+        #self.past_data = np.zeros((features.shape[0], self._past))
+        #self.past_data[:,-1] = features
+        #self.current_state = self.EstimateState(self.past_data, normalize=False)
 
         # 2.)Set whole past to initial features then estimate state with normalization
-        #self.past_data = np.zeros((features.shape[0], self._past))
-        #self.past_data = (self.past_data.T+features).T
-        #self.current_state = self.EstimateState(self.past_data, normalize=True)
+        self.past_data = np.zeros((features.shape[0], self._past))
+        self.past_data = (self.past_data.T+features).T
+        self.current_state = self.EstimateState(self.past_data, normalize=True)
+        plt.imshow(np.abs(self.past_data))
+        plt.show()
 
         # Append to state_history
         self.state_hist[:, 0] = self.current_state
@@ -236,7 +243,7 @@ class PrimitiveUtterance(object):
 
     # need a better way to pass sample period from one class to the other
     # maybe it's worth setting it up to pass a pointer to a control policy as input?
-    def SimulatePeriod(self, control_action=None, control_period=0):
+    def SimulatePeriod(self, control_action=None, control_period=0, hold=False):
 
         if control_action == None: 
             control_action = np.zeros(self.O.shape[1])
@@ -246,13 +253,19 @@ class PrimitiveUtterance(object):
 
         # get target articulation
         target = self.GetControl(self.current_state+control_action)
+        if not hold:
+            print self.current_state
+            #plt.plot(self.current_state)
+            #plt.show()
+        #print control_action
+        #print target
         #target = self.GetControl(control_action)
         # Save control action history
         self.action_hist[:, self.Now()/self.control_period-1] = control_action
 
         # initialize features and articulation
         features = np.zeros(self.past_data.shape[0])
-        action = np.zeros(target.shape[0])
+        action = np.copy(self.utterance.GetInitialControl()) #np.zeros(target.shape[0])
         prev_target = self.utterance.GetLastControl()
 
         # loop over control period and implement interpolated articulation
@@ -261,15 +274,17 @@ class PrimitiveUtterance(object):
 
                 # interpolate to target in order to make smooth motions
                 # TODO: For some reason, this interpolation modifies the variable target.
-                for k in range(target.size):
-                    action[k] = np.interp(t, [0, self.control_period-1], [prev_target[k], target[k]])
-                    # it may be worth wrapping this function too
-                    # effectively, it would do something like getting the control from the lower level controller
-                    # in order to reach the desired target. 
+                if hold:
+                    print "Holding"
+                else:
+                    for k in range(target.size):
+                        action[k] = np.interp(t, [0, self.control_period-1], [prev_target[k], target[k]])
+                        # it may be worth wrapping this function too
+                        # effectively, it would do something like getting the control from the lower level controller
+                        # in order to reach the desired target. 
 
-                #self.speaker.SetArticulation(articulation)
-                #self.speaker.IterateSim()
-                self.utterance.SetControl(action)
+                    self.utterance.SetControl(action)
+
                 self.utterance.IterateSim()
 
                 self.UpdateOutputs()
@@ -283,6 +298,9 @@ class PrimitiveUtterance(object):
 
             #features += self.GetFeatures()/self.control_period
         features = self.GetFeatures()
+        #print features
+        #plt.figure()
+        #plt.show()
 
         # add features to past data
         # First if statement won't get used currently how we are initializing past_data, but here for future proofing
@@ -292,10 +310,15 @@ class PrimitiveUtterance(object):
         else:
             self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
             self.past_data[:, -1] = features
+
+        #plt.imshow(np.abs(self.past_data))
         
 
         # get current state and choose target articulation
         self.current_state = self.EstimateState(self.past_data, normalize=True)
+        #plt.figure()
+        #plt.plot(self.current_state)
+        #plt.show()
 
         # save control action and state
         self.state_hist[:, self.utterance.Now()/self.control_period-1] = self.current_state

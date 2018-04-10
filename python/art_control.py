@@ -36,7 +36,7 @@ fname = "round109"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 1 
+rnd = 74 
 
 
 control = PrimitiveUtterance( prim_fname="data/batch/round%i"%rnd)
@@ -45,10 +45,15 @@ control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=1.)
 
 print control.K
 #initial_art=np.random.random((aw.kArt_muscle.MAX, ))
-initial_art=np.zeros((aw.kArt_muscle.MAX, ))
-initial_art[0] = 0.2
+#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+initial_art = control._ave[control.Features.pointer[control.Features.control_action]]
+print initial_art
+#initial_art=np.ones((aw.kArt_muscle.MAX, ))*0.36
+#initial_art[0] = 0.2
 control.InitializeControl(initial_art=initial_art)
 
+plt.figure()
+plt.show()
 
 Ts = 1000/(sample_period)
 
@@ -151,7 +156,13 @@ while control.NotDone():
 #    #control_action[test_dim] = -20
 
     ## Step Simulation
-    current_state = control.SimulatePeriod() #control_action=control_action, control_period=0.)
+    #print control.current_state
+    #plt.plot(control.current_state)
+    #plt.show()
+    #print control.Now()
+    current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
+    #plt.plot(current_state)
+    #plt.show()
     j+=1
 
 plt.plot(control.utterance.data['sound_wave'])
