@@ -197,42 +197,36 @@ class PrimitiveUtterance(object):
 
         print "Controller period:", self.control_period
 
-        #self.InitializeDir(self.method)  # appends DTS to folder name
-        #self.InitializeDir(self.dirname)  # appends DTS to folder name
+        # pass kwargs through to utterance initializer
         self.utterance.InitializeAll(**kwargs)
         self.SaveParams()  # save parameters before anything else
 
-        # intialize simulator
-        #self.InitializeSpeaker() # Should only have to call this once unless chaning speaker parameters
-        #self.InitializeArticulation()
-        #self.InitializeSim()
         self.ResetOutputVars()
 
         # setup feedback variables
         #self.control_target = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')) 
+
+        # run the simulator for some number of loops to get the initial output
+        for k in range(1):
+            self.utterance.IterateSim()
+            self.UpdateOutputs()
         features = self.GetFeatures()
-        plt.plot(features)
-        plt.show()
 
-        # past_data stores history of features used to compute current state
-        
-        # Currenlty not using this method. It relies on EstimateState to fill in the rest of the past_data vector
-        # self.past_data = features
-        # self.past_data = self.past_data.reshape(self.past_data.shape[0],1)
-        
         # Either choose 1 or 2 for initializing past_data
+        # past_data stores history of features used to compute current state
+        edge_copy = kwargs.get("edge_copy", True)
         
-        # 1.)Set all of past but last state to 0 then estimate state without normalization to avoid subtraction of mean
-        #self.past_data = np.zeros((features.shape[0], self._past))
-        #self.past_data[:,-1] = features
-        #self.current_state = self.EstimateState(self.past_data, normalize=False)
+        if not edge_copy:
+            # 1.)Set all of past but last state to 0 then estimate state without normalization to avoid subtraction of mean
+            self.past_data = np.zeros((features.shape[0], self._past))
+            self.past_data[:,-1] = features
+            self.current_state = self.EstimateState(self.past_data, normalize=False)
 
-        # 2.)Set whole past to initial features then estimate state with normalization
-        self.past_data = np.zeros((features.shape[0], self._past))
-        self.past_data = (self.past_data.T+features).T
-        self.current_state = self.EstimateState(self.past_data, normalize=True)
-        plt.imshow(np.abs(self.past_data))
-        plt.show()
+        else:
+            # 2.)Set whole past to initial features then estimate state with normalization
+            self.past_data = np.zeros((features.shape[0], self._past))
+            self.past_data = (self.past_data.T+features).T
+            self.current_state = self.EstimateState(self.past_data, normalize=True)
 
         # Append to state_history
         self.state_hist[:, 0] = self.current_state
