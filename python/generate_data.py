@@ -51,6 +51,6 @@ if args.breathe=='manual':
     utterance.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.2], 
                                                           [0.1, 0.0])
 
-utterance.Run(max_increment=0.3, min_increment=0.1, max_delta_target=0.1, addDTS=False)
+utterance.Run(max_increment=0.3, min_increment=0.1, max_delta_target=0.1, random=True, addDTS=False)
 
 
