@@ -33,6 +33,7 @@ class Utterance(object):
         self.initial_art = np.zeros(aw.kArt_muscle.MAX,
                                     dtype=np.dtype('double'))
 
+        self._addDTS = True
         self._art_init = False  # flag for whether self.InitializeArticulation has been called
         
         self._sim_init = False  # flag for seeing if simulation has already been initialized
@@ -50,6 +51,8 @@ class Utterance(object):
                                            self.utterance_length)
         self.loops = kwargs.get("loops", self.loops)
         self.initial_art = kwargs.get("initial_art", self.initial_art)
+
+        self._addDTS=kwargs.get("addDTS", self._addDTS)
         #print self.initial_art
 
 
@@ -89,7 +92,7 @@ class Utterance(object):
 
     def InitializeDir(self, directory, addDTS=True):
         # setup directory for saving files
-        if addDTS:
+        if self._addDTS:
             self.directory = directory + '_' + time.strftime('%Y-%m-%d-%H-%M-%S')
         else:
             self.directory = directory
