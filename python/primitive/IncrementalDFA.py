@@ -603,7 +603,7 @@ class SubspaceDFA(DataHandler):
 
 
         # has to be normalized before processing state history
-        data= ((self.feature_data.T-self._ave)/self._std).T
+        data= ((self.feature_data.T-self._mean)/self._std).T
 
         h = np.zeros((self.K.shape[0], data.shape[1]))
 
@@ -630,7 +630,7 @@ class SubspaceDFA(DataHandler):
 
         """
         # has to be normalized before processing state history
-        data= ((data.T-self._ave)/self._std).T
+        data= ((data.T-self._mean)/self._std).T
 
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
 

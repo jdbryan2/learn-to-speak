@@ -187,7 +187,10 @@ class Utterance(object):
     ## set control targets in old Artword style
     def SetManualArticulation(self, muscle, times, targets):
 
-        self.InitializeArticulation()
+        #self.InitializeArticulation()
+        if not self._art_init: 
+            print "Articulation has not been initialized. Cannot define manual controls."
+            return 0
 
         if muscle > aw.kArt_muscle.MAX or muscle < 0:
             print "Invalid muscle ID: " + str(muscle)
@@ -265,7 +268,7 @@ class Utterance(object):
     def Run(self, **kwargs):
         # initialize parameters if anything new is passed in
         
-        self.InitializeAll(**kwargs)
+        #self.InitializeAll(**kwargs)
 
         for k in range(self.loops):
             print "Loop: " + str(k)

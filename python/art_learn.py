@@ -24,65 +24,42 @@ import Artword as aw
 #future = 50
 
 # call in all the necessary global variables
-from test_params import *
+#from test_params import *
+
+dim = 8
+sample_period = 10 # in milliseconds
+sample_period=sample_period*8 # # (*8) -> convert to samples ms
+dirname = 'data/test'
+load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+past = 10
+future = 10
+v_ = 5
 
 rounds = 1
 loops_per_round = 10
 utterance_length = 1.0
-#full_utterance = loops_per_round*utterance_length
-
-rando = RandExcite(dirname=dirname+"_"+str(loops_per_round*rounds), 
-                   utterance_length=utterance_length,
-                   initial_art=np.random.random((aw.kArt_muscle.MAX, )), 
-                   max_increment=0.3, min_increment=0.01, max_delta_target=0.2)
-
-#rando.InitializeAll()
 
 
-dim = 8
-sample_period = 10*8 # (*8) -> ms
 
 
 ss = SubspaceDFA(sample_period=sample_period, past=past, future=future)
 
 ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
-#ss.SetFeatures(SpectralAcousticFeatures)
 
-error = np.zeros(rounds)
-for k in range(error.size):
+for k in range(1, 11):
+    ss.LoadDataDir(directory=dirname+"/breathe_rand_init_"+str(k))
     
-    print ""
-    print "#"*20
-    print "Round " + str(k+1)
-    print "#"*20
-    ss.GenerateData(rando, loops_per_round)
 
-    ss.SubspaceDFA(dim)
+ss.SubspaceDFA(dim)
+ss.SavePrimitives(directory="data/test/breathe_rand_init_prim")
 
-    if k>0:
-        error[k] = np.sum(np.sum(np.abs(F-ss.F)))/np.sum(np.sum(ss.F))
-        print "Update Delta: " + str(error[k])
-
-    F = np.copy(ss.F)
-
-    print "Incremental variable magnitudes:"
-    print np.max(np.abs(ss.phi)),np.max(np.abs(ss.psi)), np.max(np.abs(ss._mean)), np.max(np.abs(ss._var)), np.max(np.abs(ss._sum))
-
-
-    #plt.figure()
-    #plt.imshow(np.abs(ss.F))
-    #plt.figure()
-    #plt.imshow(np.abs(ss.O))
-    #plt.figure()
-    #plt.imshow(np.abs(ss.K))
-    #plt.show()
 
 #plt.figure()
-state_history = ss.StateHistoryFromFile(rando.directory+"data1.npz")
+state_history = ss.StateHistoryFromFile(dirname+"/breathe_rand_init_1/data1.npz")
 plt.plot(state_history.T)
 plt.title("State History")
 plt.figure()
-plt.plot(error[1:])
+#plt.plot(error[1:])
 plt.title("Magnitude of error in estimate of F")
 plt.show()
 

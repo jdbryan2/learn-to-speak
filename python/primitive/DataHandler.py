@@ -181,8 +181,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
     def SaveAnimation(self, **kwargs):
         # should probably clean this up...
         fname = kwargs.get('fname', 'video')
-        self.directory = kwargs.get('dirname', '')
-        self.directory = kwargs.get('directory', '')
+        self.directory = kwargs.get('dirname', self.directory)
+        self.directory = kwargs.get('directory', self.directory)
         #dirname = os.path.join(self.home_dir, dirname)
         fname = os.path.join(self.directory, fname)
 
@@ -252,8 +252,8 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
     def SaveWav(self, **kwargs):
         fname = kwargs.get('fname', 'concat')
-        self.directory = kwargs.get('dirname', '')
-        self.directory = kwargs.get('directory', '')
+        self.directory = kwargs.get('dirname', self.directory)
+        self.directory = kwargs.get('directory', self.directory)
         #dirname = os.path.join(self.home_dir, dirname)
         fname = os.path.join(self.directory, fname)
 
@@ -281,27 +281,28 @@ if __name__ == "__main__":
 
     # directory = 'gesture_2017-05-10-20-16-18'
     #directory = '../data/exploded'
-    dh = DataHandler(directory='../data/exploded')
-    dh.LoadDataDir(min_index=1350, verbose=True)
-    #dh.SaveAnimation(dirname='../',fname='exploded')
-    #print 'done'
-    dh.SaveWav(fname='../concat')
+    for k in range(1, 10):
+        dh = DataHandler(directory='../data/test/breathe_zero_init_'+str(k))
+        dh.LoadDataDir(verbose=True, max_index=10)
+        dh.SaveAnimation()
+        #print 'done'
+        dh.SaveWav()
 
-    area_std = np.std(dh.data['area_function'], axis=1)
-    pressure_std = np.std(dh.data['pressure_function'], axis=1)
-    art_std = np.std(dh.data['art_hist'], axis=1)
+    #area_std = np.std(dh.data['area_function'], axis=1)
+    #pressure_std = np.std(dh.data['pressure_function'], axis=1)
+    #art_std = np.std(dh.data['art_hist'], axis=1)
 
-    area_ave = np.mean(dh.data['area_function'], axis=1)
-    pressure_ave = np.mean(dh.data['pressure_function'], axis=1)
-    art_ave = np.mean(dh.data['art_hist'], axis=1)
+    #area_ave = np.mean(dh.data['area_function'], axis=1)
+    #pressure_ave = np.mean(dh.data['pressure_function'], axis=1)
+    #art_ave = np.mean(dh.data['art_hist'], axis=1)
 
-    area_dr = np.max(dh.data['area_function'], axis=1)-np.min(dh.data['area_function'], axis=1)
-    pressure_dr = np.max(dh.data['pressure_function'], axis=1)-np.min(dh.data['pressure_function'], axis=1)
-    art_dr = np.max(dh.data['art_hist'], axis=1)-np.min(dh.data['art_hist'], axis=1)
+    #area_dr = np.max(dh.data['area_function'], axis=1)-np.min(dh.data['area_function'], axis=1)
+    #pressure_dr = np.max(dh.data['pressure_function'], axis=1)-np.min(dh.data['pressure_function'], axis=1)
+    #art_dr = np.max(dh.data['art_hist'], axis=1)-np.min(dh.data['art_hist'], axis=1)
 
-    area = dh.data['area_function'][dh.tubes['all'], :]
-    area = (area.T-area_ave[dh.tubes['all']]).T
-    area = (area.T/area_std[dh.tubes['all']]).T
+    #area = dh.data['area_function'][dh.tubes['all'], :]
+    #area = (area.T-area_ave[dh.tubes['all']]).T
+    #area = (area.T/area_std[dh.tubes['all']]).T
 
     #for k in dh.tubes['all']:
     #    plt.figure()

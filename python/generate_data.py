@@ -47,10 +47,12 @@ utterance = RandExcite(directory=directory,
                        utterance_length=utterance_length,
                        initial_art=initial_art)
 
+utterance.InitializeAll(max_increment=0.3, min_increment=0.1, max_delta_target=0.2, random=True, addDTS=False)
+
 if args.breathe=='manual':
     utterance.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.2], 
                                                           [0.1, 0.0])
 
-utterance.Run(max_increment=0.3, min_increment=0.1, max_delta_target=0.1, random=True, addDTS=False)
+utterance.Run()
 
 
