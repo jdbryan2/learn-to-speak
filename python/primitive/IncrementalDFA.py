@@ -319,6 +319,10 @@ class SubspaceDFA(DataHandler):
         # data_chunks points to the useable chunks   
         # used data removed from self.feature_data
         chunks = int(np.floor(self.feature_data.shape[1]/(self._past+self._future)))
+        if chunks == 0:
+            print "Not enough data to process a new chunk."
+            return 0
+
         data_chunks = self.feature_data[:, :chunks*(self._past+self._future)]
         self.feature_data = self.feature_data[:, chunks*(self._past+self._future):] # remove indeces for chunks we're using
 
@@ -391,6 +395,7 @@ class SubspaceDFA(DataHandler):
             self._var -= 2.*delta_mean/(self._count+data_chunks.shape[1])*self._sum
             self._sum += np.sum(data_chunks, axis=1) - self._count*delta_mean # zero mean sum
 
+        print self._var
         self._count += data_chunks.shape[1]
         
         #print self._count, self._count_fp

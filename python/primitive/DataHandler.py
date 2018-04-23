@@ -281,12 +281,18 @@ if __name__ == "__main__":
 
     # directory = 'gesture_2017-05-10-20-16-18'
     #directory = '../data/exploded'
-    for k in range(1, 10):
-        dh = DataHandler(directory='../data/test/breathe_zero_init_'+str(k))
-        dh.LoadDataDir(verbose=True, max_index=10)
-        dh.SaveAnimation()
-        #print 'done'
-        dh.SaveWav()
+    #for k in range(1, 10):
+    #    dh = DataHandler(directory='../data/test/breathe_zero_init_'+str(k))
+    #    dh.LoadDataDir(verbose=True, max_index=10)
+    #    dh.SaveAnimation()
+    #    #print 'done'
+    #    dh.SaveWav()
+
+    dh = DataHandler(directory='../data/5_out_2018-04-22-13-31-56')
+    dh.LoadDataDir(verbose=True, max_index=10)
+    dh.SaveAnimation()
+    #print 'done'
+    dh.SaveWav()
 
     #area_std = np.std(dh.data['area_function'], axis=1)
     #pressure_std = np.std(dh.data['pressure_function'], axis=1)

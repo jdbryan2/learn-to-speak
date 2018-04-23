@@ -20,8 +20,22 @@ import os
 #past = 50
 #future = 50
 
+import argparse
+parser = argparse.ArgumentParser(description="Generate data for testing")
+parser.add_argument('--past', dest='past', type=int, default=10)
+parser.add_argument('--future', dest='future', type=int, default=10)
+parser.add_argument('--period', dest='period', type=int, default=10)
+parser.add_argument('--dim', dest='dim', type=int, default=10)
+parser.add_argument('--init', dest='init', default='zeros', help="How to initialize articulation (random or zeros)")
+
+args = parser.parse_args()
+
 # call in all the necessary global variables
-from test_params import *
+#from test_params import *
+sample_period=args.period*8 # # (*8) -> convert to samples ms
+past = args.past
+future = args.future
+dim = args.dim
 
 
 def get_last_round(directory):
@@ -40,18 +54,27 @@ def get_last_round(directory):
 loops = 60 
 utterance_length = 1.0
 full_utterance = loops*utterance_length
-directory = "data/batch"
+directory = "data/batch_%s_%i_%i"%(args.init, args.past, args.future)
+
+# create save directory if needed
+if not os.path.exists(directory):
+    print "Creating output directory: " + directory
+    os.makedirs(directory)
 
 last_round = get_last_round(directory)
 
-initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+if args.init == 'zeros':
+    initial_art=np.zeros((aw.kArt_muscle.MAX, ))
+else:
+    initial_art=np.random.random((aw.kArt_muscle.MAX, ))
 #initial_art[0] = 0.2
 
 rando = RandExcite(directory=(directory+"/sim_params/round%i"%last_round), #method="gesture",
                    loops=loops,
                    utterance_length=utterance_length)
-rando.InitializeAll(random=True, max_increment=0.3, min_increment=0.05, max_delta_target=0.15,
-                    delayed_start=np.random.random(), initial_art=initial_art)
+rando.InitializeAll(random=True, max_increment=0.3, min_increment=0.1, max_delta_target=0.2,
+                    delayed_start=0, initial_art=initial_art)
+                    #delayed_start=np.random.random(), initial_art=initial_art)
 # set lungs to always breath out
 #rando.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.1], [0.2, 0.0])
 

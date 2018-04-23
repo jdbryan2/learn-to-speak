@@ -36,11 +36,11 @@ fname = "round109"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 74 
+rnd = 6
 
 
 control = PrimitiveUtterance( prim_fname="data/batch/round%i"%rnd)
-control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=1.)
+control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=5.)
 #control.SetUtterance(utterance)
 
 print control.K
@@ -48,6 +48,7 @@ print control.K
 #initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 initial_art = control._ave[control.Features.pointer[control.Features.control_action]]
 print initial_art
+initial_art = np.zeros(initial_art.shape)
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))*0.36
 #initial_art[0] = 0.2
 control.InitializeControl(initial_art=initial_art)
@@ -160,6 +161,7 @@ while control.NotDone():
     #plt.plot(control.current_state)
     #plt.show()
     #print control.Now()
+    #current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
     current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
     #plt.plot(current_state)
     #plt.show()

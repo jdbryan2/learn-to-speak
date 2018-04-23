@@ -5,8 +5,9 @@ sample_period=sample_period*8 # # (*8) -> convert to samples ms
 dirname = 'data/random'
 #dirname = 'full_random_10'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
-past = 100
-past = 50
+#past = 50
+#future = 10
+past = 60
 future = 10
 v_ = 5
 
