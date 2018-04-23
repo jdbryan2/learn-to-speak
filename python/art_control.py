@@ -31,15 +31,15 @@ def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_sty
 #import test_params
 from test_params import *
 #primdir = dirname+'_prim'
-primdir = "data/batch/"
-fname = "round109"
+primdir = "data/batch_zeros_100_10/"
+#fname = "round1"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 6
+rnd = 10
 
 
-control = PrimitiveUtterance( prim_fname="data/batch/round%i"%rnd)
+control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
 control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=5.)
 #control.SetUtterance(utterance)
 
@@ -48,13 +48,13 @@ print control.K
 #initial_art=np.zeros((aw.kArt_muscle.MAX, ))
 initial_art = control._ave[control.Features.pointer[control.Features.control_action]]
 print initial_art
-initial_art = np.zeros(initial_art.shape)
+#initial_art = np.zeros(initial_art.shape)
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))*0.36
 #initial_art[0] = 0.2
 control.InitializeControl(initial_art=initial_art)
 
-plt.figure()
-plt.show()
+#plt.figure()
+#plt.show()
 
 Ts = 1000/(sample_period)
 
@@ -162,7 +162,7 @@ while control.NotDone():
     #plt.show()
     #print control.Now()
     #current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
-    current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
+    current_state = control.SimulatePeriod() #control_action=control_action, control_period=0.)
     #plt.plot(current_state)
     #plt.show()
     j+=1

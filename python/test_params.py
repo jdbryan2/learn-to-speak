@@ -2,9 +2,10 @@
 dim = 8
 sample_period = 10 # in milliseconds
 sample_period=sample_period*8 # # (*8) -> convert to samples ms
-dirname = 'data/random'
+dirname = 'data/batch_zeros_100_10'
 #dirname = 'full_random_10'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+load_fname = dirname + '/round10.npz' # class points toward 'data/' already, just need the rest of the path
 #past = 50
 #future = 10
 past = 60

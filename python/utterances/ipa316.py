@@ -7,6 +7,7 @@ ipa316 = ut.Utterance(dirname="ipa316",
                 utterance_length=0.5,
                 addDTS=False)
 
+ipa316.InitializeAll()
 ipa316.SetManualArticulation(aw.kArt_muscle.INTERARYTENOID, [0, 0.5],[0.5, 0.5])
 ipa316.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 0.05, 0.5],[0.3, 0.25, 0.25])
 ipa316.SetManualArticulation(aw.kArt_muscle.MYLOHYOID, [0.0, 0.5], [0.1, 0.1])
