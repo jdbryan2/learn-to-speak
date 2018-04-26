@@ -31,12 +31,13 @@ def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_sty
 #import test_params
 from test_params import *
 #primdir = dirname+'_prim'
-primdir = "data/batch_zeros_100_10/"
+#primdir = "data/batch_zeros_100_10/"
+primdir = "data/batch_random_12_12/"
 #fname = "round1"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 10
+rnd =3 
 
 
 control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)

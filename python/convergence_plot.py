@@ -3,7 +3,8 @@ import os
 import numpy as np
 import pylab as plt
 
-directory = "data/batch_zeros_100_10"
+#directory = "data/batch_zeros_100_10"
+directory = "data/batch_random_12_12"
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):

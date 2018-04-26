@@ -1,19 +1,19 @@
 # Script for evaluating primitives by looking at distributions of
 # ipa utterances in the low-dimensional space.
 
-from primitive.SubspaceDFA import SubspaceDFA
+from primitive.IncrementalDFA import SubspaceDFA
 from features.ArtFeatures import ArtFeatures
 from test_params import *
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 ss = SubspaceDFA()
-ss.LoadPrimitives(load_fname)
+ss.LoadPrimitives(fname=load_fname, directory = dirname)
 # Set feature extractor to be same as one that we used to learn primitives
 # TODO: This should be made more general so that we don't have to keep track
 #       of which extractor was being used
-ss.Features = ArtFeatures(tubes=ss.tubes) # set feature extractor
+ss.Features = ArtFeatures() # set feature extractor
 
 # Select which three primitives to view
 prims = [0,1,2]
@@ -32,20 +32,21 @@ for ipa_num, c, m in zip(ipa_nums,colors,markers):
     # TODO: Make a member function that will clear this
     # Required to make sure ss doesn't append files together
     ss._data = np.array([])
-    ss.LoadDataFile("data/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
+    #ss.LoadDataFile("data/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
 
     # shift to zero mean and  normalize by standard deviation
-    data = ((ss._data.T-ss._ave)/ss._std).T
-    ss.EstimateStateHistory(data)
+    #data = ((ss._data.T-ss._ave)/ss._std).T
+    #ss.EstimateStateHistory(data)
+    h = ss.StateHistoryFromFile("data/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
 
-    xp = ss.h[prims[0]][past:]
-    yp = ss.h[prims[1]][past:]
-    zp = ss.h[prims[2]][past:]
+    xp = h[prims[0]][past:]
+    yp = h[prims[1]][past:]
+    zp = h[prims[2]][past:]
     ax.plot(xp, yp, zp, color=c, marker=m)
     if H.size == 0:
-        H = ss.h.T
+        H = h[:3, :].T
     else:
-        H = np.append(H,ss.h.T,axis=0)
+        H = np.append(H,h[:3, :].T,axis=0)
 
 ax.set_xlabel('Primitive '+str(prims[0]))
 ax.set_ylabel('Primitive '+str(prims[1]))
