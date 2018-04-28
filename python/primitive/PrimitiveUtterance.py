@@ -239,7 +239,8 @@ class PrimitiveUtterance(object):
     # maybe it's worth setting it up to pass a pointer to a control policy as input?
     def SimulatePeriod(self, control_action=None, control_period=0, hold=False):
 
-        if control_action == None: 
+        # I don't think this is actually good though
+        if np.any(control_action) == None: 
             control_action = np.zeros(self.O.shape[1])
 
         if control_period > 0:
@@ -247,8 +248,8 @@ class PrimitiveUtterance(object):
 
         # get target articulation
         target = self.GetControl(self.current_state+control_action)
-        if not hold:
-            print self.current_state
+        #if not hold:
+            #print self.current_state
             #plt.plot(self.current_state)
             #plt.show()
         #print control_action
