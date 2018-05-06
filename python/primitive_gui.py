@@ -1,12 +1,20 @@
 import wx
 import os
 
+import numpy as np
+import pylab as plt
+from primitive.PrimitiveUtterance import PrimitiveUtterance
+from primitive.Utterance import Utterance 
+import Artword as aw
+from matplotlib2tikz import save as tikz_save
+
 class MyFrame(wx.Frame):
     """ We simply drive a new class of Frame."""
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title, size=(800, 600))
         #self.control = wx.TextCtrl(self, pos=(300, 20), size=(200, 300), style=wx.TE_MULTILINE|wx.TE_READONLY)
         self.InitUI()
+        self.InitSimulator()
         self.Centre()
 
     def InitUI(self):
@@ -80,12 +88,24 @@ class MyFrame(wx.Frame):
         # ------------------------------------------
         name_box = wx.BoxSizer(wx.HORIZONTAL)
         name_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Name: ")
-        self.save_name = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="save_name")
+        self.save_name = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="save_name", value="")
 
         # add to sizer
         name_box.Add(name_label, 1, wx.EXPAND|wx.ALIGN_RIGHT)
         name_box.Add(self.save_name, 5,wx.EXPAND|wx.ALIGN_LEFT)
         right_sizer.Add(name_box)
+
+        dir_box = wx.BoxSizer(wx.HORIZONTAL)
+        dir_button = wx.Button(right_panel, id=wx.ID_ANY, label="Set Directory", name="dir_button")
+        self.dir_text = wx.StaticText(right_panel, label="(no directory selected)")
+
+        # set binding function
+        self.Bind(wx.EVT_BUTTON, self.OnSelectDir, dir_button)
+
+        # add to sizer
+        dir_box.Add(dir_button)
+        dir_box.Add(self.dir_text, 2, border=5)
+        right_sizer.Add(dir_box)
 
         # [control policy] /static/text/to/file.txt
         # ------------------------------------------
@@ -94,7 +114,7 @@ class MyFrame(wx.Frame):
         self.control_text = wx.StaticText(right_panel, label="(no file selected)")
 
         # set binding function
-        self.Bind(wx.EVT_BUTTON, self.OnSelectPolicy, prim_file)
+        self.Bind(wx.EVT_BUTTON, self.OnSelectPolicy, control_file)
 
         # add to sizer
         control_box.Add(control_file)
@@ -118,8 +138,8 @@ class MyFrame(wx.Frame):
         # utterance length: textbox X textbox (default to 1x10 second)
         # ------------------------------------------
         utterance_box = wx.BoxSizer(wx.HORIZONTAL)
-        utterance_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Utterance Length: ")
-        self.utterance_length = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="utterance_length")
+        utterance_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Utterance Length (seconds): ")
+        self.utterance_length = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="utterance_length", value="1.0")
 
         # add to sizer
         utterance_box.Add(utterance_label, 1, wx.EXPAND|wx.ALIGN_RIGHT)
@@ -132,7 +152,7 @@ class MyFrame(wx.Frame):
         simulate = wx.Button(right_panel, id=wx.ID_ANY, label=" ------ Run Simulation ------ ", name="run_simulation")
 
         # set binding function
-        self.Bind(wx.EVT_BUTTON, self.OnSelectPolicy, prim_file)
+        self.Bind(wx.EVT_BUTTON, self.OnSimulate, simulate)
 
         right_sizer.AddSpacer(10)
         right_sizer.Add(simulate)
@@ -219,6 +239,10 @@ class MyFrame(wx.Frame):
         self.SetMenuBar(menuBar)
         self.Show(True)
 
+    def InitSimulator(self):
+        self.prim = PrimitiveUtterance()
+        
+
     def OnAbout(self, event):
         dlg = wx.MessageDialog(self, "A simple GUI for simulating primitive vocal tract controls.", "About Sample Editor", wx.OK)
         dlg.ShowModal()
@@ -228,9 +252,37 @@ class MyFrame(wx.Frame):
         self.Close(True)
 
     def OnSelectPrimitive(self, event):
-        dlg = wx.MessageDialog(self, "Select Primitive File", "Button Clicked", wx.OK)
-        dlg.ShowModal()
+        self.dirname = 'data/'
+        dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.FD_OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.filename = dlg.GetFilename()
+            self.dirname = dlg.GetDirectory()
+            full_filename = os.path.join(self.dirname, self.filename)
+
+            # change static text to show selected file
+            self.prim_text.SetLabel(".../"+self.filename) 
+
+            self.prim.LoadPrimitives(full_filename)
+
+            params_list = "Dimension: %i\n"%self.prim._dim
+            params_list += "Past: %i\n" %self.prim._past
+            params_list += "Future: %i\n" %self.prim._future
+            params_list += "Controller Period: %i ms\n" %(self.prim.control_period/8)
+            params_list += "Features: %s \n"%self.prim.Features.__class__.__name__
+            self.param_view.SetValue(params_list)
+
+            if self.save_name.GetValue() == "":
+                self.save_name.SetValue(self.filename[:-4]+"_utterance")
+
+
         dlg.Destroy()
+
+    def OnSelectDir(self, event):
+        dialog = wx.DirDialog(None, "Choose a destination directory:",style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.savedir = dialog.GetPath()
+            self.dir_text.SetLabel(self.savedir)
+        dialog.Destroy()
 
     def OnSelectPolicy(self, event):
         dlg = wx.MessageDialog(self, "Select Control Policy File", "Button Clicked", wx.OK)
@@ -257,6 +309,8 @@ class MyFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
         
+    def OnSimulate(self, event):
+        return 0
         
     def FileSelect(self, event):
         button = event.GetEventObject()
