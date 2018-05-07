@@ -164,7 +164,7 @@ class Utterance(object):
             print "Setting up simulation..."
             self.InitializeArticulation(**kwargs)
             self.InitializeDir(self.directory)  # appends DTS to folder name
-            self.SaveParams()  # save parameters before anything else
+            #self.SaveParams()  # save parameters before anything else
             self.InitializeSim() # speaker now initialized in sim
 
         else: 
@@ -238,6 +238,8 @@ class Utterance(object):
     # not totally sure that this use of kwargs will work properly
     # previously named Save
     def SaveOutputs(self, fname = None, wav_file=True, **kwargs):
+
+        self.SaveParams()  # save parameters before anything else
 
         if fname == None: 
             fname = self.iteration
