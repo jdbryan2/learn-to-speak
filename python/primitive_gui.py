@@ -18,7 +18,7 @@ class MyFrame(wx.Frame):
         self.Centre()
 
     def InitUI(self):
-        self.CreateStatusBar() # A statusbar at the bottom of the window
+        self.statusbar = self.CreateStatusBar() # A statusbar at the bottom of the window
 
         # main panel
         ############
@@ -86,15 +86,6 @@ class MyFrame(wx.Frame):
         # name: textbox (default to primitive name, updates if path with simulation parameters is chosen)
         # [path select button] /static/text/path/ (default to data/) 
         # ------------------------------------------
-        name_box = wx.BoxSizer(wx.HORIZONTAL)
-        name_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Name: ")
-        self.save_name = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="save_name", value="")
-
-        # add to sizer
-        name_box.Add(name_label, 1, wx.EXPAND|wx.ALIGN_RIGHT)
-        name_box.Add(self.save_name, 5,wx.EXPAND|wx.ALIGN_LEFT)
-        right_sizer.Add(name_box)
-
         dir_box = wx.BoxSizer(wx.HORIZONTAL)
         dir_button = wx.Button(right_panel, id=wx.ID_ANY, label="Set Directory", name="dir_button")
         self.dir_text = wx.StaticText(right_panel, label="(no directory selected)")
@@ -106,6 +97,19 @@ class MyFrame(wx.Frame):
         dir_box.Add(dir_button)
         dir_box.Add(self.dir_text, 2, border=5)
         right_sizer.Add(dir_box)
+
+#        name_box = wx.BoxSizer(wx.HORIZONTAL)
+#        #name_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Name: ")
+#        name_button = wx.Button(right_panel, id=wx.ID_ANY, label="Choose Name:", name="name_button")
+#        self.save_name = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="save_name", value="")
+
+#        self.Bind(wx.EVT_BUTTON, self.OnSelectFilename, name_button)
+#
+#        # add to sizer
+#        name_box.Add(name_button, 1, wx.EXPAND|wx.ALIGN_RIGHT)
+#        name_box.Add(self.save_name, 5,wx.EXPAND|wx.ALIGN_LEFT)
+#        right_sizer.Add(name_box)
+
 
         # [control policy] /static/text/to/file.txt
         # ------------------------------------------
@@ -127,7 +131,7 @@ class MyFrame(wx.Frame):
         art_box = wx.BoxSizer(wx.HORIZONTAL)
         art_label = wx.StaticText(right_panel, id=wx.ID_ANY, label="Initial Art: ")
         art_choices= ["Zeros", "Random", "Mean Primitive"]
-        self.art_option = wx.ComboBox(right_panel, id=wx.ID_ANY, name="art_option", value=art_choices[0], choices=art_choices)
+        self.art_option = wx.ComboBox(right_panel, id=wx.ID_ANY, name="art_option", value=art_choices[2], choices=art_choices)
 
         art_box.Add(art_label)
         art_box.Add(self.art_option)
@@ -149,13 +153,18 @@ class MyFrame(wx.Frame):
 
         # [simulate] 
         # ------------------------------------------
-        simulate = wx.Button(right_panel, id=wx.ID_ANY, label=" ------ Run Simulation ------ ", name="run_simulation")
+        simulate_box = wx.BoxSizer(wx.HORIZONTAL)
+        simulate_button = wx.Button(right_panel, id=wx.ID_ANY, label=" ------ Run Simulation ------ ", name="run_simulation")
+        self.save_raw_data   = wx.CheckBox(right_panel, label="Save Data")
+        simulate_box.Add(simulate_button)
+        simulate_box.Add(self.save_raw_data)
+        
 
         # set binding function
-        self.Bind(wx.EVT_BUTTON, self.OnSimulate, simulate)
+        self.Bind(wx.EVT_BUTTON, self.OnSimulate, simulate_button)
 
         right_sizer.AddSpacer(10)
-        right_sizer.Add(simulate)
+        right_sizer.Add(simulate_box)
 
         # checkboxes: primitive states, articulators, features
         # [generate Tikz] [generate plots]
@@ -165,11 +174,12 @@ class MyFrame(wx.Frame):
         self.plot_state   = wx.CheckBox(right_panel, label="State")
         self.plot_art     = wx.CheckBox(right_panel, label="Articulator")
         self.plot_feature = wx.CheckBox(right_panel, label="Features")
+        self.plot_control = wx.CheckBox(right_panel, label="Control")
 
         
         plot_box2 = wx.BoxSizer(wx.HORIZONTAL)
-        trajectory_plot = wx.Button(right_panel, id=wx.ID_ANY, label="Show Trajectories", name="trajectory_plot")
-        trajectory_tikz = wx.Button(right_panel, id=wx.ID_ANY, label="Save Trajectories (tikz)", name="trajectory_tikz")
+        trajectory_plot = wx.Button(right_panel, id=wx.ID_ANY, label="Plot Trajectories", name="trajectory_plot")
+        trajectory_tikz = wx.Button(right_panel, id=wx.ID_ANY, label="Save to Tikz", name="trajectory_tikz")
         #self.trajectory_tikz = wx.CheckBox(right_panel, label="Generate Tikz Files")
 
         # set binding function
@@ -179,6 +189,7 @@ class MyFrame(wx.Frame):
         plot_box1.Add(self.plot_state)
         plot_box1.Add(self.plot_art)
         plot_box1.Add(self.plot_feature)
+        plot_box1.Add(self.plot_control)
 
         plot_box2.Add(trajectory_plot)
         plot_box2.AddSpacer(3)
@@ -252,15 +263,19 @@ class MyFrame(wx.Frame):
         self.Close(True)
 
     def OnSelectPrimitive(self, event):
-        self.dirname = 'data/'
-        dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.*", wx.FD_OPEN)
+        if self.dir_text.GetLabel() == "(no directory selected)":
+            self.prim_dirname = 'data/'
+        else: 
+            self.prim_dirname = self.prim_text.GetLabel()
+
+        dlg = wx.FileDialog(self, "Choose a file", self.prim_dirname, "", "*.*", wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            self.filename = dlg.GetFilename()
-            self.dirname = dlg.GetDirectory()
-            full_filename = os.path.join(self.dirname, self.filename)
+            self.prim_filename = dlg.GetFilename()
+            self.prim_dirname = dlg.GetDirectory()
+            full_filename = os.path.join(self.prim_dirname, self.prim_filename)
 
             # change static text to show selected file
-            self.prim_text.SetLabel(".../"+self.filename) 
+            self.prim_text.SetLabel(".../"+self.prim_filename) 
 
             self.prim.LoadPrimitives(full_filename)
 
@@ -271,22 +286,69 @@ class MyFrame(wx.Frame):
             params_list += "Features: %s \n"%self.prim.Features.__class__.__name__
             self.param_view.SetValue(params_list)
 
-            if self.save_name.GetValue() == "":
-                self.save_name.SetValue(self.filename[:-4]+"_utterance")
+
+            if self.dir_text.GetLabel() == "(no directory selected)":
+                self.savedir = self.prim_dirname
+                self.dir_text.SetLabel(self.savedir) 
+            #if self.save_name.GetValue() == "":
+                #self.save_name.SetValue(self.prim_filename[:-4]+"_utterance")
 
 
         dlg.Destroy()
 
     def OnSelectDir(self, event):
-        dialog = wx.DirDialog(None, "Choose a destination directory:",style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+        if self.dir_text.GetLabel() == "(no directory selected)":
+            self.savedir = 'data/'
+        #else: 
+        #    self.savedir = self.dir_text.GetLabel()
+
+        dialog = wx.DirDialog(None, "Choose a destination directory:",
+                              defaultPath=self.savedir,
+                              style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
+
         if dialog.ShowModal() == wx.ID_OK:
             self.savedir = dialog.GetPath()
             self.dir_text.SetLabel(self.savedir)
         dialog.Destroy()
 
+    def OnSelectFilename(self, event):
+        if self.dir_text.GetLabel() == "(no directory selected)":
+            self.output_dirname = 'data/'
+        else: 
+            self.output_dirname = self.dir_text.GetLabel()
+
+        dlg = wx.FileDialog(self, "Choose a file", self.output_dirname, "", "*.*", wx.FD_OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.output_filename = dlg.GetFilename()
+            self.output_dirname = dlg.GetDirectory()
+            full_filename = os.path.join(self.output_dirname, self.utterance_filename)
+
+            # change static text to show selected file
+            self.dir_text.SetLabel(self.output_dirname) 
+            self.save_name.SetValue(self.output_filename[:-4]) 
+
+
+        dlg.Destroy()
+
     def OnSelectPolicy(self, event):
-        dlg = wx.MessageDialog(self, "Select Control Policy File", "Button Clicked", wx.OK)
-        dlg.ShowModal()
+        #if self.dir_text.GetLabel() == "(no directory selected)":
+        #    self.control_dirname = 'data/'
+        #else: 
+        #    self.control_dirname = self.prim_text.GetLabel()
+
+        self.control_dirname = 'data/'
+
+        dlg = wx.FileDialog(self, "Choose a file", self.control_dirname, "", "*.*", wx.FD_OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            self.control_filename = dlg.GetFilename()
+            self.control_dirname = dlg.GetDirectory()
+            full_filename = os.path.join(self.control_dirname, self.control_filename)
+
+            # change static text to show selected file
+            self.control_text.SetLabel(".../"+self.control_filename) 
+
+            self._control_input = np.genfromtxt(full_filename, delimiter=",", skip_header=1)
+
         dlg.Destroy()
 
     def OnOperatorPlot(self, event):
@@ -295,6 +357,8 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def OnTrajectoryPlot(self, event):
+        #if self.plot_state.GetValue():
+            
         dlg = wx.MessageDialog(self, "Plot Primitive Trajectories", "Button Clicked", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
@@ -310,7 +374,65 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
         
     def OnSimulate(self, event):
+        # set utterance
+        self.prim.utterance = Utterance(directory=self.savedir,
+                                        utterance_length=float(self.utterance_length.GetValue()), 
+                                        addDTS=False)
+        print "Directory:"
+        print self.prim.utterance.directory
+        print self.savedir
+
+        # select initial articulation
+        art_option = self.art_option.GetValue()
+        initial_art = self.prim.GetControlMean()
+
+        if art_option == "Zeros":
+            initial_art = np.zeros(initial_art.shape)
+        elif art_option == "Random":
+            initial_art = np.random.random(initial_art.shape)
+
+        #initialize controller
+        self.prim.InitializeControl(initial_art=initial_art)
+
+        # TODO: Adjust controller so that time is actually delta time between inputs
+        # should make it easier to do repetative stuff and not worry about when it is
+        target_index = 0 
+        prev_target = initial_art
+        prev_time = 0.
+        next_target = self._control_input[target_index, 1:]
+        next_time = self._control_input[target_index, 0]
+
+        while self.prim.NotDone():
+            _now = self.prim.NowSecondsLooped()
+            if self._control_input[target_index, 0] < _now:
+                prev_target = self._control_input[target_index, 1:]
+                prev_time = self._control_input[target_index, 0]
+                target_index += 1
+                next_target = self._control_input[target_index, 1:]
+                next_time = self._control_input[target_index, 0]
+
+
+            #control_action = -1.*current_state
+            control_action = np.zeros(self.prim.current_state.shape)
+            for k in range(control_action.size):
+                control_action[k] = np.interp(_now,
+                                              [prev_time, next_time], 
+                                              [prev_target[k], next_target[k]])
+            
+
+            current_state = self.prim.SimulatePeriod(control_action=control_action) 
+            
+            if _now%0.1 == 0.:
+                self.statusbar.SetStatusText("Simulating: %.1fs..."%_now)
+        
+        if self.save_raw_data.GetValue():
+            self.statusbar.SetStatusText("Saving Data...")
+            self.prim.SaveOutputs()
+
+        self.statusbar.SetStatusText("Done, Simulated %.1fs"%_now)
+
         return 0
+
         
     def FileSelect(self, event):
         button = event.GetEventObject()

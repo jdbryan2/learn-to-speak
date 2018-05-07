@@ -301,6 +301,9 @@ class Utterance(object):
     def Now(self):
         return self.speaker.Now()
 
+    def NowSecondsLooped(self):
+        return self.speaker.NowSecondsLooped()
+
     def NotDone(self):
         return self.speaker.NotDone()
 

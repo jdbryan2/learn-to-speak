@@ -160,6 +160,8 @@ class PrimitiveUtterance(object):
         current_state = np.dot(self.K, _Xp).flatten()
         return current_state
 
+    def GetControlMean(self):
+        return self._ave[self.Features.pointer[self.Features.control_action]]
     def GetControl(self, current_state):
 
         _Xf = np.dot(self.O, current_state)
@@ -247,7 +249,9 @@ class PrimitiveUtterance(object):
             self.control_period=control_period
 
         # get target articulation
-        target = self.GetControl(self.current_state+control_action)
+        #target = self.GetControl(self.current_state+control_action)
+        target = self.GetControl(control_action)
+
         #if not hold:
             #print self.current_state
             #plt.plot(self.current_state)
@@ -387,6 +391,9 @@ class PrimitiveUtterance(object):
 
     def Now(self):
         return self.utterance.Now()
+
+    def NowSecondsLooped(self):
+        return self.utterance.NowSecondsLooped()
 
     def NotDone(self):
         return self.utterance.NotDone()

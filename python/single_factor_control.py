@@ -70,9 +70,10 @@ while control.NotDone():
         #print factor
         #j += 1
 
-    control_action = -1.*current_state
+    #control_action = -1.*current_state
+    control_action = np.zeros(current_state.shape)
     if control.Now() > 3000 and control.Now() < 6000:
-        control_action[factor_index] = factor
+        control_action[factor_index] = factor*current_state[factor_index]
     
     current_state = control.SimulatePeriod(control_action=control_action) #control_action=control_action, control_period=0.)
     #plt.plot(current_state)
