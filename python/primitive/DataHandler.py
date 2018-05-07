@@ -134,13 +134,26 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             return True
 
 
+    def GetIndexList(self, **kwargs):
+
+        self.InitParams(**kwargs)
+
+        # pull indeces from the filenames
+        index_list = []  # using a list for simplicity
+        for filename in os.listdir(self.directory):
+            if filename.startswith('data') and filename.endswith(".npz"):
+                index_list.append(int(filter(str.isdigit, str(filename))))
+
+        # sort numerically and load files in order
+        return np.array(sorted(index_list))
+
     def LoadDataDir(self, **kwargs):#dirname, sample_period=None, verbose = False):
         # open directory, walk files and call LoadDataFile on each
         # is the audio saved in the numpy data? ---> Yes
 
         # clear unused data from last directory
         # prevents erroneous predictions based on discontinuous data
-        self.data = {}
+        self.raw_data = {}
         self._data = np.array([])
 
 
@@ -156,15 +169,18 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
             if self._verbose: 
                 print "Data not loaded from %s" % self.directory
 
-        # pull indeces from the filenames
-        index_list = []  # using a list for simplicity
-        for filename in os.listdir(self.directory):
-            if filename.startswith('data') and filename.endswith(".npz"):
-                index_list.append(int(filter(str.isdigit, filename)))
+            return 0
 
-        # sort numerically and load files in order
-        index_list = np.array(sorted(index_list))
+        ## pull indeces from the filenames
+        #index_list = []  # using a list for simplicity
+        #for filename in os.listdir(self.directory):
+        #    if filename.startswith('data') and filename.endswith(".npz"):
+        #        index_list.append(int(filter(str.isdigit, filename)))
 
+        ## sort numerically and load files in order
+        #index_list = np.array(sorted(index_list))
+
+        index_list = self.GetIndexList()
         # trim off the indexes outside of min and max index range
         index_list = index_list[index_list >= _min]
         index_list = index_list[index_list <= _max]
@@ -262,6 +278,24 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         scaled = np.int16(self.raw_data['sound_wave']/np.nanmax(np.abs(self.raw_data['sound_wave']))*32767)
         write(str(fname) + '.wav', self.params['sample_freq'], scaled)
 
+
+    def GetControlHistory(self, level=0):
+        if level == 0:
+            return self.raw_data['art_hist']
+        else:
+            return self.raw_data['action_hist_%i'%level]
+
+    def GetAreaHistory(self):
+        return self.raw_data['area_function']
+
+    def GetPressureHistory(self):
+        return self.raw_data['pressure_function']
+
+    def GetStateHistory(self, level=1):
+        return self.raw_data['state_hist_%i'%level]
+
+    def GetSoundWave(self):
+        return self.raw_data['sound_wave']
 
     def IsValid(self):
         _valid = True

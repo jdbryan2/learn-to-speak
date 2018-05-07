@@ -255,7 +255,16 @@ class Utterance(object):
         #kwargs['pressure_function'] = self.pressure_function
         #kwargs['art_hist'] = self.art_hist
 
+        for index in kwargs:
+            self.data[index] = kwargs[index]
+
         np.savez( self.directory + 'data' + str(fname), **(self.data) )
+
+    def GetOutputs(self, **kwargs):
+        for index in kwargs:
+            self.data[index] = kwargs[index]
+
+        return self.data.copy()
 
     def SaveParams(self, **kwargs):
         
@@ -266,6 +275,16 @@ class Utterance(object):
         kwargs['loops'] = self.loops
 
         np.savez(self.directory + 'params', **kwargs)
+
+    def GetParams(self, **kwargs):
+
+        kwargs['gender'] = self.gender
+        kwargs['sample_freq'] = self.sample_freq
+        kwargs['oversamp'] = self.oversamp
+        kwargs['glottal_masses'] = self.glottal_masses
+        kwargs['loops'] = self.loops
+
+        return kwargs
 
     def Run(self, **kwargs):
         # initialize parameters if anything new is passed in
@@ -293,6 +312,21 @@ class Utterance(object):
 
     def SetControl(self, action):
         self.speaker.SetArticulation(action)
+
+    def GetControlHistory(self, level=0):
+        if level != 0:
+            print "Tried to call GetControlHistory from level 0, asking for level %i"%level
+
+        return self.data['art_hist']
+
+    def GetAreaHistory(self):
+        return self.data['area_function']
+
+    def GetPressureHistory(self):
+        return self.data['pressure_function']
+
+    def GetSoundWave(self):
+        return self.data['sound_wave']
 
     def GetLastControl(self):
         return self.data['art_hist'][:, self.speaker.Now()-1]

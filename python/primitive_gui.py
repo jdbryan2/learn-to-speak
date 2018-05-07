@@ -4,9 +4,11 @@ import os
 import numpy as np
 import pylab as plt
 from primitive.PrimitiveUtterance import PrimitiveUtterance
+from primitive.DataHandler import DataHandler
 from primitive.Utterance import Utterance 
 import Artword as aw
 from matplotlib2tikz import save as tikz_save
+import plot_functions as pf
 
 class MyFrame(wx.Frame):
     """ We simply drive a new class of Frame."""
@@ -160,11 +162,31 @@ class MyFrame(wx.Frame):
         simulate_box.Add(self.save_raw_data)
         
 
+
         # set binding function
         self.Bind(wx.EVT_BUTTON, self.OnSimulate, simulate_button)
 
         right_sizer.AddSpacer(10)
         right_sizer.Add(simulate_box)
+
+        # [Load From File]
+        # ------------------------------------------
+
+        load_box = wx.BoxSizer(wx.HORIZONTAL)
+        self.min_load = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="max_load", value="")
+        to = wx.StaticText(right_panel, id=wx.ID_ANY, label=" to ")
+        self.max_load = wx.TextCtrl(right_panel, id=wx.ID_ANY, name="max_load", value="")
+        load_button = wx.Button(right_panel, id=wx.ID_ANY, label="Load From Dir", name="load_button")
+
+        self.Bind(wx.EVT_BUTTON, self.OnLoad, load_button)
+
+        # add to sizer
+        load_box.Add(self.min_load)
+        load_box.Add(to)
+        load_box.Add(self.max_load)
+        load_box.Add(load_button)
+
+        right_sizer.Add(load_box)
 
         # checkboxes: primitive states, articulators, features
         # [generate Tikz] [generate plots]
@@ -173,7 +195,7 @@ class MyFrame(wx.Frame):
 
         self.plot_state   = wx.CheckBox(right_panel, label="State")
         self.plot_art     = wx.CheckBox(right_panel, label="Articulator")
-        self.plot_feature = wx.CheckBox(right_panel, label="Features")
+        self.plot_sound = wx.CheckBox(right_panel, label="Sound")
         self.plot_control = wx.CheckBox(right_panel, label="Control")
 
         
@@ -188,7 +210,7 @@ class MyFrame(wx.Frame):
 
         plot_box1.Add(self.plot_state)
         plot_box1.Add(self.plot_art)
-        plot_box1.Add(self.plot_feature)
+        plot_box1.Add(self.plot_sound)
         plot_box1.Add(self.plot_control)
 
         plot_box2.Add(trajectory_plot)
@@ -252,7 +274,8 @@ class MyFrame(wx.Frame):
 
     def InitSimulator(self):
         self.prim = PrimitiveUtterance()
-        
+        self.handler = DataHandler()
+        self._loaded = False
 
     def OnAbout(self, event):
         dlg = wx.MessageDialog(self, "A simple GUI for simulating primitive vocal tract controls.", "About Sample Editor", wx.OK)
@@ -309,7 +332,26 @@ class MyFrame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.savedir = dialog.GetPath()
             self.dir_text.SetLabel(self.savedir)
+
+            indeces = self.handler.GetIndexList(directory=self.savedir)
+            if len(indeces) > 0:
+                self.min_load.SetValue(str(np.min(indeces)))
+                self.max_load.SetValue(str(np.max(indeces)))
+
+            
         dialog.Destroy()
+
+    def OnLoad(self, event):
+        self.handler.LoadDataDir(directory=self.savedir, 
+                                 min_index=int(self.min_load.GetValue()),
+                                 max_index=int(self.max_load.GetValue()))
+
+        #self.state_hist = self.handler.GetStateHistory()
+        #self.art_hist =   self.handler.GetControlHistory(level=0)
+        #self.sound_wave = self.handler.GetSoundWave()
+        #self.ctrl_hist =  self.handler.GetControlHistory(level=1)
+
+        self._loaded = True
 
     def OnSelectFilename(self, event):
         if self.dir_text.GetLabel() == "(no directory selected)":
@@ -352,16 +394,42 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def OnOperatorPlot(self, event):
+        #K = ss.K[k,:].reshape(ss._past, feature_dim)
+        #O = ss.O[:, k].reshape(ss._future, feature_dim)
         dlg = wx.MessageDialog(self, "Plot Primitive Operators", "Button Clicked", wx.OK)
         dlg.ShowModal()
         dlg.Destroy()
 
+    def CreatePlots(self):
+        if self.plot_state.GetValue():
+            state_hist = self.handler.GetStateHistory()
+            plt.figure()
+            pf.PlotTraces(state_hist, np.arange(state_hist.shape[0]), state_hist.shape[1], self.prim.control_period, highlight=0)
+
+        if self.plot_art.GetValue():
+            art_hist = self.handler.GetControlHistory(level=0)
+            plt.figure()
+            pf.PlotTraces(art_hist, np.arange(art_hist.shape[0]), art_hist.shape[1], self.prim.control_period, highlight=0)
+
+        if self.plot_sound.GetValue():
+            sound_wave = self.handler.GetSoundWave()
+            plt.figure()
+            plt.plot(np.arange(len(sound_wave))/8000.,sound_wave)
+            
+        if self.plot_control.GetValue():
+            ctrl_hist = self.handler.GetControlHistory(level=1)
+            plt.figure()
+            pf.PlotTraces(ctrl_hist, np.arange(ctrl_hist.shape[0]), ctrl_hist.shape[1], self.prim.control_period, highlight=0)
+
+
     def OnTrajectoryPlot(self, event):
         #if self.plot_state.GetValue():
+        self.CreatePlots()
             
-        dlg = wx.MessageDialog(self, "Plot Primitive Trajectories", "Button Clicked", wx.OK)
-        dlg.ShowModal()
-        dlg.Destroy()
+        plt.show()
+        #dlg = wx.MessageDialog(self, "Plot Primitive Trajectories", "Button Clicked", wx.OK)
+        #dlg.ShowModal()
+        #dlg.Destroy()
         
     def OnTrajectoryTikz(self, event):
         dlg = wx.MessageDialog(self, "Plot Primitive Trajectories", "Button Clicked", wx.OK)
@@ -369,9 +437,20 @@ class MyFrame(wx.Frame):
         dlg.Destroy()
 
     def OnMovieButton(self, event):
-        dlg = wx.MessageDialog(self, "Generate Video File", "Button Clicked", wx.OK)
-        dlg.ShowModal()
-        dlg.Destroy()
+
+        if not self._loaded:
+            self.handler.LoadDataDir(directory=self.savedir, 
+                                     min_index=int(self.min_load.GetValue()),
+                                     max_index=int(self.max_load.GetValue()))
+
+        self.handler.SaveAnimation()
+        self.handler.SaveWav()
+        
+        self.statusbar.SetStatusText("Saved Movie and Audio File to "+self.savedir)
+
+        #dlg = wx.MessageDialog(self, "Generate Video File", "Button Clicked", wx.OK)
+        #dlg.ShowModal()
+        #dlg.Destroy()
         
     def OnSimulate(self, event):
         # set utterance
@@ -431,8 +510,23 @@ class MyFrame(wx.Frame):
 
         self.statusbar.SetStatusText("Done, Simulated %.1fs"%_now)
 
-        return 0
+        # update the index limiters so that we can just load from dir with one click
+        indeces = self.handler.GetIndexList(directory=self.savedir)
+        if len(indeces) > 0:
+            self.min_load.SetValue(np.min(indeces))
+            self.max_load.SetValue(np.max(indeces))
 
+        # tuck variables into current class so that we can plot easier
+        #self.state_hist = self.prim.GetStateHistory()
+        #self.art_hist = self.prim.GetControlHistory(level=0)
+        #self.sound_wave = self.prim.GetSoundWave()
+        #self.ctrl_hist = self.prim.GetControlHistory(level=1)
+        self.handler.raw_data = self.prim.GetOutputs()
+        self.handler.params = self.prim.GetParams()
+        self._loaded = True
+
+
+        return 0
         
     def FileSelect(self, event):
         button = event.GetEventObject()

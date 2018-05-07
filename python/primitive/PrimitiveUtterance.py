@@ -340,6 +340,15 @@ class PrimitiveUtterance(object):
         self.utterance.SaveParams(**kwargs)
         #np.savez(self.directory + 'params', **kwargs)
 
+    def GetParams(self, **kwargs):
+
+        # add pointer to primitive operators
+        kwargs['primitives_'+str(self.Level())] = self.fname
+
+        # pass down the chain
+        return self.utterance.GetParams(**kwargs)
+        #np.savez(self.directory + 'params', **kwargs)
+
     def SaveOutputs(self, fname=None, wav_file=True, **kwargs):
 
         # state and state-level control action
@@ -348,6 +357,13 @@ class PrimitiveUtterance(object):
 
         # pass down the chain
         self.utterance.SaveOutputs(fname=fname, wav_file=wav_file, **kwargs)
+
+    def GetOutputs(self, **kwargs):
+        # state and state-level control action
+        kwargs['state_hist_'+str(self.Level())] = self.state_hist
+        kwargs['action_hist_'+str(self.Level())] = self.action_hist
+
+        return self.utterance.GetOutputs(**kwargs)
 
     def ResetOutputVars(self):
         # reset the normal utterance output vars
@@ -382,6 +398,29 @@ class PrimitiveUtterance(object):
 
     def SetControl(self, action):
         self.utterance.SetControl(action)
+
+    def GetControlHistory(self, level=-1):
+        if level == self.Level() or level==-1:
+            return self.action_hist
+
+        else: # if it's at a lower level, pass it down the line
+            return self.utterance.GetControlHistory(level)
+
+    def GetStateHistory(self, level=-1):
+        if level == self.Level() or level==-1:
+            return self.state_hist
+
+        else: # if it's at a lower level, pass it down the line
+            return self.utterance.GetStateHistory(level)
+
+    def GetAreaHistory(self):
+        return self.utterance.GetAreaHistory()
+
+    def GetPressureHistory(self):
+        return self.utterance.GetAreaHistory()
+
+    def GetSoundWave(self):
+        return self.utterance.GetSoundWave()
 
     def GetLastControl(self):
         return self.utterance.GetLastControl()
