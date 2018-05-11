@@ -197,6 +197,7 @@ class MyFrame(wx.Frame):
         self.plot_art     = wx.CheckBox(right_panel, label="Articulator")
         self.plot_sound = wx.CheckBox(right_panel, label="Sound")
         self.plot_control = wx.CheckBox(right_panel, label="Control")
+        self.plot_prediction_error = wx.CheckBox(right_panel, label="Error")
 
         
         plot_box2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -212,6 +213,7 @@ class MyFrame(wx.Frame):
         plot_box1.Add(self.plot_art)
         plot_box1.Add(self.plot_sound)
         plot_box1.Add(self.plot_control)
+        plot_box1.Add(self.plot_prediction_error)
 
         plot_box2.Add(trajectory_plot)
         plot_box2.AddSpacer(3)
@@ -421,6 +423,70 @@ class MyFrame(wx.Frame):
             plt.figure()
             pf.PlotTraces(ctrl_hist, np.arange(ctrl_hist.shape[0]), ctrl_hist.shape[1], self.prim.control_period, highlight=0)
 
+
+        #print state_hist.shape,sound_wave[::self.prim.control_period].shape, self.prim.control_period
+        if self.plot_prediction_error.GetValue():
+            state_hist = self.handler.GetStateHistory()
+
+            ctrl_hist = self.handler.GetControlHistory(level=1)
+            
+            output = self.prim.Features.Extract(self.handler.raw_data, sample_period=self.prim.control_period)
+            output = ((output.T-self.prim._ave)/self.prim._std).T
+
+            predicted1 = np.zeros(output.shape)
+            predicted2 = np.zeros(output.shape)
+            predicted3 = np.zeros(output.shape)
+            predicted4 = np.zeros(output.shape)
+            predicted5 = np.zeros(output.shape)
+
+            print state_hist.shape
+            for t in range(state_hist.shape[1]):
+                _Xf = np.dot(self.prim.O, state_hist[:, t])
+                _Xf = np.mean(_Xf.reshape((self.prim._ave.size, -1)), axis=1)
+
+                predicted1[:, t] = _Xf[:self.prim._ave.size]
+                _Xf = np.dot(self.prim.O, ctrl_hist[:, t])
+                _Xf = _Xf.reshape((self.prim._ave.size, -1))
+                predicted2[:, t] = _Xf[:, 0]
+                predicted3[:, t] = _Xf[:, 1]
+                predicted4[:, t] = _Xf[:, 2]
+                predicted5[:, t] = _Xf[:, 3]
+
+            error1 = np.mean(np.abs(output-predicted1)**2, axis=0)
+            error2 = np.mean(np.abs(output-predicted2)**2, axis=0)
+            error3 = np.mean(np.abs(output-predicted3)**2, axis=0)
+            error4 = np.mean(np.abs(output-predicted4)**2, axis=0)
+            error5 = np.mean(np.abs(output-predicted5)**2, axis=0)
+
+            plt.figure()
+    
+            plt.plot(error1)
+            plt.plot(error2)
+            plt.plot(error3)
+            plt.plot(error4)
+            plt.plot(error5)
+            plt.show()
+            #for k in range(output.shape[0]):
+            #    plt.figure()
+            #    plt.plot(output[k], 'b-o')
+            #    plt.plot(predicted1[k], 'g-*')
+            #    plt.plot(predicted2[k], 'r-*')
+            #    plt.plot(predicted3[k], 'r-*', alpha=0.9)
+            #    plt.plot(predicted4[k], 'r-*', alpha=0.8)
+            #    plt.plot(predicted5[k], 'r-*', alpha=0.7)
+            #    plt.plot(predicted2[k]+predicted1[k], 'c-*')
+
+            #    #plt.plot(error[k], 'r--') 
+            #    plt.title(k)
+            #    plt.show()
+            #plt.figure()
+            #pf.PlotTraces(output, np.arange(output.shape[0]), output.shape[1], self.prim.control_period, highlight=0)
+
+            #plt.figure()
+            #pf.PlotTraces(predicted, np.arange(predicted.shape[0]), predicted.shape[1], self.prim.control_period, highlight=0)
+
+            #plt.figure()
+            #pf.PlotTraces(error, np.arange(error.shape[0]), error.shape[1], self.prim.control_period, highlight=0)
 
     def OnTrajectoryPlot(self, event):
         #if self.plot_state.GetValue():
