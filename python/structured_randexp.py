@@ -13,8 +13,8 @@ from primitive.DataHandler import DataHandler
 import pylab as plt
 
     
-loops = 10
-utterance_length = 1.0
+loops = 1
+utterance_length = 5. #10.0
 full_utterance = loops*utterance_length
 
 savedir = 'data/random_prim_%i'%loops
@@ -38,9 +38,13 @@ rand = ActionSequence(dim=prim._dim,
                       initial_action=np.zeros(prim._dim),
                       sample_period=sample_period,
                       random=True,
-                      min_increment=3*sample_period, 
-                      max_increment=5*sample_period,
-                      max_delta_target=0.1)
+                      min_increment=0.5, # 20*sample_period, 
+                      max_increment=0.5, # 20*sample_period,
+                      max_delta_target=0.5)
+
+# all factors over 3 to be constant zero
+for factor in range(3, prim._dim):
+    rand.SetManualTarget(factor, 0., 0.)
 
 handler = DataHandler()
 handler.params = prim.GetParams()
@@ -53,11 +57,11 @@ for k in range(loops):
         action = rand.GetAction(prim.NowSecondsLooped())
         prim.SimulatePeriod(control_action=action)
 
-    #plt.figure()
-    #plt.plot(prim.state_hist.T)
-    #plt.figure()
-    #plt.plot(prim.action_hist.T)
-    #plt.show()
+    plt.figure()
+    plt.plot(prim.state_hist.T)
+    plt.figure()
+    plt.plot(prim.action_hist.T)
+    plt.show()
     
     prim.SaveOutputs(str(k))
 
