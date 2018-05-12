@@ -85,8 +85,8 @@ class PrimitiveUtterance(object):
         self._past = primitives['past'].item()
         self._future = primitives['future'].item()
 
-        self.dim = self.K.shape[0]
-        print "Primitive dimension: ", self.dim
+        self._dim = self.K.shape[0]
+        print "Primitive dimension: ", self._dim
 
 
         self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
@@ -162,6 +162,7 @@ class PrimitiveUtterance(object):
 
     def GetControlMean(self):
         return self._ave[self.Features.pointer[self.Features.control_action]]
+    #TODO: change input variable to something like "action"
     def GetControl(self, current_state):
 
         _Xf = np.dot(self.O, current_state)
@@ -250,7 +251,7 @@ class PrimitiveUtterance(object):
 
         # get target articulation
         #target = self.GetControl(self.current_state+control_action)
-        target = self.GetControl(control_action)
+        target = self.GetControl(control_action) # only use high level input, no state feedback
 
         #if not hold:
             #print self.current_state
@@ -436,6 +437,10 @@ class PrimitiveUtterance(object):
 
     def NotDone(self):
         return self.utterance.NotDone()
+
+    def LoopBack(self):
+        return self.utterance.LoopBack()
+
 
 
 if __name__ == "__main__":

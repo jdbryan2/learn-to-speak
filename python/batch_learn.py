@@ -27,6 +27,8 @@ parser.add_argument('--future', dest='future', type=int, default=10)
 parser.add_argument('--period', dest='period', type=int, default=10)
 parser.add_argument('--dim', dest='dim', type=int, default=10)
 parser.add_argument('--init', dest='init', default='zeros', help="How to initialize articulation (random or zeros)")
+#parser.add_argument('--primitive', dest='primitive', default='none', help="Filename of primitive to be loaded")
+
 
 args = parser.parse_args()
 

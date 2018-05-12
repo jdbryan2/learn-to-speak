@@ -31,13 +31,13 @@ import Artword as aw
 #from test_params import *
 
 dim = 8
-sample_period = 10 # in milliseconds
+sample_period = 1 # in milliseconds
 sample_period=sample_period*8 # # (*8) -> convert to samples ms
 dirname = 'data/test'
 load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
-past = 10 
+past = 20 
 future = 10
-v_ = 5
+#v_ = 5
 
 rounds = 1
 loops_per_round = 10

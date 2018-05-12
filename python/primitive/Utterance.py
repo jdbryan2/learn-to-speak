@@ -213,6 +213,7 @@ class Utterance(object):
         while self.speaker.NotDone():
 
             # pass the current articulation in
+            # will automatically update targets as needed inside GetArt function
             #self._art.intoArt(articulation, self.speaker.NowSecondsLooped())
             articulation = self._art.GetArt(self.speaker.NowSecondsLooped())
             self.speaker.SetArticulation(articulation)
@@ -339,6 +340,10 @@ class Utterance(object):
 
     def NowSecondsLooped(self):
         return self.speaker.NowSecondsLooped()
+
+    def LoopBack(self):
+        return self.speaker.LoopBack()
+
 
     def NotDone(self):
         return self.speaker.NotDone()

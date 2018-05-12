@@ -5,51 +5,82 @@ from scipy.io.wavfile import write
 import PyRAAT as vt
 import Artword as aw
 from primitive.RandExcite import RandExcite
+from primitive.PrimitiveUtterance import PrimitiveUtterance
+from primitive.Utterance import Utterance
+from primitive.ActionSequence import ActionSequence
+from primitive.DataHandler import DataHandler
 
 import pylab as plt
 
     
-loops = 100
+loops = 10
 utterance_length = 1.0
 full_utterance = loops*utterance_length
 
-rando = RandExcite(dirname="full_random_"+str(loops), 
-                method="gesture",
-                loops=loops,
-                utterance_length=utterance_length,
-                initial_art=np.random.random((aw.kArt_muscle.MAX, )))
+savedir = 'data/random_prim_%i'%loops
 
-# manually pump the lungs
-#rando.SetManualSequence(aw.kArt_muscle.LUNGS,
-#                        np.array([0.2, 0.0]),  # targets
-#                        np.array([0.0, 0.5]))  # times
+prim_filename = 'round411'
+prim_dirname = 'data/batch_random_12_12'
+full_filename = os.path.join(prim_dirname, prim_filename)
 
-rando.Run(max_increment=0.3, min_increment=0.02, max_delta_target=0.2, dirname="full_random_"+str(loops), addDTS=False)
+prim = PrimitiveUtterance()
+prim.LoadPrimitives(full_filename)
+prim.utterance = Utterance(directory = savedir, 
+                           utterance_length=utterance_length, 
+                           loops=loops,
+                           addDTS=False)
+                           #initial_art = prim.GetControlMean(),
+
+prim.InitializeControl(initial_art = prim.GetControlMean())
+
+sample_period = prim.control_period/prim.utterance.sample_freq
+rand = ActionSequence(dim=prim._dim,
+                      initial_action=np.zeros(prim._dim),
+                      sample_period=sample_period,
+                      random=True,
+                      min_increment=3*sample_period, 
+                      max_increment=5*sample_period,
+                      max_delta_target=0.1)
+
+handler = DataHandler()
+handler.params = prim.GetParams()
+
+for k in range(loops):
+    print "Loop %i"%k
+    prim.ResetOutputVars()
+
+    while prim.NotDone():
+        action = rand.GetAction(prim.NowSecondsLooped())
+        prim.SimulatePeriod(control_action=action)
+
+    #plt.figure()
+    #plt.plot(prim.state_hist.T)
+    #plt.figure()
+    #plt.plot(prim.action_hist.T)
+    #plt.show()
+    
+    prim.SaveOutputs(str(k))
+
+    if k < 10:
+        handler.AppendData(prim.GetOutputs())
+
+    prim.LoopBack()
+
+handler.SaveAnimation(directory=savedir)
+handler.SaveWav(directory=savedir)
 
 
-## manually open the jaw
-#jaw_period = 0.5
-#jaw_period_var = 0.2
+#rando = RandExcite(dirname="random_"+str(loops), 
+#                method="gesture",
+#                loops=loops,
+#                utterance_length=utterance_length,
+#                initial_art=np.random.random((aw.kArt_muscle.MAX, )))
 #
-#jaw_times = np.random.rand(int(np.ceil(full_utterance/(jaw_period-jaw_period_var))))
-#jaw_times = np.cumsum(jaw_times*jaw_period_var + jaw_period)
-#jaw_times -= jaw_times[0] 
-#jaw_times = jaw_times[jaw_times<full_utterance]
+## manually pump the lungs
+##rando.SetManualSequence(aw.kArt_muscle.LUNGS,
+##                        np.array([0.2, 0.0]),  # targets
+##                        np.array([0.0, 0.5]))  # times
 #
-#jaw_targets = np.random.rand(jaw_times.size)*0.5
-#jaw_targets[::2] += 0.5
-#jaw_targets[0] = 0.
-##jaw_targets[:, 1] += 0.5
-##jaw_targets = jaw_targets.flatten()
-#
-#jaw_times = np.append(jaw_times, full_utterance)
-#jaw_targets = np.append(jaw_targets, jaw_targets[-1])
-#plt.plot(jaw_times, jaw_targets)
-#plt.show()
-#
-#
-#rando.SetManualSequence(aw.kArt_muscle.MASSETER,
-#                        jaw_targets, 
-#                        jaw_times)
-#
-#rando.Run(max_increment=0.3, min_increment=0.01, max_delta_target=0.2, dirname="structured_masseter_"+str(loops))
+#rando.Run(max_increment=0.3, min_increment=0.02, max_delta_target=0.2, dirname="full_random_"+str(loops), addDTS=False)
+
+
