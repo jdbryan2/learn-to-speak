@@ -13,8 +13,8 @@ from primitive.DataHandler import DataHandler
 import pylab as plt
 
     
-loops = 1
-utterance_length = 5. #10.0
+loops = 4
+utterance_length = 1. #10.0
 full_utterance = loops*utterance_length
 
 savedir = 'data/random_prim_%i'%loops
@@ -51,10 +51,10 @@ handler.params = prim.GetParams()
 
 for k in range(loops):
     print "Loop %i"%k
-    prim.ResetOutputVars()
 
     while prim.NotDone():
         action = rand.GetAction(prim.NowSecondsLooped())
+        print prim.NowSecondsLooped()
         prim.SimulatePeriod(control_action=action)
 
     plt.figure()
@@ -69,6 +69,7 @@ for k in range(loops):
         handler.AppendData(prim.GetOutputs())
 
     prim.LoopBack()
+    prim.ResetOutputVars()
 
 handler.SaveAnimation(directory=savedir)
 handler.SaveWav(directory=savedir)

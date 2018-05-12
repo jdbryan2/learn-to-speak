@@ -182,6 +182,7 @@ class PrimitiveUtterance(object):
         #_data['sound_wave'] = self.utterance.sound_wave[:self.speaker.Now()+1]
         
         #print self.utterance.GetOutputVars(self.Now()+1)
+        #print self.Now()+1
         #plt.figure()
         #plt.show()
         return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()+1))
@@ -252,6 +253,7 @@ class PrimitiveUtterance(object):
         # get target articulation
         #target = self.GetControl(self.current_state+control_action)
         target = self.GetControl(control_action) # only use high level input, no state feedback
+        #print target
 
         #if not hold:
             #print self.current_state
@@ -311,7 +313,10 @@ class PrimitiveUtterance(object):
             self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
             self.past_data[:, -1] = features
 
-        #plt.imshow(np.abs(self.past_data))
+        #plt.figure()
+        #plt.imshow(np.abs(self.past_data[30:, :]))
+        #plt.show()
+
         
 
         # get current state and choose target articulation
