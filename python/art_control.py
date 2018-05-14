@@ -37,17 +37,20 @@ primdir = "data/batch_random_12_12/"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd =3 
+rnd = 411
+
+#load learned feedback params
+feedback = np.load('data/rand_steps_full/feedback.npz')
+gain = feedback['K']
 
 
 control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
-control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=5.)
+control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=4.)
 #control.SetUtterance(utterance)
 
 print control.K
-#initial_art=np.random.random((aw.kArt_muscle.MAX, ))
-#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
-initial_art = control._ave[control.Features.pointer[control.Features.control_action]]
+initial_action = np.random.random(control._dim)
+initial_art = control.GetControl(initial_action)
 print initial_art
 #initial_art = np.zeros(initial_art.shape)
 #initial_art=np.ones((aw.kArt_muscle.MAX, ))*0.36
@@ -59,111 +62,31 @@ control.InitializeControl(initial_art=initial_art)
 
 Ts = 1000/(sample_period)
 
-# Good values for individual primitive controllers
-Kp = np.array([1/3,1/3,0,0,0,0,0,0])
-Ki = np.array([0.5/3,1/3,0,0,0,0,0,0])
-Kd = np.array([10/3,5/3,0,0,0,0,0,0])
-I_lim = np.array([100,150,0,0,0,0,0,0])
-
-#Integral gain only
-Kp = np.array([0.0,0,0,0,0,0,0,0])
-Ki = np.array([0.1,0.05,0.2,0,0,0,0,0])
-Kd = np.array([0,0,0,0,0,0,0,0])
-I_lim = np.array([150,150,150,0,0,0,0,0])
-# leaky integrator constant
-a = 1
-#Ki[0]=0
-#Ki[2]=0
 
 # Setup state variables
 current_state = control.current_state
 desired_state = np.zeros(current_state.shape)
 
-## Test Controller
-# Setpoint for controller
-desired_state[0] = -1
-desired_state[1] = 1
-desired_state[2] = 2
-
-"""
-## Tune Controller # Comment out this block for testing.
-# Override all gains to 0 for tuning PID controllers
-Kp = np.array([0.0,0,0,0,0,0,0,0])
-Ki = np.array([0.0,0,0,0,0,0,0,0])
-Kd = np.array([0,0,0,0,0,0,0,0])
-I_lim = np.array([0.0,0,0,0,0,0,0,0])
-
-# Tune test_dim
-test_dim = 0
-Kp[test_dim] = 0
-Ki[test_dim] = 0.1
-Kd[test_dim] = 0
-I_lim[test_dim] = 150
-# Setpoint for controller
-desired_state[test_dim] = 1
-"""
-
-# Setup PID History variables
-E_prev = desired_state - current_state
-I_prev = np.zeros(current_state.shape)
+delta_action = np.zeros(initial_action.shape)
+current_action = np.copy(initial_action)
 
 # Perform Control
 j=0
+max_inc = 0.01
 while control.NotDone():
-#    ## Compute control action
-#    # Introduce a disturbance
-#    #if j == 100:
-#        #desired_state[test_dim] = 1
-#    E = desired_state - current_state
-#    # Proporational Contribution
-#    P = Kp*E
-#    # Integral Contribution (Leaky Trapezoidal)
-#    # TODO: make a scaled by Ts
-#    I = (a ) * I_prev + Ki * (E_prev + E)*Ts / 2
-#    #print (a ) * I_prev + np.array([0.9,0,0,0,0,0,0,0]) * (E_prev + E) * Ts/2
-#    # Peform anti-windup
-#    for prim_num in np.arange(0,dim):
-#        i = I[prim_num]
-#        i_lim = I_lim[prim_num]
-#        if i > i_lim:
-#            print ("hit limit pos")
-#            I[prim_num] = i_lim
-#        elif i < -i_lim:
-#            print ("hit limit neg")
-#            I[prim_num] = -i_lim
-#        if j < past:
-#            I[prim_num]=0
-#
-#    """
-#    # For running tests. helps to show system is non-linear and single state
-#    # doesn't capture state of system.
-#    prim_num = test_dim
-#    if j == 50:
-#        I[prim_num] = -5
-#    elif j == 100:
-#        I[prim_num] = 0
-#    elif j == 150:
-#        I[prim_num] = -5
-#    elif j ==200:
-#        I[prim_num] = 0
-#    """
-#
-#    # Derivative Contribution
-#    D = Kd * (E - E_prev) / Ts
-#    # Set PID history variables
-#    E_prev = E
-#    I_prev = I
-#    # Combine Terms
-#    control_action = P + I + D
-#    #control_action[test_dim] = -20
+    delta_action = np.dot(gain, current_state)
 
+    delta_action[delta_action>max_inc] = max_inc
+    delta_action[delta_action<-max_inc] = -max_inc
+    print delta_action
+    current_action -= delta_action
     ## Step Simulation
     #print control.current_state
     #plt.plot(control.current_state)
     #plt.show()
     #print control.Now()
     #current_state = control.SimulatePeriod(hold=(control.Now()<1000)) #control_action=control_action, control_period=0.)
-    current_state = control.SimulatePeriod() #control_action=control_action, control_period=0.)
+    current_state = control.SimulatePeriod(control_action = current_action) #control_action=control_action, control_period=0.)
     #plt.plot(current_state)
     #plt.show()
     j+=1

@@ -31,13 +31,13 @@ loops = 100
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/rand_steps'
+savedir = 'data/rand_steps_full'
 
 prim_filename = 'round411'
 prim_dirname = 'data/batch_random_12_12'
 full_filename = os.path.join(prim_dirname, prim_filename)
 
-true_dim = 3
+true_dim = 10#prim._dim 
 
 
 loop_start = get_last_index(savedir)+1

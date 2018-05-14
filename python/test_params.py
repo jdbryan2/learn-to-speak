@@ -1,7 +1,7 @@
 
 dim = 8
-#sample_period_ms = 20 # in milliseconds
-sample_period_ms = 1 # in milliseconds
+sample_period_ms = 20 # in milliseconds
+#sample_period_ms = 1 # in milliseconds
 sample_period=sample_period_ms*8 # # (*8) -> convert to samples ms
 #dirname = 'data/batch_random_12_12'
 dirname = 'data/batch_random_20_5'

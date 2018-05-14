@@ -4,7 +4,7 @@ import scipy.linalg as la
 import pylab as plt
 
 #directory = "data/batch_zeros_100_10"
-directory = "data/rand_steps"
+directory = "data/rand_steps_full"
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):
@@ -22,36 +22,57 @@ for index in index_list:
     fname = os.path.join(directory, 'state_action_'+str(index)+'.npz')
     data = np.load(fname)
     if not is_init:
-        state = data['state_hist']
-        action = data['action_hist']
+        state_0 = np.copy(data['state_hist'][:, :-1])
+        state_1 = data['state_hist'][:, 1:]
+        action_1 = data['action_hist'][:, 1:]
         is_init = True
 
     else:
-        state = np.append(state, data['state_hist'], axis=1)
-        action = np.append(action, data['action_hist'], axis=1)
+        state_0 = np.append(state_0, data['state_hist'][:, :-1], axis=1)
+        state_1 = np.append(state_1, data['state_hist'][:, 1:], axis=1)
+        action_1 = np.append(action_1, -data['action_hist'][:, :-1] + data['action_hist'][:, 1:], axis=1)
+        #action_1 = np.append(action_1, data['action_hist'][:, 1:], axis=1)
 
-A = np.dot(state, la.pinv(action))
-print A
+AB = np.dot(state_0, la.pinv(np.append(state_1, action_1, axis=0)))
+print AB
+
+A = AB[:, :10]
+B = AB[:, 10:]
 plt.figure()
 plt.imshow(A)
+plt.figure()
+plt.imshow(B)
 plt.show()
 
-#plt.figure()
-#plt.plot(state.T)
-#
-#plt.figure()
-#plt.plot(action.T)
 
-_state = np.dot(A, action)
-error = state-_state
+state = data['state_hist'][:, 1:]
+action = -data['action_hist'][:, :-1] + data['action_hist'][:, 1:]
+#state = data['state_hist']
+#action = data['action_hist']
+_state = np.dot(A, state)
+_state += np.dot(B, action)
+error = state[:, 1:]-_state[:, :-1]
 print state.shape
 plt.plot(error.T)
-#for k in range(state.shape[0]):
-#    plt.figure()
-#    plt.plot(state[k, :], 'b-')
-#    plt.plot(_state[k, :], 'r--')
-#    plt.show()
+plt.show()
+plt.figure()
+for k in range(state.shape[0]):
+    plt.plot(state[k, :], 'b-')
+    plt.plot(_state[k, :], 'r--')
+plt.show()
 
+
+P = la.solve_discrete_are(A, B, np.eye(A.shape[0]), np.eye(A.shape[0]))
+K = -np.dot(la.pinv(np.dot(B.T, np.dot(P, B))+np.eye(A.shape[0])), np.dot(B.T, np.dot(P, A)))
+
+data = {}
+data['A'] = A
+data['B'] = B
+data['P'] = P
+data['K'] = K
+
+np.savez(os.path.join(directory, 'feedback'), **data)
+print K
 
 #plt.show()
 
