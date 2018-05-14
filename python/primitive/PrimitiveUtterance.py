@@ -142,6 +142,7 @@ class PrimitiveUtterance(object):
         # note: appending zeros actually works here because the feature data has been
         # shifted to be zero mean. Features of 0 are the average value.
         if data_length < self._past:
+            print "Not enough data provided"
             # Either do 1 or 2
 
             # 1.)Take last element of history and assume that was what the data was up til self._past
@@ -166,7 +167,9 @@ class PrimitiveUtterance(object):
     def GetControl(self, current_state):
 
         _Xf = np.dot(self.O, current_state)
-        _Xf = _Xf.reshape((self.past_data.shape[0], self._future))
+        #_Xf = _Xf.reshape((self.past_data.shape[0], self._future))
+        _Xf = _Xf.reshape((-1, self._future))
+
         predicted = _Xf[:, 0]
         predicted = ((predicted.T*self._std)+self._ave).T
         return self.ClipControl(predicted[self.Features.pointer[self.Features.control_action]])
@@ -185,7 +188,7 @@ class PrimitiveUtterance(object):
         #print self.Now()+1
         #plt.figure()
         #plt.show()
-        return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()+1))
+        return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()))
 
 
     def ClipControl(self, action, lower=0., upper=1.):
@@ -240,7 +243,7 @@ class PrimitiveUtterance(object):
 
 
     # need a better way to pass sample period from one class to the other
-    # maybe it's worth setting it up to pass a pointer to a control policy as input?
+    # maybe its worth setting it up to pass a pointer to a control policy as input?
     def SimulatePeriod(self, control_action=None, control_period=0, hold=False):
 
         # I don't think this is actually good though
@@ -253,15 +256,7 @@ class PrimitiveUtterance(object):
         # get target articulation
         #target = self.GetControl(self.current_state+control_action)
         target = self.GetControl(control_action) # only use high level input, no state feedback
-        #print target
 
-        #if not hold:
-            #print self.current_state
-            #plt.plot(self.current_state)
-            #plt.show()
-        #print control_action
-        #print target
-        #target = self.GetControl(control_action)
         # Save control action history
         self.action_hist[:, self.Now()/self.control_period-1] = control_action
 
@@ -292,17 +287,9 @@ class PrimitiveUtterance(object):
                 self.UpdateOutputs()
                 # Save sound data point
 
-                #area_function += control.area_function[:, control.speaker.Now()-1]/down_sample/8.
-                #last_art += articulation/down_sample/8.
-
                 self.utterance.UpdateActionHistory(action, self.Now()-1)
-                #self.art_hist[:, self.utterance.Now()-1] = action
 
-            #features += self.GetFeatures()/self.control_period
         features = self.GetFeatures()
-        #print features
-        #plt.figure()
-        #plt.show()
 
         # add features to past data
         # First if statement won't get used currently how we are initializing past_data, but here for future proofing
@@ -313,17 +300,8 @@ class PrimitiveUtterance(object):
             self.past_data = np.roll(self.past_data, -1, axis=1) # roll to the left
             self.past_data[:, -1] = features
 
-        #plt.figure()
-        #plt.imshow(np.abs(self.past_data[30:, :]))
-        #plt.show()
-
-        
-
         # get current state and choose target articulation
         self.current_state = self.EstimateState(self.past_data, normalize=True)
-        #plt.figure()
-        #plt.plot(self.current_state)
-        #plt.show()
 
         # save control action and state
         self.state_hist[:, self.utterance.Now()/self.control_period-1] = self.current_state
