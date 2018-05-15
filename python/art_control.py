@@ -8,6 +8,7 @@
 #from __future__ import division
 import os
 import numpy as np
+import numpy.linalg as la
 import pylab as plt
 from primitive.PrimitiveUtterance import PrimitiveUtterance
 from primitive.Utterance import Utterance 
@@ -40,8 +41,12 @@ ATM = 101325. # one atm in pascals
 rnd = 411
 
 #load learned feedback params
-feedback = np.load('data/rand_steps_full/feedback.npz')
+#feedback = np.load('data/rand_steps_full/feedback.npz')
+feedback = np.load('data/rand_full/feedback.npz')
 gain = feedback['K']
+A = feedback['A']
+B = feedback['B']
+I = np.eye(A.shape[0])
 
 
 control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
@@ -50,6 +55,7 @@ control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=4.)
 
 print control.K
 initial_action = np.random.random(control._dim)
+initial_action = np.ones(control._dim)
 initial_art = control.GetControl(initial_action)
 print initial_art
 #initial_art = np.zeros(initial_art.shape)
@@ -66,20 +72,31 @@ Ts = 1000/(sample_period)
 # Setup state variables
 current_state = control.current_state
 desired_state = np.zeros(current_state.shape)
+#desired_state = -0.5*np.ones(current_state.shape)
+#desired_state[0] = -0.5
 
 delta_action = np.zeros(initial_action.shape)
 current_action = np.copy(initial_action)
 
 # Perform Control
 j=0
-max_inc = 0.01
+max_inc = 0.5
+#target_action = np.dot(gain, current_state) 
 while control.NotDone():
-    delta_action = np.dot(gain, current_state)
+    
+    #delta_action = np.dot(la.pinv(B), desired_state-np.dot(A, current_state))
+    delta_action = 0.3*np.dot(gain, desired_state-current_state) 
+    #print target_action
+    #delta_action = target_action - current_action
+    print delta_action
+
+    #delta_action = np.dot(gain, current_state)
 
     delta_action[delta_action>max_inc] = max_inc
     delta_action[delta_action<-max_inc] = -max_inc
+
     print delta_action
-    current_action -= delta_action
+    current_action += delta_action
     ## Step Simulation
     #print control.current_state
     #plt.plot(control.current_state)
@@ -93,7 +110,7 @@ while control.NotDone():
 
 plt.plot(control.utterance.data['sound_wave'])
 plt.show()
-plt.plot(control.state_hist.T)
+plt.plot(control.state_hist[:, :].T)
 plt.show()
 control.SaveOutputs()
 #plt.plot(_h)
