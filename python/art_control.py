@@ -41,7 +41,7 @@ ATM = 101325. # one atm in pascals
 rnd = 411
 
 #load learned feedback params
-feedback = np.load('data/rand_steps_full/feedback.npz')
+feedback = np.load('data/rand_prim_5sec/feedback.npz')
 #feedback = np.load('data/rand_full/feedback.npz')
 gain = feedback['K']
 A = feedback['A']
@@ -50,7 +50,7 @@ I = np.eye(A.shape[0])
 
 
 control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
-control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=4.)
+control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=3.)
 #control.SetUtterance(utterance)
 
 print control.K
@@ -82,18 +82,18 @@ current_action = np.copy(initial_action)
 j=0
 max_inc = 0.5
 #target_action = np.dot(gain, current_state) 
-scale = 0.3
+scale = 0.9
 while control.NotDone():
     
     #delta_action = np.dot(la.pinv(B), desired_state-np.dot(A, current_state))
     #delta_action = 0.3*np.dot(gain, desired_state-current_state) 
     target_action = scale*np.dot(gain, desired_state-current_state) 
     #print target_action
-    delta_action = target_action - current_action
+    delta_action = target_action #- current_action
     print delta_action
     
-    if np.max(np.abs(delta_action)) < 0.0001:
-        scale = 0.4
+    #if np.max(np.abs(delta_action)) < 0.0001:
+        #scale = 0.4
 
 
     #delta_action = np.dot(gain, current_state)

@@ -1,4 +1,4 @@
-for k in {1..100}
+for k in {1..200}
 do 
     echo Batch $k
     python batch_learn.py --past 1 --future 1 --period 1 --dim 10 --init random >> data/batch_zeros_1_1_1.txt

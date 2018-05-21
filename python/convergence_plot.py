@@ -4,7 +4,7 @@ import numpy as np
 import pylab as plt
 
 #directory = "data/batch_zeros_100_10"
-directory = "data/batch_random_20_5"
+directory = "data/batch_random_1_1"
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):
@@ -27,7 +27,8 @@ for index in index_list:
         old_F = np.zeros(data['F'].shape)
 
     
-    error = np.append(error, np.sum(np.abs(old_F-data['F'])/(np.abs(old_F)+np.abs(data['F'])))/data['F'].size)
+    #error = np.append(error, np.sum(np.abs(old_F-data['F'])/(np.abs(old_F)+np.abs(data['F'])))/data['F'].size)
+    error = np.append(error, np.sum(np.abs(old_F-data['F'])))#/data['F'].size)
     old_F = np.copy(data['F'])
     mean_F = np.append(mean_F, np.mean(data['F']))
     var_F = np.append(var_F, np.var(data['F']))

@@ -13,14 +13,14 @@ from primitive.DataHandler import DataHandler
 import pylab as plt
 
     
-loops = 4
-utterance_length = 1. #10.0
+loops = 1
+utterance_length = 5. #10.0
 full_utterance = loops*utterance_length
 
 savedir = 'data/random_prim_%i'%loops
 
-prim_filename = 'round411'
-prim_dirname = 'data/batch_random_12_12'
+prim_filename = 'round550'
+prim_dirname = 'data/batch_random_1_1'
 full_filename = os.path.join(prim_dirname, prim_filename)
 
 prim = PrimitiveUtterance()
