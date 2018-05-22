@@ -305,6 +305,8 @@ class SubspaceDFA(DataHandler):
 
         # extract features and throw into _data array
         extracted_features = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+        #plt.imshow(np.log(np.abs(extracted_features)))
+        #plt.show()
 
         # append to or initialize data array
         if self.feature_data.size==0:
@@ -423,9 +425,7 @@ class SubspaceDFA(DataHandler):
             #        'pressure_function':utterance.pressure_function,
             #        'art_hist':utterance.art_hist}
 
-            self.LoadDataChunk(utterance.data)
-            #plt.plot(utterance.data['art_hist'].T)
-            #plt.show()
+            self.LoadDataChunk(utterance.GetOutputs())
 
             if save_data:
                 if not fname==None:

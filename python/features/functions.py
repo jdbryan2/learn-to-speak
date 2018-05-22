@@ -156,6 +156,7 @@ def DynamicProgramming(x, y):
 if __name__ == '__main__':
     #import pylab as plt
     #from scipy.io.wavfile import read as wav_read
+    import scikits.talkbox.features as tb
 
     # Spoken Language Processing: only first 13 MFCC needed for speech recog
     #x = MelFilters(13, 512, 16000, 300., 8000.)
@@ -174,14 +175,18 @@ if __name__ == '__main__':
     y, e = MFCC(data, ncoeffs=13, nfilters=26)
     y2, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
                  noverlap=128)
+    y3 = tb.mfcc(data, nwin=256, nfft=512, nceps=13)
 
-    #print y.shape
-    #plt.imshow(np.abs(y[:, 1:].T))
-    #plt.figure()
-    #plt.imshow(np.abs(y2[:, 1:].T))
-    #plt.show()
+    print y.shape
+    plt.imshow(np.abs(y[:, 1:].T))
+    plt.figure()
+    plt.imshow(np.abs(y2[:, 1:].T))
+    plt.figure()
+    plt.imshow(np.abs(y3[0].T))
+    plt.show()
 
     #distance, lattice, backpointers, constraint = DynamicProgramming(y, y2)
+    exit()
 
     nperseg=160 # 20 ms * 8 samples per ms
     noverlap=int(3*nperseg/4)
@@ -190,7 +195,7 @@ if __name__ == '__main__':
     for i in range(0,100):
         fname = "d%02i.wav"%i
         print "Comparing "+fname
-        rate, data = wav_read('../data/digits/'+fname)
+        rate, data = wav_read('../data/utterances/digits/'+fname)
         data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
 
         x, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,
@@ -203,7 +208,7 @@ if __name__ == '__main__':
 
         for j in range(0, 100):
             fname = "d%02i.wav"%j
-            rate, data = wav_read('../data/digits/'+fname)
+            rate, data = wav_read('../data/utterances/digits/'+fname)
             data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
 
             y, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=nperseg,

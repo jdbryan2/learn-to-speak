@@ -86,21 +86,23 @@ for k in range(loop_start, loop_start+loops):
     handler.params = prim.GetParams()
 
 
-    while prim.NotDone():
-        action = rand.GetAction(prim.NowSecondsLooped())
-        #print action
-        #print prim.NowSecondsLooped()
-        prim.SimulatePeriod(control_action=action)
+    prim._act = rand
+    prim.Simulate()
+    #while prim.NotDone():
+    #    action = rand.GetAction(prim.NowSecondsLooped())
+    #    #print action
+    #    #print prim.NowSecondsLooped()
+    #    prim.SimulatePeriod(control_action=action)
 
-    #plt.figure()
-    #plt.plot(prim.state_hist.T)
-    #plt.figure()
-    #plt.plot(prim.action_hist.T)
-    #plt.show()
+    plt.figure()
+    plt.plot(prim.state_hist.T)
+    plt.figure()
+    plt.plot(prim.action_hist.T)
+    plt.show()
 
     handler.raw_data = prim.GetOutputs()
-    handler.SaveAnimation(directory=prim.utterance.directory,fname="vid"+str(k))
-    prim.SaveOutputs(fname=str(k))
+    #handler.SaveAnimation(directory=prim.utterance.directory,fname="vid"+str(k))
+    #prim.SaveOutputs(fname=str(k))
 
 
     

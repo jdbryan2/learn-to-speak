@@ -25,6 +25,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.nfilters = 26 # number of mel spaced filters
         self.periodsperseg = 5 # measured in sample periods
         self.min_data_length = self.sample_period*self.periodsperseg
+        self.control_sample_period = 8
 
     def InitializeParams(self, **kwargs):
         super(SpectralAcousticFeatures, self).InitializeParams(**kwargs)
@@ -34,6 +35,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.nfft = kwargs.get('nfft', self.nfft)
         self.periodsperseg = kwargs.get('periodsperseg', self.periodsperseg)
         self.min_sound_length = self.sample_period*(self.periodsperseg-1)
+        self.control_sample_period = kwargs.get('control_sample_period', self.control_sample_period)
 
     # TODO: Add function for checking that all necessary items are in data dict
 
@@ -55,21 +57,23 @@ class SpectralAcousticFeatures(BaseFeatures):
         #print "nperseg: " , self.periodsperseg*sample_period
 
         spectrum, energy = MFCC(sound_wave, 
-                                     ncoeffs=self.ncoeffs,
-                                     nfilters=self.nfilters,
-                                     sample_freq=self.fs,
-                                     window=self.window, 
-                                     nperseg=nperseg,
-                                     noverlap=(self.periodsperseg-1)*self.sample_period,
-                                     nfft=self.nfft)
+                                ncoeffs=self.ncoeffs,
+                                nfilters=self.nfilters,
+                                sample_freq=self.fs,
+                                window=self.window, 
+                                nperseg=nperseg,
+                                noverlap=(self.periodsperseg-1)*self.sample_period,
+                                nfft=self.nfft)
         # transpose so that spectrum.shape[1]==time dimension
         #               and spectrum.shape[0]==feature dimension
         spectrum=spectrum.T
 
         # start with articulator inputs and down sample
         _data = data[self.control_action]
-        _data = moving_average(_data, n=self.sample_period)
-        _data = _data[:, ::self.sample_period]
+        if self.sample_period%self.control_sample_period:
+            print "Sample period must be an integer multiple of controller's sample period"
+        _data = moving_average(_data, n=int(self.sample_period/self.control_sample_period))
+        _data = _data[:, ::int(self.sample_period/self.control_sample_period)]
 
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])

@@ -4,6 +4,7 @@ import numpy.linalg as ln
 import os
 import pylab as plt
 import Artword as aw
+from ActionSequence import ActionSequence
 from matplotlib2tikz import save as tikz_save
 
 from Utterance import Utterance
@@ -49,6 +50,8 @@ class PrimitiveUtterance(object):
         prim_fname = kwargs.get('prim_fname', None)
         if not prim_fname == None:
             self.LoadPrimitives(prim_fname)
+
+        self._act = ActionSequence() # leave as default, can be overridden by user
 
         #super(PrimitiveUtterance, self).__init__(**kwargs)
         #self.utterance = Utterance(**kwargs) # default utterance object
@@ -309,6 +312,10 @@ class PrimitiveUtterance(object):
 
         return self.current_state
 
+    def Simulate(self):
+            
+        while self.NotDone():
+            self.SimulatePeriod(control_action=self._act.GetAction(self.NowSecondsLooped()))
 
     # wrapper functions for driving the simulator
     # PrimitiveUtterance can be used as the utterance attribute

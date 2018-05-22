@@ -16,7 +16,7 @@ class BaseFeatures(object):
         #self.tubes = {}
         self.pointer = {}
         self.control_action = 'art_hist'
-        self.sample_period = 8
+        self.sample_period = 8 # default to one ms
         self.min_sound_length = 0
         self.tubes = config.TUBES
 
