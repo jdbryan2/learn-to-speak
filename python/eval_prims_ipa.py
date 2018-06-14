@@ -18,7 +18,7 @@ ss.Features = ArtFeatures() # set feature extractor
 # Select which three primitives to view
 prims = [0,1,2]
 # ipa logs that will be plotted
-ipa_nums = [132,134,140,142,301,304,305,316]
+ipa_nums = [101, 132,134,140,142,301,304,305,316]
 colors = ['b','g','r','c','m','y','k','0.75']
 markers = ['o','o','o','o','x','x','x','x',]
 
@@ -37,7 +37,8 @@ for ipa_num, c, m in zip(ipa_nums,colors,markers):
     # shift to zero mean and  normalize by standard deviation
     #data = ((ss._data.T-ss._ave)/ss._std).T
     #ss.EstimateStateHistory(data)
-    h = ss.StateHistoryFromFile("data/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
+    data = ss.ExtractDataFile("data/utterances/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
+    h = ss.EstimateStateHistory(data)
 
     xp = h[prims[0]][past:]
     yp = h[prims[1]][past:]

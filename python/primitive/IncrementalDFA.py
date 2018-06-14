@@ -305,6 +305,7 @@ class SubspaceDFA(DataHandler):
 
         # extract features and throw into _data array
         extracted_features = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+        #plt.figure()
         #plt.imshow(np.log(np.abs(extracted_features)))
         #plt.show()
 
@@ -583,6 +584,16 @@ class SubspaceDFA(DataHandler):
         self.sample_period = primitives['control_period'].item() 
         self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
 
+    def ExtractDataFile(self, fname):
+        # reset internal data vars
+        self.raw_data.clear() # do I want or need this here?
+        self.feature_data = np.array([]) # internal data var
+
+
+        super(SubspaceDFA, self).LoadDataFile(fname)
+
+        return self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+    
     def StateHistoryFromFile(self, fname):
         """Estimate primitive state history from data file
 
@@ -601,27 +612,13 @@ class SubspaceDFA(DataHandler):
         self.raw_data.clear() # do I want or need this here?
         self.feature_data = np.array([]) # internal data var
 
-
         super(SubspaceDFA, self).LoadDataFile(fname)
 
         self.feature_data = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
 
+        return self.EstimateStateHistory(self.feature_data)
 
-        # has to be normalized before processing state history
-        data= ((self.feature_data.T-self._mean)/self._std).T
-
-        h = np.zeros((self.K.shape[0], data.shape[1]))
-
-        #for t in range(0, self._past):
-        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
-
-        for t in range(self._past, data.shape[1]):
-            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
-            h[:, t] = np.dot(self.K, _Xp).flatten()
-
-        return h
-
-    def EstimateStateHistory(self, data):
+    def EstimateStateHistory(self, data): # data is returned by FeaturesExtract
         """Estimate primitive state history from data
 
         Arguments: 
@@ -634,18 +631,30 @@ class SubspaceDFA(DataHandler):
             h -- primitive state history array, first dim is primitive index, second is time
 
         """
+
         # has to be normalized before processing state history
-        data= ((data.T-self._mean)/self._std).T
+        _data = ((data.T-self._mean)/self._std).T
 
-        self.h = np.zeros((self.K.shape[0], data.shape[1]))
+        h = np.zeros((self.K.shape[0], _data.shape[1]))
 
-        #for t in range(0, self._past):
-        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
+        for t in range(self._past, _data.shape[1]):
+            _Xp = np.reshape(_data[:, t-self._past:t].T, (-1, 1))
+            h[:, t] = np.dot(self.K, _Xp).flatten()
 
-        for t in range(self._past, data.shape[1]):
-            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
-            self.h[:, t] = np.dot(self.K, _Xp).flatten()
+        return h
 
+    def EstimateControlHistory(self, data):
+
+        _data = ((data.T-self._mean)/self._std).T
+
+        action_pointer= self.Features.pointer[self.Features.control_action]
+
+        #O_inv = ln.pinv(self.O)[:, action_pointer]
+        O_inv = ln.pinv(self.O[action_pointer, :]) # this is the correct formulation
+
+        v = np.dot(O_inv, _data[action_pointer, :])
+
+        return v
 
 if __name__ == "__main__":
     # Real test: Generate a signal using underlying factors and see if this

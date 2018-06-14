@@ -12,10 +12,31 @@ from primitive.Utterance import Utterance
 dim = 8
 sample_period_ms = 20 # in milliseconds
 sample_period=sample_period_ms*8 # # (*8) -> convert to samples ms
-dirname = 'data/rand_prim_5sec'
-load_fname = dirname + '/primitives.npz' # class points toward 'data/' already, just need the rest of the path
+#dirname = 'data/rand_prim_5sec'
+dirname = 'data/batch_random_1_1'
+load_fname = 'round588.npz' 
 past = 1 
 future =1 
+
+ss= SubspaceDFA()
+ss.LoadPrimitives(fname=load_fname, directory=dirname)
+data = ss.ExtractDataFile("data/test/data0.npz")#, sample_period=sample_period)
+h = ss.EstimateStateHistory(data)
+v = ss.EstimateControlHistory(data)
+plt.figure()
+plt.plot(h.T)
+plt.figure()
+plt.plot(ss.raw_data['state_hist_1'].T)
+plt.show()
+
+plt.figure()
+plt.plot(v.T)
+plt.figure()
+plt.plot(ss.raw_data['action_hist_1'].T)
+plt.show()
+
+exit()
+
 #v_ = 5
 
 rounds = 1

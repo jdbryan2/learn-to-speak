@@ -110,8 +110,11 @@ else:
                                                 periodsperseg=1) # set feature extractor
 
 learn.GenerateData(prim, loops, save_data=False)
-#plt.plot(prim.utterance.data['action_hist_1'].T)
-#plt.show()
+plt.figure()
+plt.plot(prim.utterance.data['action_hist_1'].T)
+plt.figure()
+plt.plot(prim.utterance.data['state_hist_1'].T)
+plt.show()
 learn.SubspaceDFA(dim)
 #plt.imshow(np.abs(learn.F))
 #plt.show()
