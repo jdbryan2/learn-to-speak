@@ -27,6 +27,7 @@ parser = argparse.ArgumentParser(description="Generate data for testing")
 parser.add_argument('--past', dest='past', type=int, default=10)
 parser.add_argument('--future', dest='future', type=int, default=10)
 parser.add_argument('--period', dest='period', type=int, default=20)
+parser.add_argument('--segments', dest='segments', type=int, default=20)
 parser.add_argument('--dim', dest='dim', type=int, default=10)
 parser.add_argument('--init', dest='init', default='zeros', help="How to initialize articulation (random or zeros)")
 #parser.add_argument('--primitive', dest='primitive', default='none', help="Filename of primitive to be loaded")
@@ -58,7 +59,7 @@ def get_last_round(directory):
 loops = 1#60 
 utterance_length = 5.0
 full_utterance = loops*utterance_length
-directory = "data/mfcc_%s_%i_%i"%(args.init, args.past, args.future)
+directory = "data/mfcc_%s_%i_%i_%i"%(args.init, args.past, args.future, args.segments)
 
 prim_filename = 'round550'
 prim_dirname = 'data/batch_random_1_1'
@@ -79,7 +80,6 @@ if args.init == 'zeros':
 else:
     initial_control = np.random.random(prim._dim)*2. - 1.
 #initial_art[0] = 0.2
-
 
 prim.utterance = Utterance(directory = (directory+"/sim_params/round%i"%last_round), 
                            utterance_length=utterance_length, 
@@ -107,16 +107,16 @@ if last_round>0:
 else:
     learn.Features = SpectralAcousticFeatures(control_action='action_hist_1', 
                                                 control_sample_period=prim.control_period,
-                                                periodsperseg=1) # set feature extractor
+                                                periodsperseg=args.segments) # set feature extractor
 
 learn.GenerateData(prim, loops, save_data=False)
-plt.figure()
-plt.plot(prim.utterance.data['action_hist_1'].T)
-plt.figure()
-plt.plot(prim.utterance.data['state_hist_1'].T)
-plt.show()
+#plt.figure()
+#plt.plot(prim.utterance.data['action_hist_1'].T)
+#plt.figure()
+#plt.plot(prim.utterance.data['state_hist_1'].T)
+#plt.show()
 learn.SubspaceDFA(dim)
-#plt.imshow(np.abs(learn.F))
+#plt.imshow(np.abs(learn.Features.Extract(prim.utterance.data)))
 #plt.show()
 learn.SavePrimitives('round'+str(last_round+1))
 

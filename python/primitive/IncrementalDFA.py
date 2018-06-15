@@ -306,7 +306,7 @@ class SubspaceDFA(DataHandler):
         # extract features and throw into _data array
         extracted_features = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
         #plt.figure()
-        #plt.imshow(np.log(np.abs(extracted_features)))
+        #plt.imshow(np.log(np.abs(extracted_features)), aspect=20)
         #plt.show()
 
         # append to or initialize data array
@@ -584,7 +584,7 @@ class SubspaceDFA(DataHandler):
         self.sample_period = primitives['control_period'].item() 
         self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
 
-    def ExtractDataFile(self, fname):
+    def ExtractDataFile(self, fname, raw=False):
         # reset internal data vars
         self.raw_data.clear() # do I want or need this here?
         self.feature_data = np.array([]) # internal data var
@@ -592,7 +592,10 @@ class SubspaceDFA(DataHandler):
 
         super(SubspaceDFA, self).LoadDataFile(fname)
 
-        return self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+        if raw:
+            return self.raw_data
+        else:
+            return self.Features.Extract(self.raw_data, sample_period=self.sample_period)
     
     def StateHistoryFromFile(self, fname):
         """Estimate primitive state history from data file
