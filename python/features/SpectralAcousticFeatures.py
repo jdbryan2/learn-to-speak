@@ -78,7 +78,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
-        #print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period
+        print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period
 
         # only the first 
         _data = np.append(_data, spectrum[:, :_data.shape[1]], axis=0) 

@@ -145,6 +145,9 @@ class SubspaceDFA(DataHandler):
         self._dim = 0
         self.sample_period=1
         self._verbose = True
+
+        self._downpointer_fname      = None
+        self._downpointer_directory  = None
         return 0
 
     def InitParams(self, **kwargs):
@@ -168,6 +171,9 @@ class SubspaceDFA(DataHandler):
         self._verbose = kwargs.get('verbose', self._verbose)
         # period over which data is downsampled
         self.sample_period = kwargs.get('sample_period', self.sample_period)
+
+        self._downpointer_fname = kwargs.get('downpointer_fname', self._downpointer_fname)
+        self._downpointer_directory = kwargs.get('downpointer_directory', self._downpointer_directory)
 
     def SetFeatures(self, feature_class, **kwargs):
         """ Set feature extractor class
@@ -531,12 +537,16 @@ class SubspaceDFA(DataHandler):
         #kwargs['feature_pointer']=self.Features.pointer # what does this do?
         #kwargs['control_action']=self.Features.control_action
 
+        kwargs['downpointer_fname']=self._downpointer_fname     
+        kwargs['downpointer_directory']=self._downpointer_directory 
+
         # create save directory if needed
         if not os.path.exists(self.directory):
             if self._verbose:
                 print "Creating output directory: " + self.directory
             os.makedirs(self.directory)
 
+        print kwargs
         np.savez(os.path.join(self.directory, fname), **kwargs)
 
     def LoadPrimitives(self, fname=None, directory=None):
@@ -583,6 +593,19 @@ class SubspaceDFA(DataHandler):
         self._future = primitives['future'].item()
         self.sample_period = primitives['control_period'].item() 
         self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
+
+        if 'downpointer_fname' in primitives:
+            print "downpointer fname", primitives['downpointer_fname'].item()
+            self._downpointer_fname     = primitives['downpointer_fname'].item()
+        else: 
+            self._downpointer_fname      = None
+
+        if 'downpointer_directory' in primitives:
+            print "downpointer directory", primitives['downpointer_directory'].item()
+            self._downpointer_directory = primitives['downpointer_directory'].item()
+        else: 
+            self._downpointer_directory  = None
+
 
     def ExtractDataFile(self, fname, raw=False):
         # reset internal data vars

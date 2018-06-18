@@ -304,11 +304,16 @@ class MyFrame(wx.Frame):
 
             self.prim.LoadPrimitives(full_filename)
 
+            if self.prim._downpointer_fname != None: 
+                self.prim.utterance = PrimitiveUtterance()
+                self.prim.LoadPrimitives(os.path.join(self.prim._downpointer_directory, self.prim._downpointer_fname))
+
             params_list = "Dimension: %i\n"%self.prim._dim
             params_list += "Past: %i\n" %self.prim._past
             params_list += "Future: %i\n" %self.prim._future
             params_list += "Controller Period: %i ms\n" %(self.prim.control_period/8)
             params_list += "Features: %s \n"%self.prim.Features.__class__.__name__
+            params_list += "Downpointer: %s/%s \n"%(self.prim._downpointer_directory, self.prim._downpointer_fname)
             self.param_view.SetValue(params_list)
 
 

@@ -154,6 +154,10 @@ class Utterance(object):
     def IsInitialized(self):
         return self._sim_init
 
+    # alias for InitializeAll
+    def InitializeControl(self, **kwargs):
+        self.InitalizeAll(**kwargs)
+
     def InitializeAll(self, **kwargs):
         # initialize parameters if anything new is passed in
         self.UpdateParams(**kwargs)

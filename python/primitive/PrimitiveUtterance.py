@@ -103,6 +103,17 @@ class PrimitiveUtterance(object):
         if 'control_period' in primitives:
             self.control_period = primitives['control_period'].item()
 
+        if 'downpointer_fname' in primitives:
+            self._downpointer_fname = primitives['downpointer_fname'].item()
+        else: 
+            self._downpointer_fname = None
+
+        if 'downpointer_directory' in primitives:
+            print "downpointer directory", primitives['downpointer_directory'].item()
+            self._downpointer_directory = primitives['downpointer_directory'].item()
+        else: 
+            self._downpointer_directory  = None
+
         #if feature_class == 'ArtFeatures':
         #    from features.ArtFeatures import ArtFeatures
         #    self.Features= ArtFeatures(pointer=feature_pointer, 
@@ -121,8 +132,8 @@ class PrimitiveUtterance(object):
         #                                            sample_period=self.control_period)
         #    
             
-        else: 
-            print 'Invalid features.'
+        #else: 
+            #print 'Invalid features.'
 
     def EstimateStateHistory(self, data):
         self.h = np.zeros((self.K.shape[0], data.shape[1]))
@@ -208,7 +219,8 @@ class PrimitiveUtterance(object):
         print "Controller period:", self.control_period
 
         # pass kwargs through to utterance initializer
-        self.utterance.InitializeAll(**kwargs)
+        #self.utterance.InitializeAll(**kwargs)
+        self.utterance.InitializeControl(**kwargs)
         self.SaveParams()  # save parameters before anything else
 
         self.ResetOutputVars()
@@ -218,7 +230,7 @@ class PrimitiveUtterance(object):
 
         # run the simulator for some number of loops to get the initial output
         for k in range(1):
-            self.utterance.IterateSim()
+            self.IterateSim()
             self.UpdateOutputs()
         features = self.GetFeatures()
 

@@ -98,11 +98,22 @@ prim.InitializeControl(initial_art = prim.GetControl(rand.GetAction(time=0.0)))
 prim._act = rand
 ################################################################################
 
-learn = IncrementalDFA(sample_period=sample_period, past=past, future=future, directory=directory, verbose=True)
+learn = IncrementalDFA(sample_period=sample_period, 
+                       past=past, 
+                       future=future, 
+                       directory=directory, 
+                       verbose=True,
+                       downpointer_fname=prim_filename, 
+                       downpointer_directory=prim_dirname)
 
 if last_round>0:
     print "Loading round %i data..."%last_round
     learn.LoadPrimitives('round'+str(last_round))
+
+    # reload downpointers in case last round didn't actually have any
+    learn._downpointer_fname=prim_filename
+    learn._downpointer_directory=prim_dirname
+
     old_F = np.copy(learn.F)
 else:
     learn.Features = SpectralAcousticFeatures(control_action='action_hist_1', 

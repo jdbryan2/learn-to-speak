@@ -1,4 +1,4 @@
-for k in {1..500}
+for k in {1..1}
 do 
     echo Batch $k
     #python batch_learn_mfcc.py --past 1 --future 1 --period 20 --dim 10 --init random >> data/batch_mfcc.txt
