@@ -9,6 +9,8 @@ import os
 
 
 
+# Data Handler must be a base level class
+# It does not use super() to call parent methods from any functions
 
 class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
 #""" Load data files from simulator output 
@@ -17,18 +19,12 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 #    Fix tubes so that it is global variable to all classes
 #"""
     def __init__(self, **kwargs):
-        # define tube sections from PRAAT
-        self.tubes = config.TUBES # defined in config/constants.py
 
-        # initialize the variables
-        self.raw_data = {}
-
-        self.directory = kwargs.get("directory", "data")
-        self.directory = kwargs.get("home_dir", self.directory)
-
-        self.InitVars()
-        self.DefaultParams()
-        self.InitParams(**kwargs)
+        # run initialization if this is the top level class
+        if type(self) == DataHandler:
+            self.InitVars()
+            self.DefaultParams()
+            self.InitParams(**kwargs)
 
     def InitVars(self):
         self.tubes = config.TUBES # defined in config/constants.py
@@ -41,11 +37,12 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         self._verbose = True
         self._params_loaded = False
 
-    def InitParams(self, **kwargs):
+    def UpdateParams(self, **kwargs):
         # stupid backward compatibility because I can't decide on a variable name
         self.directory = kwargs.get("directory", self.directory)
         self.directory = kwargs.get("home_dir", self.directory)
         self.directory = kwargs.get("dirname", self.directory)
+
         self._verbose = kwargs.get("verbose", self._verbose)
         
 
@@ -136,7 +133,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 
     def GetIndexList(self, **kwargs):
 
-        self.InitParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
         # pull indeces from the filenames
         index_list = []  # using a list for simplicity
@@ -157,7 +154,7 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
         self._data = np.array([])
 
 
-        self.InitParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
         # minimum and maximum index values for data files to be loaded from directory
         # files with indexes equal to the min and max will be included in the loading

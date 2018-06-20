@@ -8,14 +8,14 @@ from matplotlib2tikz import save as tikz_save
 
 from DataHandler import DataHandler
 
-class SubspaceDFA(DataHandler):
+class SubspaceDFA(PrimitiveHandler, DataHandler):
     """ Subspace Method for inferring primitive operators
 
     Methods: 
         __init__ -- initialize class
             InitVars -- initialize internal variables
             DefaultParams -- defaults for all DFA parameters
-            InitParams -- initialize DFA parameters
+            UpdateParams -- initialize DFA parameters
         SetFeatures -- initialize feature extractor class
 
         LoadDataFile -- routine for loading data from file
@@ -37,7 +37,7 @@ class SubspaceDFA(DataHandler):
         _past --  number of past samples used in history
         _future -- number of future predicted samples
         _dim -- internal dimension of primitive space
-        sample_period -- period of downsampling operator
+        _sample_period -- period of downsampling operator
         homedir -- base directory 
         Features -- feature extractor class object (must inherit from BaseFeatures)
 
@@ -74,7 +74,6 @@ class SubspaceDFA(DataHandler):
             future -- number of future predicted samples
             dim -- internal dimension of primitive space
             sample_period -- period of downsampling operator
-            homedir -- base directory 
 
         Outputs:
             N/A
@@ -83,9 +82,14 @@ class SubspaceDFA(DataHandler):
 
         super(SubspaceDFA, self).__init__(**kwargs)
 
-        self.InitVars()
-        self.DefaultParams()
-        self.InitParams(**kwargs)
+        # Do these need to be here?     
+        # They get called in both parent classes too
+        # Should they get called in those classes? 
+        # run initialization if this is the top level class
+        if type(self) == SubspaceDFA:
+            self.InitVars()
+            self.DefaultParams()
+            self.UpdateParams(**kwargs)
 
     def InitVars(self):
         """ Initialize internal variables
@@ -100,31 +104,8 @@ class SubspaceDFA(DataHandler):
         # initialize the variables
         super(SubspaceDFA, self).InitVars()
 
-        # preprocessed data matrices
-        #self.Xf = np.array([])
-        #self.Xp = np.array([])
-
-        # intermediate data for computing prediction matrix F without saving all data into memory directly
-        # all parameters are saved without any data normalization 
-        # mean and variance are computed after (from the sums) and used to adjust phi and psi
-        self.phi = np.array([])
-        self.psi = np.array([])
-        self._sum = np.array([]) # running sum of data
-        self._sum2 = np.array([]) # running sum of squared data
-        self._count = 0. # total number of data points added to sums
-
-        self._mean = 0.
-        self._2nd_moment = 1.
-        self._std = 1.
-
-        # primitive model operators
-        self.F = np.array([])
-        self.O = np.array([])
-        self.K = np.array([])
-
         # data vars
         self.feature_data = np.array([]) # internal data var
-        self.Features = None # init to nothing
         self.raw_data.clear() # do I want or need this here?
 
     def DefaultParams(self):
@@ -138,19 +119,9 @@ class SubspaceDFA(DataHandler):
 
         """
         super(SubspaceDFA, self).DefaultParams()
-
-        # internal variables for tracking dimensions of past and future histories and internal state dimension
-        self._past = 0
-        self._future = 0
-        self._dim = 0
-        self.sample_period=1
-        self._verbose = True
-
-        self._downpointer_fname      = None
-        self._downpointer_directory  = None
         return 0
 
-    def InitParams(self, **kwargs):
+    def UpdateParams(self, **kwargs):
         """ Parameter initialization
 
         Arguments: 
@@ -163,17 +134,9 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
-        super(SubspaceDFA, self).InitParams(**kwargs)
+        super(SubspaceDFA, self).UpdateParams(**kwargs)
+        return 0
 
-        self._past = kwargs.get('past', self._past)
-        self._future = kwargs.get('future', self._future)
-        self._dim = kwargs.get('dim', self._dim)
-        self._verbose = kwargs.get('verbose', self._verbose)
-        # period over which data is downsampled
-        self.sample_period = kwargs.get('sample_period', self.sample_period)
-
-        self._downpointer_fname = kwargs.get('downpointer_fname', self._downpointer_fname)
-        self._downpointer_directory = kwargs.get('downpointer_directory', self._downpointer_directory)
 
     def SetFeatures(self, feature_class, **kwargs):
         """ Set feature extractor class
@@ -191,14 +154,14 @@ class SubspaceDFA(DataHandler):
 
         Arguments: 
             fname -- name of data file
-            **kwargs -- key word arguments passed to InitParams
+            **kwargs -- key word arguments passed to UpdateParams
 
         Output: 
             _data -- data matrix generated by the specified file
 
         """ 
         #print fname
-        self.InitParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
         # if soundwave key does not exist
         # create it and fill with zero padding
@@ -216,14 +179,14 @@ class SubspaceDFA(DataHandler):
 
         Arguments: 
             data -- dictionary of data 
-            **kwargs -- key word arguments passed to InitParams
+            **kwargs -- key word arguments passed to UpdateParams
 
         Output: 
             _data -- data matrix generated by the specified file
 
         """ 
         #print fname
-        self.InitParams(**kwargs)
+        self.UpdateParams(**kwargs)
 
         # if soundwave key does not exist
         # create it and fill with zero padding
@@ -310,7 +273,7 @@ class SubspaceDFA(DataHandler):
 
 
         # extract features and throw into _data array
-        extracted_features = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+        extracted_features = self.Features.Extract(self.raw_data, sample_period=self._sample_period)
         #plt.figure()
         #plt.imshow(np.log(np.abs(extracted_features)), aspect=20)
         #plt.show()
@@ -322,7 +285,7 @@ class SubspaceDFA(DataHandler):
             self.feature_data = np.append(self.feature_data , extracted_features , axis=1)
         
         # remove all but the necessary bits from self.raw_data 
-        self.ClearRawData(size=extracted_features.shape[1]*self.sample_period)
+        self.ClearRawData(size=extracted_features.shape[1]*self._sample_period)
 
         # count how many chunks of data we can use
         # data_chunks points to the useable chunks   
@@ -494,118 +457,6 @@ class SubspaceDFA(DataHandler):
         self.K = np.dot(np.sqrt(S), Vh)
         self.O = np.dot(U, np.sqrt(S))
 
-    def SavePrimitives(self, fname=None, directory=None):
-        """Save primitive operators to file
-
-        Arguments: 
-            fname -- output file name, default to 'primitives'
-
-        Outputs:
-            N/A
-            
-        Affected Attributes: 
-            N/A
-
-        """
-
-        if directory != None: 
-            self.directory = directory
-
-        if fname==None:
-            fname = 'primitives'
-
-        kwargs = {}
-        # incremental DFA parameters
-        kwargs['phi'] = self.phi
-        kwargs['psi'] = self.psi
-        kwargs['count'] = self._count
-        kwargs['var'] = self._var
-        kwargs['sum'] = self._sum
-        kwargs['sum_f'] = self._sum_f
-        kwargs['sum_p'] = self._sum_p
-        kwargs['count_fp'] = self._count_fp
-
-        kwargs['F']=self.F
-        kwargs['K']=self.K
-        kwargs['O']=self.O
-        kwargs['mean']=self._mean
-        kwargs['std']=self._std
-        kwargs['past']=self._past
-        kwargs['future']=self._future
-        kwargs['control_period']=self.sample_period
-        kwargs['features']=self.Features #.__class__.__name__ # feature extractor parameters (don't like this way of passing them through)
-        #kwargs['feature_pointer']=self.Features.pointer # what does this do?
-        #kwargs['control_action']=self.Features.control_action
-
-        kwargs['downpointer_fname']=self._downpointer_fname     
-        kwargs['downpointer_directory']=self._downpointer_directory 
-
-        # create save directory if needed
-        if not os.path.exists(self.directory):
-            if self._verbose:
-                print "Creating output directory: " + self.directory
-            os.makedirs(self.directory)
-
-        print kwargs
-        np.savez(os.path.join(self.directory, fname), **kwargs)
-
-    def LoadPrimitives(self, fname=None, directory=None):
-        """Load primitive operators from file
-
-        Arguments: 
-            fname -- input file name, default to 'primitives.npz'
-
-        Outputs:
-            N/A
-            
-        Affected Attributes: 
-            N/A
-
-        """
-
-        if directory != None: 
-            self.directory = directory
-
-        if fname==None:
-            fname = 'primitives.npz'
-
-        if fname[-4:] != ".npz":
-            fname += ".npz"
-
-        primitives = np.load(os.path.join(self.directory, fname))
-
-        # incremental DFA parameters
-        self.phi = primitives['phi']      
-        self.psi = primitives['psi']      
-        self._count = primitives['count']    
-        self._var = primitives['var']      
-        self._sum = primitives['sum']      
-        self._sum_f = primitives['sum_f']    
-        self._sum_p = primitives['sum_p']    
-        self._count_fp = primitives['count_fp'] 
-
-        self.F = primitives['F']
-        self.K = primitives['K']
-        self.O = primitives['O']
-        self._mean = primitives['mean']
-        self._std = primitives['std']
-        self._past = primitives['past'].item()
-        self._future = primitives['future'].item()
-        self.sample_period = primitives['control_period'].item() 
-        self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
-
-        if 'downpointer_fname' in primitives:
-            print "downpointer fname", primitives['downpointer_fname'].item()
-            self._downpointer_fname     = primitives['downpointer_fname'].item()
-        else: 
-            self._downpointer_fname      = None
-
-        if 'downpointer_directory' in primitives:
-            print "downpointer directory", primitives['downpointer_directory'].item()
-            self._downpointer_directory = primitives['downpointer_directory'].item()
-        else: 
-            self._downpointer_directory  = None
-
 
     def ExtractDataFile(self, fname, raw=False):
         # reset internal data vars
@@ -618,7 +469,7 @@ class SubspaceDFA(DataHandler):
         if raw:
             return self.raw_data
         else:
-            return self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+            return self.Features.Extract(self.raw_data, sample_period=self._sample_period)
     
     def StateHistoryFromFile(self, fname):
         """Estimate primitive state history from data file
@@ -640,47 +491,47 @@ class SubspaceDFA(DataHandler):
 
         super(SubspaceDFA, self).LoadDataFile(fname)
 
-        self.feature_data = self.Features.Extract(self.raw_data, sample_period=self.sample_period)
+        self.feature_data = self.Features.Extract(self.raw_data, sample_period=self._sample_period)
 
         return self.EstimateStateHistory(self.feature_data)
 
-    def EstimateStateHistory(self, data): # data is returned by FeaturesExtract
-        """Estimate primitive state history from data
+    #def EstimateStateHistory(self, data): # data is returned by FeaturesExtract
+    #    """Estimate primitive state history from data
 
-        Arguments: 
-            data -- input data matrix (after feature extraction and downsampling)
+    #    Arguments: 
+    #        data -- input data matrix (after feature extraction and downsampling)
 
-        Outputs:
-            N/A
-            
-        Affected Attributes: 
-            h -- primitive state history array, first dim is primitive index, second is time
+    #    Outputs:
+    #        N/A
+    #        
+    #    Affected Attributes: 
+    #        h -- primitive state history array, first dim is primitive index, second is time
 
-        """
+    #    """
 
-        # has to be normalized before processing state history
-        _data = ((data.T-self._mean)/self._std).T
+    #    # has to be normalized before processing state history
+    #    _data = ((data.T-self._mean)/self._std).T
 
-        h = np.zeros((self.K.shape[0], _data.shape[1]))
+    #    h = np.zeros((self.K.shape[0], _data.shape[1]))
 
-        for t in range(self._past, _data.shape[1]):
-            _Xp = np.reshape(_data[:, t-self._past:t].T, (-1, 1))
-            h[:, t] = np.dot(self.K, _Xp).flatten()
+    #    for t in range(self._past, _data.shape[1]):
+    #        _Xp = np.reshape(_data[:, t-self._past:t].T, (-1, 1))
+    #        h[:, t] = np.dot(self.K, _Xp).flatten()
 
-        return h
+    #    return h
 
-    def EstimateControlHistory(self, data):
+    #def EstimateControlHistory(self, data):
 
-        _data = ((data.T-self._mean)/self._std).T
+    #    _data = ((data.T-self._mean)/self._std).T
 
-        action_pointer= self.Features.pointer[self.Features.control_action]
+    #    action_pointer= self.Features.pointer[self.Features.control_action]
 
-        #O_inv = ln.pinv(self.O)[:, action_pointer]
-        O_inv = ln.pinv(self.O[action_pointer, :]) # this is the correct formulation
+    #    #O_inv = ln.pinv(self.O)[:, action_pointer]
+    #    O_inv = ln.pinv(self.O[action_pointer, :]) # this is the correct formulation
 
-        v = np.dot(O_inv, _data[action_pointer, :])
+    #    v = np.dot(O_inv, _data[action_pointer, :])
 
-        return v
+    #    return v
 
 if __name__ == "__main__":
     # Real test: Generate a signal using underlying factors and see if this

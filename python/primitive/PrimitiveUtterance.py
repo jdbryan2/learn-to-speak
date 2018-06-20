@@ -13,7 +13,8 @@ from Utterance import Utterance
 
 # this should actually take "utterance" as an attribute, not an inheritance
 #class PrimitiveUtterance(Utterance):
-class PrimitiveUtterance(object):
+# Now we'll do both
+class PrimitiveUtterance(Primitive, Utterance):
 
     def __init__(self, **kwargs):
 

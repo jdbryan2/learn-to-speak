@@ -14,7 +14,6 @@ MAX_NUMBER_OF_TUBES = 89
 
 class Utterance(object):
 
-
     def __init__(self, **kwargs):
         self.DefaultParams()
         self.UpdateParams(**kwargs)
@@ -87,8 +86,6 @@ class Utterance(object):
         _data['sound_wave'] = self.data['sound_wave'][:time]
 
         return _data
-
-
 
     def InitializeDir(self, directory, addDTS=True):
         # setup directory for saving files
