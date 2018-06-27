@@ -153,7 +153,7 @@ class Utterance(object):
 
     # alias for InitializeAll
     def InitializeControl(self, **kwargs):
-        self.InitalizeAll(**kwargs)
+        self.InitializeAll(**kwargs)
 
     def InitializeAll(self, **kwargs):
         # initialize parameters if anything new is passed in
@@ -338,6 +338,9 @@ class Utterance(object):
 
     def Now(self):
         return self.speaker.Now()
+
+    def NowPeriods(self):
+        return self.Now()
 
     def NowSecondsLooped(self):
         return self.speaker.NowSecondsLooped()

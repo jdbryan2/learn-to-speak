@@ -6,13 +6,14 @@ import matplotlib.animation as animation
 from scipy.io.wavfile import write
 # import scipy.signal as signal
 import os
+from BaseObject import BaseObject
 
 
 
 # Data Handler must be a base level class
 # It does not use super() to call parent methods from any functions
 
-class DataHandler(object): # inherit from "object" declares DataHandler as a "new-style-class"
+class DataHandler(BaseObject): # inherit from "object" declares DataHandler as a "new-style-class"
 #""" Load data files from simulator output 
 #
 #TODO: 
@@ -20,24 +21,32 @@ class DataHandler(object): # inherit from "object" declares DataHandler as a "ne
 #"""
     def __init__(self, **kwargs):
 
+        super(DataHandler, self).__init__(**kwargs)
+    
         # run initialization if this is the top level class
         if type(self) == DataHandler:
             self.InitVars()
             self.DefaultParams()
-            self.InitParams(**kwargs)
+            self.UpdateParams(**kwargs)
 
     def InitVars(self):
+        super(DataHandler, self).InitVars()
+
         self.tubes = config.TUBES # defined in config/constants.py
 
         # initialize the variables
         self.raw_data = {}
 
     def DefaultParams(self):
+        super(DataHandler, self).DefaultParams()
+
         self.directory = "data"
         self._verbose = True
         self._params_loaded = False
 
     def UpdateParams(self, **kwargs):
+        super(DataHandler, self).UpdateParams(**kwargs)
+
         # stupid backward compatibility because I can't decide on a variable name
         self.directory = kwargs.get("directory", self.directory)
         self.directory = kwargs.get("home_dir", self.directory)

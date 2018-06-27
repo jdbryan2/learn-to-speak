@@ -6,9 +6,10 @@ import pylab as plt
 from matplotlib2tikz import save as tikz_save
 
 from DataHandler import DataHandler
+from BaseObject import BaseObject
 
 
-class PrimitiveHandler(object):
+class PrimitiveHandler(BaseObject):
 
     def __init__(self, **kwargs):
         """ Class initialization
@@ -59,6 +60,8 @@ class PrimitiveHandler(object):
         self.O = np.array([])
         self.K = np.array([])
 
+        self._sample_period = 1
+
         # feature extractor class
         self.Features = None # init to nothing
 
@@ -72,7 +75,9 @@ class PrimitiveHandler(object):
             N/A
 
         """
-        super(SubspaceDFA, self).DefaultParams()
+        super(PrimitiveHandler, self).DefaultParams()
+
+        self.directory="data" # default directory name data/utterance_<current dts>
 
         # internal variables for tracking dimensions of past and future histories and internal state dimension
         self._past = 0
@@ -105,10 +110,12 @@ class PrimitiveHandler(object):
         self._dim = kwargs.get('dim', self._dim)
         self._verbose = kwargs.get('verbose', self._verbose)
         # period over which data is downsampled
-        self.sample_period = kwargs.get('sample_period', self.sample_period)
+        self._sample_period = kwargs.get('sample_period', self._sample_period)
 
         self._downpointer_fname = kwargs.get('downpointer_fname', self._downpointer_fname)
         self._downpointer_directory = kwargs.get('downpointer_directory', self._downpointer_directory)
+
+        self.directory = kwargs.get("directory", self.directory)
 
     def SavePrimitives(self, fname=None, directory=None):
         """Save primitive operators to file
@@ -149,7 +156,7 @@ class PrimitiveHandler(object):
         kwargs['std']=self._std
         kwargs['past']=self._past
         kwargs['future']=self._future
-        kwargs['control_period']=self.sample_period
+        kwargs['sample_period']=self._sample_period
         kwargs['features']=self.Features # Feature extractor class
 
         # pointers to lower level primitives
@@ -188,6 +195,8 @@ class PrimitiveHandler(object):
         if fname[-4:] != ".npz":
             fname += ".npz"
 
+        self.fname = fname
+
         primitives = np.load(os.path.join(self.directory, fname))
 
         # incremental DFA parameters
@@ -207,7 +216,13 @@ class PrimitiveHandler(object):
         self._std = primitives['std']
         self._past = primitives['past'].item()
         self._future = primitives['future'].item()
-        self.sample_period = primitives['control_period'].item() 
+
+        # Fucking backward compatibility
+        if 'sample_period' in primitives:
+            self._sample_period = primitives['sample_period'].item() 
+        elif 'control_period' in primitives:
+            self._sample_period = primitives['control_period'].item() 
+
         self.Features = primitives['features'].item() # load's feature class 
 
         # only load pointers down to 

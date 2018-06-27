@@ -7,46 +7,28 @@ import Artword as aw
 from ActionSequence import ActionSequence
 from matplotlib2tikz import save as tikz_save
 
+from PrimitiveHandler import PrimitiveHandler
 from Utterance import Utterance
 
-# TODO: Add functionality to automatically load feature extractor based on primitive meta data
-
-# this should actually take "utterance" as an attribute, not an inheritance
-#class PrimitiveUtterance(Utterance):
-# Now we'll do both
-class PrimitiveUtterance(Primitive, Utterance):
+# Note:  
+    # PrimitiveUtterance must have methods that match with the Utterance class
+    # these matching methods must in some way call the corresponding method from 
+    # the attribute PrimitiveUtterance.utterance
+    #
+    # The attribute utterance can either be an instance of PrimitiveUtterance or Utterance
+    # This gives the abilility to call a function that cascades down the chain until the bottom - which must be an
+    # instance of Utterance
+class PrimitiveUtterance(PrimitiveHandler):
 
     def __init__(self, **kwargs):
 
-        #super(PrimLearn, self).__init__(**kwargs)
+        super(PrimitiveUtterance, self).__init__(**kwargs)
 
-        # initialize the variables
-        self.Xf = np.array([])
-        self.Xp = np.array([])
+        self.InitVars()
+        self.DefaultParams()
+        self.UpdateParams(**kwargs)
 
-        self.F = np.array([])
-        self.O = np.array([])
-        self.K = np.array([])
-
-        # internal variables for tracking dimensions of past and future histories and internal state dimension
-        self._past = 0
-        self._future = 0
-        self._dim = 0
-
-        # data vars
-        #self.art_hist = np.array([])
-        #self.area_function = np.array([])
-        #self.sound_wave = np.array([])
         self._data = np.array([]) # internal data var
-        self.features = {}
-
-
-        # downsample data such that it's some number of ms
-        # period at which controller can make observations
-        self.control_period = 1 # in ms
-
-        # Taken care of in parent class.
-        #self.home_dir = kwargs.get("home_dir", "../data")
 
         prim_fname = kwargs.get('prim_fname', None)
         if not prim_fname == None:
@@ -64,87 +46,11 @@ class PrimitiveUtterance(Primitive, Utterance):
         Object can be an instance of this PrimitiveUtterance class.
 
         """
-        # function is somewhat trivial 
-        self.utterance = utterance
-
-    def LoadPrimitives(self, fname=None):
-
-        if fname==None:
-            print "No primitive file given"
-            fname = 'primitives.npz'
-
-        # append file extension if not given
-        if fname[-4:] != ".npz":
-            fname+=".npz"
-        # save for later
-        self.fname = fname
-
-        #primitives = np.load(os.path.join(self.directory, fname))
-        primitives = np.load(fname)
-
-        self.K = primitives['K']
-        self.O = primitives['O']
-        self._ave = primitives['mean']
-        self._std = primitives['std']
-        self._past = primitives['past'].item()
-        self._future = primitives['future'].item()
-
-        self._dim = self.K.shape[0]
-        print "Primitive dimension: ", self._dim
-
-
-        self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
-        #feature_class= primitives['features'].item()
-        #feature_pointer = primitives['feature_pointer'].item() # should pull out the dict
-        #feature_tubes = primitives['feature_tubes'].item() # should pull out the dict
-        #control_action = primitives['control_action'].item() 
-        #control_pointer = self.Features.pointer[control_action]
-
-        # pull control_period from primitive
-        if 'control_period' in primitives:
-            self.control_period = primitives['control_period'].item()
-
-        if 'downpointer_fname' in primitives:
-            self._downpointer_fname = primitives['downpointer_fname'].item()
-        else: 
-            self._downpointer_fname = None
-
-        if 'downpointer_directory' in primitives:
-            print "downpointer directory", primitives['downpointer_directory'].item()
-            self._downpointer_directory = primitives['downpointer_directory'].item()
-        else: 
-            self._downpointer_directory  = None
-
-        #if feature_class == 'ArtFeatures':
-        #    from features.ArtFeatures import ArtFeatures
-        #    self.Features= ArtFeatures(pointer=feature_pointer, 
-        #                               tubes=feature_tubes,
-        #                               control_action=control_action,
-        #                               sample_period=self.control_period)
-
-        #if feature_class == 'SpectralAcousticFeatures':
-        #    from features.SpectralAcousticFeatures import SpectralAcousticFeatures
-
-        #    # need to set this up to pass all relevant feature parameters
-        #    # through. This will only work with all defaults set
-        #    self.Features= SpectralAcousticFeatures(pointer=feature_pointer, 
-        #                                            tubes=feature_tubes,
-        #                                            control_action=control_action,
-        #                                            sample_period=self.control_period)
-        #    
-            
-        #else: 
-            #print 'Invalid features.'
-
-    def EstimateStateHistory(self, data):
-        self.h = np.zeros((self.K.shape[0], data.shape[1]))
-
-        #for t in range(0, self._past):
-        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
-
-        for t in range(self._past, data.shape[1]):
-            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
-            self.h[:, t] = np.dot(self.K, _Xp).flatten()
+        # assign utterance class at the bottom of the cascade
+        try:
+            self.utterance.SetUtterance(utterance)
+        except AttributeError:
+            self.utterance = utterance
 
     def EstimateState(self, data, normalize=True, extend_edge=False):
         data_length = data.shape[1]
@@ -152,7 +58,7 @@ class PrimitiveUtterance(Primitive, Utterance):
 
         if normalize:
             # convert data by mean and standard deviation
-            _data = ((_data.T-self._ave)/self._std).T
+            _data = ((_data.T-self._mean)/self._std).T
         
         # note: appending zeros actually works here because the feature data has been
         # shifted to be zero mean. Features of 0 are the average value.
@@ -176,33 +82,28 @@ class PrimitiveUtterance(Primitive, Utterance):
         current_state = np.dot(self.K, _Xp).flatten()
         return current_state
 
-    def GetControlMean(self):
-        return self._ave[self.Features.pointer[self.Features.control_action]]
+    def GetControlMean(self, level=-1):
+        if self.Level() == level or level<=0:
+            return self._mean[self.Features.pointer[self.Features.control_action]]
+        else: 
+            return self.utterance.GetControlMean(level)
+
     #TODO: change input variable to something like "action"
     def GetControl(self, current_state):
 
         _Xf = np.dot(self.O, current_state)
-        #_Xf = _Xf.reshape((self.past_data.shape[0], self._future))
         _Xf = _Xf.reshape((-1, self._future))
 
         predicted = _Xf[:, 0]
-        predicted = ((predicted.T*self._std)+self._ave).T
+        predicted = ((predicted.T*self._std)+self._mean).T
         return self.ClipControl(predicted[self.Features.pointer[self.Features.control_action]])
 
     def GetFeatures(self):
-
-        ## TODO: figure out a way of generalizing the 'art_hist' variable to a
-        ## more general control_action variable as done in the feature extractor
-        #_data = {}
-        #_data['art_hist'] = self.utterance.art_hist[:, :self.speaker.Now()+1] 
-        #_data['area_function'] = self.utterance.area_function[:, :self.speaker.Now()+1]
-        #_data['pressure_function'] = self.utterance.pressure_function[:, :self.speaker.Now()+1]
-        #_data['sound_wave'] = self.utterance.sound_wave[:self.speaker.Now()+1]
-        
         #print self.utterance.GetOutputVars(self.Now()+1)
         #print self.Now()+1
         #plt.figure()
         #plt.show()
+        print self.NowPeriods()
         return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()))
 
 
@@ -213,11 +114,8 @@ class PrimitiveUtterance(Primitive, Utterance):
 
     # TODO: InitControl needs updating to the new cascaded class format
     def InitializeControl(self, **kwargs):
-        # initialize parameters if anything new is passed in
-        #if len(kwargs.keys()):
-            #self.UpdateParams(**kwargs)
 
-        print "Controller period:", self.control_period
+        print "Controller period:", self._sample_period
 
         # pass kwargs through to utterance initializer
         #self.utterance.InitializeAll(**kwargs)
@@ -229,7 +127,7 @@ class PrimitiveUtterance(Primitive, Utterance):
         # setup feedback variables
         #self.control_target = np.zeros(aw.kArt_muscle.MAX, dtype=np.dtype('double')) 
 
-        # run the simulator for some number of loops to get the initial output
+        # run the simulator for one loop to get the initial output
         for k in range(1):
             self.IterateSim()
             self.UpdateOutputs()
@@ -254,27 +152,24 @@ class PrimitiveUtterance(Primitive, Utterance):
         # Append to state_history
         self.state_hist[:, 0] = self.current_state
 
-        #articulation = self.GetControl(self.current_state)
-        #self.speaker.SetArticulation(articulation)
-
 
     # need a better way to pass sample period from one class to the other
     # maybe its worth setting it up to pass a pointer to a control policy as input?
-    def SimulatePeriod(self, control_action=None, control_period=0, hold=False):
+    def SimulatePeriod(self, control_action=None, sample_period=0, hold=False):
 
         # I don't think this is actually good though
         if np.any(control_action) == None: 
             control_action = np.zeros(self.O.shape[1])
 
-        if control_period > 0:
-            self.control_period=control_period
+        if sample_period > 0:
+            self._sample_period=sample_period
 
         # get target articulation
         #target = self.GetControl(self.current_state+control_action)
         target = self.GetControl(control_action) # only use high level input, no state feedback
 
         # Save control action history
-        self.action_hist[:, self.Now()/self.control_period-1] = control_action
+        self.action_hist[:, self.Now2Periods(self.Now())-1] = control_action
 
         # initialize features and articulation
         features = np.zeros(self.past_data.shape[0])
@@ -282,7 +177,7 @@ class PrimitiveUtterance(Primitive, Utterance):
         prev_target = self.utterance.GetLastControl()
 
         # loop over control period and implement interpolated articulation
-        for t in range(self.control_period):
+        for t in range(self._sample_period):
             if self.NotDone():
 
                 # interpolate to target in order to make smooth motions
@@ -291,7 +186,7 @@ class PrimitiveUtterance(Primitive, Utterance):
                     print "Holding"
                 else:
                     for k in range(target.size):
-                        action[k] = np.interp(t, [0, self.control_period-1], [prev_target[k], target[k]])
+                        action[k] = np.interp(t, [0, self._sample_period-1], [prev_target[k], target[k]])
                         # it may be worth wrapping this function too
                         # effectively, it would do something like getting the control from the lower level controller
                         # in order to reach the desired target. 
@@ -303,7 +198,7 @@ class PrimitiveUtterance(Primitive, Utterance):
                 self.UpdateOutputs()
                 # Save sound data point
 
-                self.utterance.UpdateActionHistory(action, self.Now()-1)
+                self.utterance.UpdateActionHistory(action, self.Now2Periods(self.Now())-1)
 
         features = self.GetFeatures()
 
@@ -320,8 +215,8 @@ class PrimitiveUtterance(Primitive, Utterance):
         self.current_state = self.EstimateState(self.past_data, normalize=True)
 
         # save control action and state
-        self.state_hist[:, self.utterance.Now()/self.control_period-1] = self.current_state
-        self.action_hist[:, self.utterance.Now()/self.control_period-1] = control_action
+        self.state_hist[:, self.utterance.Now()/self._sample_period-1] = self.current_state
+        self.action_hist[:, self.utterance.Now()/self._sample_period-1] = control_action
 
         return self.current_state
 
@@ -353,6 +248,13 @@ class PrimitiveUtterance(Primitive, Utterance):
         return self.utterance.GetParams(**kwargs)
         #np.savez(self.directory + 'params', **kwargs)
 
+    def GetOutputVars(self, time):
+        # TODO: verify that I'm getting the time indexing right here
+        _data = self.utterance.GetOutputVars(time) 
+        _data['state_hist_'+str(self.Level())] = self.state_hist[:self.Now2Periods(time)]
+        _data['action_hist_'+str(self.Level())] = self.action_hist[:self.Now2Periods(time)]
+        return _data
+
     def SaveOutputs(self, fname=None, wav_file=True, **kwargs):
 
         # state and state-level control action
@@ -374,21 +276,31 @@ class PrimitiveUtterance(Primitive, Utterance):
         #super(PrimitiveUtterance, self).ResetOutputVars()
         self.utterance.ResetOutputVars()
         
-        # internal primitive state "h"
-        self.state_hist = np.zeros((self.K.shape[0],
-                                  int(np.ceil(self.utterance.sample_freq *
-                                              self.utterance.utterance_length / 
-                                              self.control_period))))
+        if self.Level() == 1:
+            self.state_hist = np.zeros((self.K.shape[0],
+                                      int(np.ceil(self.utterance.sample_freq *
+                                                  self.utterance.utterance_length / 
+                                                  self._sample_period))))
 
-        # action_hist = high level control actions
-        self.action_hist = np.zeros((self.K.shape[0],
-                                  int(np.ceil(self.utterance.sample_freq *
-                                              self.utterance.utterance_length /
-                                              self.control_period))))
+            # action_hist = high level control actions
+            self.action_hist = np.zeros((self.K.shape[0],
+                                      int(np.ceil(self.utterance.sample_freq *
+                                                  self.utterance.utterance_length /
+                                                  self._sample_period))))
+        else:
+            self.state_hist = np.zeros((self.K.shape[0],
+                                      int(np.ceil(self.utterance.state_hist.shape[1] / 
+                                                  self._sample_period))))
+
+            # action_hist = high level control actions
+            self.action_hist = np.zeros((self.K.shape[0],
+                                      int(np.ceil(self.utterance.action_hist.shape[1] /
+                                                  self._sample_period))))
 
     def UpdateActionHistory(self, action, index):
         self.action_hist[:, index] = np.copy(action)
 
+    # only updates simulator outputs
     def UpdateOutputs(self, index=0):
         self.utterance.UpdateOutputs(self.Now()-1)
 
@@ -435,6 +347,15 @@ class PrimitiveUtterance(Primitive, Utterance):
     def Now(self):
         return self.utterance.Now()
 
+    def Now2Periods(self, time):
+        if self.Level() == 1:
+            return time/self._sample_period
+        elif self.Level() > 1: 
+            return int(self.utterance.Now2Periods(time)/self._sample_period)
+
+    def NowPeriods(self):
+        return self.utterance.NowPeriods()/self._sample_period
+
     def NowSecondsLooped(self):
         return self.utterance.NowSecondsLooped()
 
@@ -444,6 +365,87 @@ class PrimitiveUtterance(Primitive, Utterance):
     def LoopBack(self):
         return self.utterance.LoopBack()
 
+
+    #def LoadPrimitives(self, fname=None):
+
+    #    if fname==None:
+    #        print "No primitive file given"
+    #        fname = 'primitives.npz'
+
+    #    # append file extension if not given
+    #    if fname[-4:] != ".npz":
+    #        fname+=".npz"
+    #    # save for later
+    #    self.fname = fname
+
+    #    #primitives = np.load(os.path.join(self.directory, fname))
+    #    primitives = np.load(fname)
+
+    #    self.K = primitives['K']
+    #    self.O = primitives['O']
+    #    self._mean = primitives['mean']
+    #    self._std = primitives['std']
+    #    self._past = primitives['past'].item()
+    #    self._future = primitives['future'].item()
+
+    #    self._dim = self.K.shape[0]
+    #    print "Primitive dimension: ", self._dim
+
+
+    #    self.Features = primitives['features'].item() # should load an instance of the Feature extractor object used
+    #    #feature_class= primitives['features'].item()
+    #    #feature_pointer = primitives['feature_pointer'].item() # should pull out the dict
+    #    #feature_tubes = primitives['feature_tubes'].item() # should pull out the dict
+    #    #control_action = primitives['control_action'].item() 
+    #    #control_pointer = self.Features.pointer[control_action]
+
+    #    # pull sample_period from primitive
+    #    if 'sample_period' in primitives:
+    #        self._sample_period = primitives['sample_period'].item()
+
+    #    if 'downpointer_fname' in primitives:
+    #        self._downpointer_fname = primitives['downpointer_fname'].item()
+    #    else: 
+    #        self._downpointer_fname = None
+
+    #    if 'downpointer_directory' in primitives:
+    #        print "downpointer directory", primitives['downpointer_directory'].item()
+    #        self._downpointer_directory = primitives['downpointer_directory'].item()
+    #    else: 
+    #        self._downpointer_directory  = None
+
+    #    #if feature_class == 'ArtFeatures':
+    #    #    from features.ArtFeatures import ArtFeatures
+    #    #    self.Features= ArtFeatures(pointer=feature_pointer, 
+    #    #                               tubes=feature_tubes,
+    #    #                               control_action=control_action,
+    #    #                               sample_period=self._sample_period)
+
+    #    #if feature_class == 'SpectralAcousticFeatures':
+    #    #    from features.SpectralAcousticFeatures import SpectralAcousticFeatures
+
+    #    #    # need to set this up to pass all relevant feature parameters
+    #    #    # through. This will only work with all defaults set
+    #    #    self.Features= SpectralAcousticFeatures(pointer=feature_pointer, 
+    #    #                                            tubes=feature_tubes,
+    #    #                                            control_action=control_action,
+    #    #                                            sample_period=self._sample_period)
+    #    #    
+    #        
+    #    #else: 
+    #        #print 'Invalid features.'
+
+# defined in PrimitiveHandler
+###########################################
+#    def EstimateStateHistory(self, data):
+#        self.h = np.zeros((self.K.shape[0], data.shape[1]))
+#
+#        #for t in range(0, self._past):
+#        #    self.h[:, t] = self.EstimateState(data[:, 0:t])
+#
+#        for t in range(self._past, data.shape[1]):
+#            _Xp = np.reshape(data[:, t-self._past:t].T, (-1, 1))
+#            self.h[:, t] = np.dot(self.K, _Xp).flatten()
 
 
 if __name__ == "__main__":

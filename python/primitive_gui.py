@@ -306,12 +306,12 @@ class MyFrame(wx.Frame):
 
             if self.prim._downpointer_fname != None: 
                 self.prim.utterance = PrimitiveUtterance()
-                self.prim.LoadPrimitives(os.path.join(self.prim._downpointer_directory, self.prim._downpointer_fname))
+                self.prim.utterance.LoadPrimitives(directory = self.prim._downpointer_directory, fname = self.prim._downpointer_fname)
 
             params_list = "Dimension: %i\n"%self.prim._dim
             params_list += "Past: %i\n" %self.prim._past
             params_list += "Future: %i\n" %self.prim._future
-            params_list += "Controller Period: %i ms\n" %(self.prim.control_period/8)
+            params_list += "Controller Period: %i ms\n" %(self.prim._sample_period/8)
             params_list += "Features: %s \n"%self.prim.Features.__class__.__name__
             params_list += "Downpointer: %s/%s \n"%(self.prim._downpointer_directory, self.prim._downpointer_fname)
             self.param_view.SetValue(params_list)
@@ -385,7 +385,7 @@ class MyFrame(wx.Frame):
         #else: 
         #    self.control_dirname = self.prim_text.GetLabel()
 
-        self.control_dirname = 'data/'
+        self.control_dirname = 'control_sequences/'
 
         dlg = wx.FileDialog(self, "Choose a file", self.control_dirname, "", "*.*", wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_OK:
@@ -525,16 +525,17 @@ class MyFrame(wx.Frame):
         
     def OnSimulate(self, event):
         # set utterance
-        self.prim.utterance = Utterance(directory=self.savedir,
+        base_utterance = Utterance(directory=self.savedir,
                                         utterance_length=float(self.utterance_length.GetValue()), 
                                         addDTS=False)
+        self.prim.SetUtterance(base_utterance)
         print "Directory:"
-        print self.prim.utterance.directory
+        print base_utterance.directory
         print self.savedir
 
         # select initial articulation
         art_option = self.art_option.GetValue()
-        initial_art = self.prim.GetControlMean()
+        initial_art = self.prim.GetControlMean(level=1)
 
         if art_option == "Zeros":
             initial_art = np.zeros(initial_art.shape)
