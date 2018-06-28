@@ -103,7 +103,6 @@ class PrimitiveUtterance(PrimitiveHandler):
         #print self.Now()+1
         #plt.figure()
         #plt.show()
-        print self.NowPeriods()
         return self.Features.ExtractLast(self.utterance.GetOutputVars(self.Now()))
 
 
@@ -176,6 +175,8 @@ class PrimitiveUtterance(PrimitiveHandler):
         action = np.copy(self.utterance.GetInitialControl()) #np.zeros(target.shape[0])
         prev_target = self.utterance.GetLastControl()
 
+        #print action.shape, prev_target.shape, target.shape
+
         # loop over control period and implement interpolated articulation
         for t in range(self._sample_period):
             if self.NotDone():
@@ -191,17 +192,18 @@ class PrimitiveUtterance(PrimitiveHandler):
                         # effectively, it would do something like getting the control from the lower level controller
                         # in order to reach the desired target. 
 
-                    print action.shape, prev_target.shape, target.shape
+                    
 
+                    #print action
                     self.utterance.SetControl(action)
 
-                #self.utterance.IterateSim()
-                self.utterance.SimulatePeriod()
+                self.utterance.IterateSim()
+                #self.utterance.SimulatePeriod()
 
                 self.UpdateOutputs()
                 # Save sound data point
 
-                self.utterance.UpdateActionHistory(action, self.Now2Periods(self.Now())-1)
+                self.utterance.UpdateActionHistory(action, self.utterance.Now2Periods(self.Now())-1)
 
         features = self.GetFeatures()
 
@@ -258,11 +260,11 @@ class PrimitiveUtterance(PrimitiveHandler):
         # TODO: verify that I'm getting the time indexing right here
         _data = self.utterance.GetOutputVars(time) 
         _sampletime = max(1, self.Now2Periods(time))
-        print "State and action", self.state_hist.shape, self.action_hist.shape, time, _sampletime
-        print self.state_hist, self.action_hist
+        #print "State and action", self.state_hist.shape, self.action_hist.shape, time, _sampletime
+        #print self.state_hist, self.action_hist
         _data['state_hist_'+str(self.Level())] = self.state_hist[:,   :_sampletime]
         _data['action_hist_'+str(self.Level())] = self.action_hist[:, :_sampletime]
-        print _data['action_hist_'+str(self.Level())].shape
+        #print _data['action_hist_'+str(self.Level())].shape
         return _data
 
     def SaveOutputs(self, fname=None, wav_file=True, **kwargs):

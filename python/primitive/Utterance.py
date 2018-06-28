@@ -331,7 +331,9 @@ class Utterance(object):
         return self.data['sound_wave']
 
     def GetLastControl(self):
-        return self.data['art_hist'][:, self.speaker.Now()-1]
+        #plt.imshow(self.data['art_hist'][:, :self.Now()-1])
+        #plt.show()
+        return self.data['art_hist'][:, self.Now()-1]
         
     def IterateSim(self):
         self.speaker.IterateSim()

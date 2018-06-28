@@ -71,20 +71,17 @@ class SpectralAcousticFeatures(BaseFeatures):
 
         # start with articulator inputs and down sample
         _data = data[self.control_action]
-        print self.control_action
-        print _data.shape
         if self.sample_period%self.control_sample_period:
             print "Sample period must be an integer multiple of controller's sample period"
         _data = moving_average(_data, n=self._relative_sample_period)
-        print _data.shape
         _data = _data[:, ::self._relative_sample_period]
 
 
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
-        print "data shape, spectrum shape, sound_wave shape, nperseg, sample_period, control_period"
-        print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period, self.control_sample_period
+        #print "data shape, spectrum shape, sound_wave shape, nperseg, sample_period, control_period"
+        #print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period, self.control_sample_period
 
         # only the first 
         _data = np.append(_data, spectrum[:, :_data.shape[1]], axis=0) 
