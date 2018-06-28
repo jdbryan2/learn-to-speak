@@ -36,6 +36,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         self.periodsperseg = kwargs.get('periodsperseg', self.periodsperseg)
         self.min_sound_length = self.sample_period*(self.periodsperseg-1)
         self.control_sample_period = kwargs.get('control_sample_period', self.control_sample_period)
+        self._relative_sample_period = int(self.sample_period/self.control_sample_period)
 
     # TODO: Add function for checking that all necessary items are in data dict
 
@@ -70,15 +71,20 @@ class SpectralAcousticFeatures(BaseFeatures):
 
         # start with articulator inputs and down sample
         _data = data[self.control_action]
+        print self.control_action
+        print _data.shape
         if self.sample_period%self.control_sample_period:
             print "Sample period must be an integer multiple of controller's sample period"
-        _data = moving_average(_data, n=int(self.sample_period/self.control_sample_period))
-        _data = _data[:, ::int(self.sample_period/self.control_sample_period)]
+        _data = moving_average(_data, n=self._relative_sample_period)
+        print _data.shape
+        _data = _data[:, ::self._relative_sample_period]
+
 
         start = 0
         self.pointer[self.control_action] = np.arange(start, _data.shape[0])
         start=_data.shape[0]
-        print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period
+        print "data shape, spectrum shape, sound_wave shape, nperseg, sample_period, control_period"
+        print _data.shape, spectrum.shape, sound_wave.shape, nperseg, self.sample_period, self.control_sample_period
 
         # only the first 
         _data = np.append(_data, spectrum[:, :_data.shape[1]], axis=0) 
@@ -112,7 +118,7 @@ class SpectralAcousticFeatures(BaseFeatures):
         # default start of control action to copy of first element if not
         # enough data provided
         action_length = data[self.control_action].shape[1]
-        if action_length < self.sample_period:
+        if action_length < self._relative_sample_period:
             action = np.copy(data[self.control_action]) # create new instance
             default = np.zeros((action.shape[0],
                                self.sample_period-action_length))
@@ -121,8 +127,8 @@ class SpectralAcousticFeatures(BaseFeatures):
 
             data[self.control_action] = action
 
-        elif action_length > self.sample_period:
-            data[self.control_action] = data[self.control_action][:, -self.sample_period:]
+        elif action_length > self._relative_sample_period:
+            data[self.control_action] = data[self.control_action][:, -self._relative_sample_period:]
 
         # get extracted data and flatten that shit
         return self.Extract(data).flatten()

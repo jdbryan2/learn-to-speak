@@ -411,12 +411,12 @@ class MyFrame(wx.Frame):
         if self.plot_state.GetValue():
             state_hist = self.handler.GetStateHistory()
             plt.figure()
-            pf.PlotTraces(state_hist, np.arange(state_hist.shape[0]), state_hist.shape[1], self.prim.control_period, highlight=0)
+            pf.PlotTraces(state_hist, np.arange(state_hist.shape[0]), state_hist.shape[1], self.prim._sample_period, highlight=0)
 
         if self.plot_art.GetValue():
             art_hist = self.handler.GetControlHistory(level=0)
             plt.figure()
-            pf.PlotTraces(art_hist, np.arange(art_hist.shape[0]), art_hist.shape[1], self.prim.control_period, highlight=0)
+            pf.PlotTraces(art_hist, np.arange(art_hist.shape[0]), art_hist.shape[1], self.prim._sample_period, highlight=0)
 
         if self.plot_sound.GetValue():
             sound_wave = self.handler.GetSoundWave()
@@ -426,16 +426,16 @@ class MyFrame(wx.Frame):
         if self.plot_control.GetValue():
             ctrl_hist = self.handler.GetControlHistory(level=1)
             plt.figure()
-            pf.PlotTraces(ctrl_hist, np.arange(ctrl_hist.shape[0]), ctrl_hist.shape[1], self.prim.control_period, highlight=0)
+            pf.PlotTraces(ctrl_hist, np.arange(ctrl_hist.shape[0]), ctrl_hist.shape[1], self.prim._sample_period, highlight=0)
 
 
-        #print state_hist.shape,sound_wave[::self.prim.control_period].shape, self.prim.control_period
+        #print state_hist.shape,sound_wave[::self.prim._sample_period].shape, self.prim._sample_period
         if self.plot_prediction_error.GetValue():
             state_hist = self.handler.GetStateHistory()
 
             ctrl_hist = self.handler.GetControlHistory(level=1)
             
-            output = self.prim.Features.Extract(self.handler.raw_data, sample_period=self.prim.control_period)
+            output = self.prim.Features.Extract(self.handler.raw_data, sample_period=self.prim._sample_period)
             output = ((output.T-self.prim._ave)/self.prim._std).T
 
             predicted1 = np.zeros(output.shape)
@@ -485,13 +485,13 @@ class MyFrame(wx.Frame):
             #    plt.title(k)
             #    plt.show()
             #plt.figure()
-            #pf.PlotTraces(output, np.arange(output.shape[0]), output.shape[1], self.prim.control_period, highlight=0)
+            #pf.PlotTraces(output, np.arange(output.shape[0]), output.shape[1], self.prim._sample_period, highlight=0)
 
             #plt.figure()
-            #pf.PlotTraces(predicted, np.arange(predicted.shape[0]), predicted.shape[1], self.prim.control_period, highlight=0)
+            #pf.PlotTraces(predicted, np.arange(predicted.shape[0]), predicted.shape[1], self.prim._sample_period, highlight=0)
 
             #plt.figure()
-            #pf.PlotTraces(error, np.arange(error.shape[0]), error.shape[1], self.prim.control_period, highlight=0)
+            #pf.PlotTraces(error, np.arange(error.shape[0]), error.shape[1], self.prim._sample_period, highlight=0)
 
     def OnTrajectoryPlot(self, event):
         #if self.plot_state.GetValue():

@@ -336,11 +336,18 @@ class Utterance(object):
     def IterateSim(self):
         self.speaker.IterateSim()
 
+    # alias for iterate sim
+    # might be worth simply renaming InterateSim
+    def SimulatePeriod(self):
+        self.IterateSim()
+
     def Now(self):
         return self.speaker.Now()
 
     def NowPeriods(self):
         return self.Now()
+    def Now2Periods(self, time):
+        return time
 
     def NowSecondsLooped(self):
         return self.speaker.NowSecondsLooped()

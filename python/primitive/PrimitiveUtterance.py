@@ -191,9 +191,12 @@ class PrimitiveUtterance(PrimitiveHandler):
                         # effectively, it would do something like getting the control from the lower level controller
                         # in order to reach the desired target. 
 
+                    print action.shape, prev_target.shape, target.shape
+
                     self.utterance.SetControl(action)
 
-                self.utterance.IterateSim()
+                #self.utterance.IterateSim()
+                self.utterance.SimulatePeriod()
 
                 self.UpdateOutputs()
                 # Save sound data point
@@ -215,8 +218,8 @@ class PrimitiveUtterance(PrimitiveHandler):
         self.current_state = self.EstimateState(self.past_data, normalize=True)
 
         # save control action and state
-        self.state_hist[:, self.utterance.Now()/self._sample_period-1] = self.current_state
-        self.action_hist[:, self.utterance.Now()/self._sample_period-1] = control_action
+        self.state_hist[:, self.Now2Periods(self.utterance.Now())-1] = self.current_state
+        self.action_hist[:, self.Now2Periods(self.utterance.Now())-1] = control_action
 
         return self.current_state
 
@@ -224,6 +227,9 @@ class PrimitiveUtterance(PrimitiveHandler):
             
         while self.NotDone():
             self.SimulatePeriod(control_action=self._act.GetAction(self.NowSecondsLooped()))
+
+    def GetInitialControl(self):
+        return self.action_hist[:,0]
 
     # wrapper functions for driving the simulator
     # PrimitiveUtterance can be used as the utterance attribute
@@ -251,8 +257,12 @@ class PrimitiveUtterance(PrimitiveHandler):
     def GetOutputVars(self, time):
         # TODO: verify that I'm getting the time indexing right here
         _data = self.utterance.GetOutputVars(time) 
-        _data['state_hist_'+str(self.Level())] = self.state_hist[:self.Now2Periods(time)]
-        _data['action_hist_'+str(self.Level())] = self.action_hist[:self.Now2Periods(time)]
+        _sampletime = max(1, self.Now2Periods(time))
+        print "State and action", self.state_hist.shape, self.action_hist.shape, time, _sampletime
+        print self.state_hist, self.action_hist
+        _data['state_hist_'+str(self.Level())] = self.state_hist[:,   :_sampletime]
+        _data['action_hist_'+str(self.Level())] = self.action_hist[:, :_sampletime]
+        print _data['action_hist_'+str(self.Level())].shape
         return _data
 
     def SaveOutputs(self, fname=None, wav_file=True, **kwargs):
@@ -264,6 +274,8 @@ class PrimitiveUtterance(PrimitiveHandler):
         # pass down the chain
         self.utterance.SaveOutputs(fname=fname, wav_file=wav_file, **kwargs)
 
+    #TODO: Verify whether this function does anything
+    #       Remove if not
     def GetOutputs(self, **kwargs):
         # state and state-level control action
         kwargs['state_hist_'+str(self.Level())] = self.state_hist
@@ -301,6 +313,7 @@ class PrimitiveUtterance(PrimitiveHandler):
         self.action_hist[:, index] = np.copy(action)
 
     # only updates simulator outputs
+    #TODO: Update this variable name
     def UpdateOutputs(self, index=0):
         self.utterance.UpdateOutputs(self.Now()-1)
 
@@ -313,7 +326,7 @@ class PrimitiveUtterance(PrimitiveHandler):
         self.utterance.IntializeDir(directory, addDTS)
 
     def SetControl(self, action):
-        self.utterance.SetControl(action)
+        self.utterance.SetControl(self.GetControl(action))
 
     def GetControlHistory(self, level=-1):
         if level == self.Level() or level==-1:
@@ -348,6 +361,7 @@ class PrimitiveUtterance(PrimitiveHandler):
         return self.utterance.Now()
 
     def Now2Periods(self, time):
+        #print self._sample_period
         if self.Level() == 1:
             return time/self._sample_period
         elif self.Level() > 1: 
