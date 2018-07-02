@@ -7,6 +7,7 @@ import Artword as aw
 from matplotlib2tikz import save as tikz_save
 
 from DataHandler import DataHandler
+from PrimitiveHandler import PrimitiveHandler
 
 class SubspaceDFA(PrimitiveHandler, DataHandler):
     """ Subspace Method for inferring primitive operators
