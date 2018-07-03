@@ -4,6 +4,7 @@ import Artword as aw
 class ActionSequence(object):
 #class Artword:
 
+#TODO: Add save and load functions to this class
     def __init__(self, **kwargs):
         self.DefaultParams()
         self.UpdateParams(**kwargs)
@@ -31,7 +32,6 @@ class ActionSequence(object):
         self.sample_period =  1./self.sample_freq # in seconds
         self.manual_targets = {}
         self._random = False # flag for generating random targets (or not)
-
 
     def UpdateParams(self, **kwargs):
 
@@ -73,7 +73,6 @@ class ActionSequence(object):
         self.sample_period = kwargs.get("sample_period", 1./self.sample_freq) # in seconds
 
         self._random = kwargs.get("random", self._random) # flag for generating random targets (or not)
-
 
     def Reset(self, initial_art=None):
         if initial_art == None:
