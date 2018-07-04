@@ -1,5 +1,6 @@
 import numpy as np
 import Artword as aw
+import os
 
 class ActionSequence(object):
 #class Artword:
@@ -10,6 +11,8 @@ class ActionSequence(object):
         self.UpdateParams(**kwargs)
 
     def DefaultParams(self):
+        self.directory = '.'
+
         self._dim = aw.kArt_muscle.MAX 
         self._max_action = 1.
         self._min_action = -1.
@@ -73,6 +76,42 @@ class ActionSequence(object):
         self.sample_period = kwargs.get("sample_period", 1./self.sample_freq) # in seconds
 
         self._random = kwargs.get("random", self._random) # flag for generating random targets (or not)
+
+    def SaveSequence(self, fname=None, directory=None):
+        # Note: Only saves manual targets
+        # randomly generated sequence is only saved through simulation because it's generated on the fly
+        if directory != None: 
+            self.directory = directory
+
+        if fname==None:
+            fname = 'sequence'
+
+        data = {'manual_targets':self.manual_targets}
+        
+        # create save directory if needed
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
+
+        np.savez(os.path.join(self.directory, fname), **data)
+
+
+    def LoadSequence(self, fname=None, directory=None):
+        if directory != None: 
+            self.directory = directory
+
+        if fname==None:
+            fname = 'sequence'
+
+        if fname[-4:] != ".npz":
+            fname += ".npz"
+
+        
+        if not os.path.exists(os.path.join(self.directory, fname)):
+            print "Failed to load data sequence, file not found."
+            self.manual_targets = {}
+        else:
+            data = np.load(os.path.join(self.directory, fname))
+            self.manual_targets = data['manual_targets'].item()
 
     def Reset(self, initial_art=None):
         if initial_art == None:
@@ -223,6 +262,11 @@ if __name__ == '__main__':
         action = rand.GetAction(time)
         x[n,:] = np.copy(action)
 
+    rand.SaveSequence(fname='sequence')
+    print rand.manual_targets
+
+    rand.LoadSequence()
+    print rand.manual_targets
     
     import pylab as plt
     for k in range(x.shape[1]):

@@ -40,6 +40,7 @@ class PrimitiveUtterance(PrimitiveHandler):
         #self.utterance = Utterance(**kwargs) # default utterance object
         #self.utterance = kwargs.get('utterance', self.utterance)
 
+
     def SetUtterance(self, utterance):
         """
         Pass an utterance object to the controller.

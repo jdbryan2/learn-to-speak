@@ -54,7 +54,7 @@ class Artword:
         self._random = False # flag for generating random targets (or not)
 
     def Reset(self, initial_art=None):
-        if initial_art == None:
+        if any(initial_art) == None:
             if self._random:
                 initial_art=np.random.random((aw.kArt_muscle.MAX, ))
             else:

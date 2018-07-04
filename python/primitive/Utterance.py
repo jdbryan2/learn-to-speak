@@ -170,7 +170,7 @@ class Utterance(object):
 
         else: 
             print "Resetting simulation..."
-            initial_art = kwargs.get("initial_art", None)
+            initial_art = kwargs.get("initial_art", self.initial_art)
             self.Reset(initial_art)
 
 
@@ -180,7 +180,8 @@ class Utterance(object):
     def Reset(self, initial_art=None):
 
         print "Resetting simulation..."
-        self._art.Reset(initial_art)
+        if self._art_init:
+            self._art.Reset(initial_art)
         self.initial_art = initial_art
         self.InitializeSim()
         self.ResetOutputVars()

@@ -11,6 +11,22 @@ from primitive.DataHandler import DataHandler
 
 import scikits.talkbox.features as tb
 
+def get_acoustic_output(prim, sequence):
+    print "Running simulation"
+    initial_art = prim.GetControl(sequence.GetAction(0.))
+
+    #prim.utterance.Reset()
+    prim.InitializeControl(initial_art=initial_art)
+
+
+    while prim.NotDone():
+        action = sequence.GetAction(prim.NowSecondsLooped())
+        prim.SimulatePeriod(control_action=action)
+
+    y = tb.mfcc(prim.utterance.data['sound_wave'], nwin=256, nfft=512, nceps=13) 
+    return y[0].T
+    # return mfcc output
+
 
 dim = 3
 primitive_dir = 'data/art3D'
@@ -19,7 +35,7 @@ primitive_dir = 'data/art3D'
 dh = DataHandler(directory='data/utterances/seq3D_1')
 dh.LoadDataDir()
 sound_wave = dh.raw_data['sound_wave']
-baseline_mfcc = tb.mfcc(sound_wave, nwin=256, nfft=512, nceps=13)
+baseline_mfcc = (tb.mfcc(sound_wave, nwin=256, nfft=512, nceps=13))[0].T
 #plt.imshow(baseline_mfcc[0].T)
 #plt.show()
 
@@ -36,42 +52,50 @@ prim.SetUtterance(utterance)
 
 # load up control sequence
 ##################################################
-# TODO: Add loading function for action sequence class.
 
-# load control sequence file
-control_input = np.genfromtxt('control_sequences/dx.csv', delimiter=",", skip_header=1)
-
-# pass sequence into ActionSequence Class
-# not sure why 'sample_period' is needed at all. I think it may be from an old version of random excitation
+MANUAL_LOAD = True
 act_seq = ActionSequence(dim=dim, initial_action=np.zeros(dim), sample_period=1./8000, random=False)
 
-for k in range(control_input.shape[0]):
-    for n in range(dim):
-        #                       dim, target, time
-        if k < 2:
-            act_seq.SetManualTarget(n, control_input[k, n+1], control_input[k, 0])
-        else:   
-            pass
+if MANUAL_LOAD == True:
+    #TODO: Add functionality to load from CSV into ActionSequence class
+    # load control sequence file
+    control_input = np.genfromtxt('control_sequences/dx.csv', delimiter=",", skip_header=1)
 
-# get initial art based on first control_input entry
+    # pass sequence into ActionSequence Class
+    # not sure why 'sample_period' is needed at all. I think it may be from an old version of random excitation
+
+    for k in range(control_input.shape[0]):
+        for n in range(dim):
+            #                       dim, target, time
+            #if k < 2:
+                act_seq.SetManualTarget(n, control_input[k, n+1], control_input[k, 0])
+            #else:   
+                #pass
+
+else:
+    act_seq.LoadSequence(directory='control_sequences/learn')
+
+
+# Generate action sequence and get output
 ##################################################
-initial_art = prim.GetControl(act_seq.GetAction(0.))
+step_size = 0.2
+random_sequence = ActionSequence(dim=dim, initial_action=np.zeros(dim), sample_period=1./8000, random=False)
+for time in np.arange(step_size, 2.0, step_size):
+    for k in range(dim):
+        # set random action sequence
+        random_sequence.SetManualTarget(k, np.random.random()/2., time)
 
-prim.InitializeControl(initial_art=initial_art)
+output1 = get_acoustic_output(prim, random_sequence)
+
+output2 = get_acoustic_output(prim, act_seq)
 
 
-while prim.NotDone():
-    action = act_seq.GetAction(prim.NowSecondsLooped())
-    print prim.NowSecondsLooped()
-    prim.SimulatePeriod(control_action=action)
-
-
-y = tb.mfcc(prim.utterance.data['sound_wave'], nwin=256, nfft=512, nceps=13) 
-
-#plt.imshow(np.abs(y[0].T))
-#plt.show()
-
-error = np.abs(y[0]-baseline_mfcc[0]).T
+error = np.abs(output2-baseline_mfcc)
+plt.figure()
+plt.imshow(output1)
+plt.figure()
+plt.imshow(output2)
+plt.figure()
 plt.imshow(error)
 plt.show()
 
