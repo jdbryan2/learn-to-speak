@@ -206,7 +206,11 @@ class ActionSequence(object):
 
         # add manual target to the list
         if muscle in self.manual_targets:
-            self.manual_targets[muscle] = np.vstack((self.manual_targets[muscle], [time, target]))
+            where_equal = self.manual_targets[muscle][:, 0] == time
+            if np.any(self.manual_targets[muscle][:, 0] == time):
+                self.manual_targets[muscle][np.where(where_equal), 1] = target
+            else:
+                self.manual_targets[muscle] = np.vstack((self.manual_targets[muscle], [time, target]))
         else:
             self.manual_targets[muscle] = np.array([[time, target]])
 

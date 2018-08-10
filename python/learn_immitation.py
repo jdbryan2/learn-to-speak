@@ -2,6 +2,7 @@ from primitive.IncrementalDFA import SubspaceDFA
 from features.ArtFeatures import ArtFeatures
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import minimize
 
 from primitive.PrimitiveUtterance import PrimitiveUtterance
 from primitive.Utterance import Utterance
@@ -80,38 +81,49 @@ else:
 ##################################################
 
 # size of time step between control input commands 
-step_size = 0.2
 
 # initialize ActionSequence class
 random_sequence = ActionSequence(dim=dim, initial_action=np.zeros(dim), sample_period=1./8000, random=False)
 
-######
-# generate new control sequence through unsupervised search method
-# 
-# load latest control sequence and last timeslot to be optimized
-#   if none exists, start with timeslot t=1 (0th timeslot stays at zero)
-#
-# initialize x_0 and x_1=x_0+random_delta
-# compute f(x_0), f(x_1)
-# compute J_0
-# 
-# n=1
-# while y_t - f(x_n) > epsilon:
-#   compute f(x_n)
-#   update (J_n)**-1
-#   update x_(n+1)
-#   n=n+1
-# 
-# save target sequence to numpy file
-######
+step_size = 0.2
+global_time = 1*step_size
+global_sequence = ActionSequence(dim=dim, intial_action=np.zeros(dim), sample_period=1./8000, random=False)
 
-# loop over time steps and pass control targets to ActionSequence class
-for time in np.arange(step_size, 2.0, step_size):
-    for k in range(dim):
-        # set random action sequence
-        random_sequence.SetManualTarget(k, np.random.random()/2., time)
+# callback function for optimizer
+def error_callback(target):
+    global global_sequence
 
-output1 = get_acoustic_output(prim, random_sequence)
+    for n, x in enumerate(target):
+        global_sequence.SetManualTarget(n, x, global_time)
+
+    print global_sequence.manual_targets
+    y = get_acoustic_output(prim, global_sequence)
+
+    error = np.sum(np.abs(y-baseline_mfcc)**2)
+    print "Error: ", error
+    return error
+
+x0 = np.zeros(dim)
+while global_time <= 2.0:
+    print "Time step: ", global_time
+    #print global_sequence.manual_targets
+    res = minimize(error_callback, x0, method='Nelder-Mead', tol=1e-2, 
+                   options={'initial_simplex':[[1, 0, 0], [0, 1, 0], [0, 0, 1], [-0.3, -0.3, -0.3]]})
+    if res.status == 0:
+        x0 = res.x
+        global_time += step_size
+
+        global_sequence.SaveSequence(fname=str(global_time), directory='control_sequences/learn')
+
+
+## loop over time steps and pass control targets to ActionSequence class
+#for time in np.arange(step_size, 2.0, step_size):
+#    for k in range(dim):
+#        # set random action sequence
+#        random_sequence.SetManualTarget(k, np.random.random()/2., time)
+
+#output1 = get_acoustic_output(prim, random_sequence)
+output1 = get_acoustic_output(prim, global_sequence)
 
 output2 = get_acoustic_output(prim, act_seq)
 
