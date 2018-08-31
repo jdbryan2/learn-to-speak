@@ -5,6 +5,8 @@ from scipy.fftpack import dct
 import pylab as plt
 from scipy.io.wavfile import read as wav_read
 
+from matplotlib2tikz import save as tikz_save
+
 def Freq2Mel(freq):
     return 2595. * np.log10(1.+freq/700.)
 
@@ -43,7 +45,7 @@ def MelFilters(nbins, nfft, sample_freq, low_freq=0, high_freq=None):
     return filter_bank
 
 def MFCC(data, ncoeffs, nfilters, nfft=512, sample_freq=16000, low_freq=300,
-         high_freq=None, preemph = 0.95, window='hamming', nperseg=512,
+         high_freq=None, preemph = 0.97, window='hamming', nperseg=512,
          noverlap=0):
 
 
@@ -159,12 +161,32 @@ if __name__ == '__main__':
     import scikits.talkbox.features as tb
 
     # Spoken Language Processing: only first 13 MFCC needed for speech recog
-    #x = MelFilters(13, 512, 16000, 300., 8000.)
-    #for filt in x:
-        #plt.plot(filt)
+    x = MelFilters(20, nfft=2*512, sample_freq=16000., low_freq=0., high_freq=4000.)
+    first = True
+    freq = np.arange(513) * 8000/512.
+    for filt in x:
+        if first:
+            first = False
+            plt.plot(freq, filt, '-b', alpha=1.)
+        else:
+            plt.plot(freq, filt, '-b', alpha=0.3)
+    plt.xlim((0, 4000))
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Amplitude')
+    #tikz_save(
+    #    'mel_filter_bank.tikz',
+    #    figureheight = '\\figureheight',
+    #    figurewidth = '\\figurewidth'
+    #    )
+    #plt.show()
 
+    #exit()
     rate, data = wav_read('/home/jacob/Projects/learn-to-speak/analysis/manifolds/timit/sa1.wav')
     data = 1.0*data/(2**15) # convert from 16 bit integer encoding to [-1, 1]
+
+    #raw = np.load('../data/utterances/apa/data1.npz')
+    #data = raw['sound_wave']
+    #
     
     #print rate, max(data), min(data)
     #plt.figure()
@@ -172,17 +194,27 @@ if __name__ == '__main__':
     #plt.show()
 
     #y, e = MFCC(np.random.random(2000), 10)
-    y, e = MFCC(data, ncoeffs=13, nfilters=26)
-    y2, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=512,
-                 noverlap=128)
-    y3 = tb.mfcc(data, nwin=256, nfft=512, nceps=13)
+    #y, e = MFCC(data, ncoeffs=13, nfilters=26)
+    y2, e = MFCC(data, ncoeffs=13, nfilters=26, nfft=512, nperseg=3*160,
+                 noverlap=3*160-80, low_freq=300)#133.3)
+    y3 = tb.mfcc(data, nwin=512, nfft=512, nceps=13)
 
-    print y.shape
-    plt.imshow(np.abs(y[:, 1:].T))
+    #print y.shape
+    #plt.imshow(np.abs(y[:, 1:].T))
     plt.figure()
-    plt.imshow(np.abs(y2[:, 1:].T))
+    plt.imshow(np.abs(y2[:, 1:].T), aspect=3, interpolation='none')
+    plt.xticks(np.arange(50, 251, 50)*2, np.arange(0.5, 2.51, 0.5))
+    plt.xlabel('Time (s)')
+    plt.ylabel('MFCC')
+    tikz_save(
+        'mfcc_sa1.tikz',
+        figureheight = '\\figureheight',
+        figurewidth = '\\figurewidth'
+        )
     plt.figure()
-    plt.imshow(np.abs(y3[0].T))
+    plt.imshow(np.abs(y3[0][:, 1:].T), aspect=3, interpolation='none')
+    plt.xticks(np.arange(50, 251, 50), np.arange(0.5, 2.51, 0.5))
+    #plt.xlim((0, y3[0].shape[0]/rate*160))
     plt.show()
 
     #distance, lattice, backpointers, constraint = DynamicProgramming(y, y2)
