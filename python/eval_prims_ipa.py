@@ -8,12 +8,24 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
+from plot_functions import *
+
+dirname = 'data/batch_random_20_5'
+dirname = 'data/batch_random_1_1'
+dirname = 'data/batch_random_12_12'
+
+ind= get_last_index(dirname, 'round')
+load_fname = 'round%i.npz'%ind
+
 ss = SubspaceDFA()
 ss.LoadPrimitives(fname=load_fname, directory = dirname)
 # Set feature extractor to be same as one that we used to learn primitives
 # TODO: This should be made more general so that we don't have to keep track
 #       of which extractor was being used
 ss.Features = ArtFeatures() # set feature extractor
+
+past = ss._past
+future = ss._future
 
 # Select which three primitives to view
 prims = [0,1,2]

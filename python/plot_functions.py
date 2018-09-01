@@ -1,6 +1,13 @@
 
 import numpy as np
 import pylab as plt
+import os
+from matplotlib2tikz import save as _tikz_save
+
+def tikz_save(fname):
+    _tikz_save(fname, 
+        figureheight = '\\figureheight',
+        figurewidth = '\\figurewidth')
 
 def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_style='b-'):
     if data.shape[1] < max_length:
@@ -20,3 +27,16 @@ def PlotDistribution(ave, std, rows):
     plt.plot(ave[rows]+std[rows], 'ro--', linewidth=1)
 
 
+def get_last_index(directory, base_name = 'data'):
+    index_list = []  # using a list for simplicity
+    if os.path.exists(directory):
+        for filename in os.listdir(directory):
+            if filename.startswith(base_name) and filename.endswith(".npz"):
+                index = filter(str.isdigit, filename)
+                if len(index) > 0:
+                    index_list.append(int(index))
+
+    if len(index_list):
+        return max(index_list)
+    else:
+        return 0
