@@ -10,9 +10,10 @@ import numpy as np
 
 from plot_functions import *
 
-dirname = 'data/batch_random_20_5'
-dirname = 'data/batch_random_1_1'
-dirname = 'data/batch_random_12_12'
+data_dir = '../data'
+#dirname = '../data/batch_random_20_5'
+#dirname = '../data/batch_random_1_1'
+dirname = data_dir+'/batch_random_12_12'
 
 ind= get_last_index(dirname, 'round')
 load_fname = 'round%i.npz'%ind
@@ -49,7 +50,7 @@ for ipa_num, c, m in zip(ipa_nums,colors,markers):
     # shift to zero mean and  normalize by standard deviation
     #data = ((ss._data.T-ss._ave)/ss._std).T
     #ss.EstimateStateHistory(data)
-    data = ss.ExtractDataFile("data/utterances/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
+    data = ss.ExtractDataFile(data_dir+"/utterances/ipa" + str(ipa_num) + "/data1.npz")#, sample_period=sample_period)
     h = ss.EstimateStateHistory(data)
 
     xp = h[prims[0]][past:]

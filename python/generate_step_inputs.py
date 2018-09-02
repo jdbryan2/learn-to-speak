@@ -27,11 +27,11 @@ def get_last_index(directory):
     else:
         return 0
     
-loops = 5 
+loops = 100 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/rand_steps'
+savedir = 'data/rand_steps_threshold'
 #savedir = 'data/rand_full'
 
 #prim_filename = 'round411'
@@ -54,9 +54,12 @@ prim.LoadPrimitives(prim_filename, prim_dirname)
 
 dim = 3
 
-for k in range(loop_start, loop_start+loops):
+#for k in range(loop_start, loop_start+loops):
 #for k in range(loops):
 
+k = loop_start
+failed_attempts = 0
+while k < loop_start + loops:
 
     # random steps
     initial_control = np.zeros(dim)
@@ -119,7 +122,21 @@ for k in range(loop_start, loop_start+loops):
     #save_data['action_hist'] = prim.action_hist
     #np.savez(os.path.join(savedir, 'state_action_'+str(k)), **save_data)
     #print prim.state_hist.shape
-    prim.SaveOutputs(fname=str(k))
+    
+    sound = prim.GetSoundWave()
+    energy = np.sum((sound[1:] - sound[:-1])**2)/sound.size
+
+    print "*"*50
+    print "Average energy: %f"%energy
+    if energy > 0.002:
+        prim.SaveOutputs(fname=str(k))
+        print "Saved k=%i"%k
+        k = k+1
+
+    else:
+        failed_attempts= failed_attempts + 1
+        print "Utterance below sound threshold: %i"%failed_attempts
+    print "*"*50
 
     #load_data = np.load(os.path.join(savedir, 'state_action.npz'))
     #plt.plot(load_data['state_hist'].T)

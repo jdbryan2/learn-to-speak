@@ -17,81 +17,77 @@ from sklearn.cluster import DBSCAN
 
 import pylab as plt
 
+def mfcc_cluster(directory="data/rand_steps", full_reload = False):
 
-FRESH_LOAD = False
-#FRESH_LOAD = True
-directory = "data/rand_steps"
-handler = DataHandler()
+    full_reload = False
+    #directory = "data/rand_steps"
+    handler = DataHandler()
 
-index_list = handler.GetIndexList(directory=directory)
 
-Y = np.array([])
+    Y = np.array([])
 
-if FRESH_LOAD:
-    for index in index_list:
-        handler.LoadDataDir(directory=directory, min_index=index, max_index=index)
-        sound = handler.raw_data['sound_wave'][0]
+    if not full_reload and os.path.exists(directory+'/mfcc_precomp.npz'):
+        data = np.load(directory+'/mfcc_precomp.npz')
+        Y = data['Y']
 
-        #plt.figure()
-        #plt.plot(sound)
+    else:
+        index_list = handler.GetIndexList(directory=directory)
 
-        y, e = MFCC(sound, ncoeffs=13, nfilters=26, nfft=512, nperseg=3*160,
-                    noverlap=3*160-80, low_freq=0)#133.3)
+        print "Loading data from: " + directory
+        for index in index_list:
+            handler.LoadDataDir(directory=directory, min_index=index, max_index=index)
+            sound = handler.raw_data['sound_wave'][0]
 
-        if Y.size == 0:
-            Y = y
-        else:
-            Y = np.append(Y, y, axis=0)
+            #plt.figure()
+            #plt.plot(sound)
 
-        print Y.shape
-        
-        #plt.figure()
-        #plt.imshow(np.abs(y[:, 1:].T), aspect=3, interpolation='none')
-        #plt.show()
-    np.savez(directory+'/mfcc_precomp', Y=Y) 
-else:
-    data = np.load(directory+'/mfcc_precomp.npz')
-    Y = data['Y']
+            y, e = MFCC(sound, ncoeffs=13, nfilters=26, nfft=512, nperseg=3*160,
+                        noverlap=3*160-80, low_freq=0)#133.3)
 
-#ref = np.random.randint(Y.shape[0])
-#dist = np.zeros(Y.shape[0])
-#print 'Computing distances from ', ref
-#for k in range(0, Y.shape[0]):
-#    dist[k] = np.sqrt(np.sum(np.abs(Y[ref]-Y[k])**2))
+            if Y.size == 0:
+                Y = y
+            else:
+                Y = np.append(Y, y, axis=0)
+
+            print Y.shape
+            
+            #plt.figure()
+            #plt.imshow(np.abs(y[:, 1:].T), aspect=3, interpolation='none')
+            #plt.show()
+        np.savez(directory+'/mfcc_precomp', Y=Y) 
+
+
+    # trim off first mfcc because it's mostly just energy
+    Y = Y[:, 1:]
+
+    nn = NearestNeighbors(radius=1)
+    nn.fit(Y)
+    A = nn.radius_neighbors_graph(Y, mode='distance')
+
+    print 'Clustering'
+    db = DBSCAN(eps=0.3, min_samples=5).fit(Y)
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
+
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+
+    print('Estimated number of clusters: %d' % n_clusters_)
+    return Y, labels
+
+if __name__ == '__main__':
+    Y, L = mfcc_cluster()
+#    Y_ = np.copy(Y[labels==1, :])
+#    for k in range(20, n_clusters_):
+#        Y_ = np.append(Y_, Y[labels==k, :], axis=0)
+#        #plt.figure()
+#        #plt.imshow(Y[labels==k, :].T, interpolation=None, aspect=np.sum(labels==k)/12.)
+#        #plt.title(np.sum(labels==k))
+#        #plt.show()
 #
-#plt.plot(dist)
-#plt.show()
-#from sklearn.neighbors import kneighbors_graph
-#A = kneighbors_graph(X, 2, mode='connectivity', include_self=True)
-
-# trim off first mfcc because it's mostly just energy
-Y = Y[:, 1:]
-
-nn = NearestNeighbors(radius=1)
-nn.fit(Y)
-A = nn.radius_neighbors_graph(Y, mode='distance')
-
-print 'Clustering'
-db = DBSCAN(eps=0.3, min_samples=5).fit(Y)
-core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-core_samples_mask[db.core_sample_indices_] = True
-labels = db.labels_
-
-# Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
-
-print('Estimated number of clusters: %d' % n_clusters_)
-
-Y_ = np.copy(Y[labels==1, :])
-for k in range(20, n_clusters_):
-    Y_ = np.append(Y_, Y[labels==k, :], axis=0)
-    #plt.figure()
-    #plt.imshow(Y[labels==k, :].T, interpolation=None, aspect=np.sum(labels==k)/12.)
-    #plt.title(np.sum(labels==k))
-    #plt.show()
-
-plt.imshow(Y_[:, :].T, interpolation=None, aspect=Y_.shape[0]/12.)
-plt.show()
+#    plt.imshow(Y_[:, :].T, interpolation=None, aspect=Y_.shape[0]/12.)
+#    plt.show()
 
 
