@@ -8,7 +8,7 @@ from primitive.DataHandler import DataHandler
 from primitive.Utterance import Utterance 
 import Artword as aw
 from matplotlib2tikz import save as tikz_save
-import plot_functions as pf
+import genfigures.plot_functions as pf
 
 class MyFrame(wx.Frame):
     """ We simply drive a new class of Frame."""
@@ -585,8 +585,8 @@ class MyFrame(wx.Frame):
         # update the index limiters so that we can just load from dir with one click
         indeces = self.handler.GetIndexList(directory=self.savedir)
         if len(indeces) > 0:
-            self.min_load.SetValue(np.min(indeces))
-            self.max_load.SetValue(np.max(indeces))
+            self.min_load.SetValue(str(np.min(indeces)))
+            self.max_load.SetValue(str(np.max(indeces)))
 
         # tuck variables into current class so that we can plot easier
         #self.state_hist = self.prim.GetStateHistory()
