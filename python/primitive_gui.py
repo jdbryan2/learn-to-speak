@@ -308,7 +308,7 @@ class MyFrame(wx.Frame):
                 self.prim.utterance = PrimitiveUtterance()
                 self.prim.utterance.LoadPrimitives(directory = self.prim._downpointer_directory, fname = self.prim._downpointer_fname)
 
-            params_list = "Dimension: %i\n"%self.prim._dim
+            params_list = "Dimension: %i\n"%self.prim.K.shape[0]#_dim
             params_list += "Past: %i\n" %self.prim._past
             params_list += "Future: %i\n" %self.prim._future
             params_list += "Controller Period: %i ms\n" %(self.prim._sample_period/8)
