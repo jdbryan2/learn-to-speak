@@ -11,36 +11,23 @@ from primitive.Utterance import Utterance
 from primitive.ActionSequence import ActionSequence
 from primitive.DataHandler import DataHandler
 
+from genfigures.plot_functions import *
+
 import pylab as plt
 
 DEBUG = False
 
-def get_last_index(directory):
-    index_list = []  # using a list for simplicity
-    if os.path.exists(directory):
-        for filename in os.listdir(directory):
-            if filename.startswith('state_action') and filename.endswith(".npz"):
-                index = filter(str.isdigit, filename)
-                if len(index) > 0:
-                    index_list.append(int(index))
-
-    if len(index_list):
-        return max(index_list)
-    else:
-        return 0
-    
-loops = 200 
+loops = 59
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
 savedir = 'data/covariance/D'
 
 #prim_filename = 'round411'
-prim_filename = 'primitives.npz'
-prim_dirname = 'data/art3D'
+prim_dirname = 'data/batch_random_12_12'
 
-ind= get_last_index(dirname, 'round')
-load_fname = 'round%i.npz'%ind
+ind= get_last_index(prim_dirname, 'round')
+prim_filename = 'round%i.npz'%ind
 
 
 # load 3D primitives from file
@@ -53,13 +40,13 @@ dim = prim.K.shape[0]
 for act_dim in range(dim):
 
     loop_start = get_last_index(savedir+str(act_dim))+1
-    print act_dim, loop_start
 
     for k in range(loop_start, loop_start+loops):
+        print "Dimension: ", act_dim, " Loop: ", k
 
         initial_control = np.zeros(dim)
         initial_control[act_dim] = np.random.random(1)*2. - 1.
-        print initial_control
+        #print initial_control
         end_control = np.zeros(dim)
         #end_control[:dim] = np.random.random(dim)*2 - 1.
 
@@ -67,9 +54,6 @@ for act_dim in range(dim):
                                    utterance_length=utterance_length, 
                                    loops=loops,
                                    addDTS=False)
-                                   #initial_art = prim.GetControlMean(),
-
-
 
         rand = ActionSequence(dim=dim,
                               initial_action=initial_control,
@@ -112,6 +96,7 @@ for act_dim in range(dim):
         prim.SaveOutputs(str(k))
 
         if DEBUG == True:
-            load_data = np.load(os.path.join(savedir+str(act_dim), 'state_action_'+str(k)+'.npz'))
-            plt.plot(load_data['state_hist'].T)
+            plt.plot(prim.state_hist.T)
+            plt.figure()
+            plt.plot(prim.action_hist.T)
             plt.show()

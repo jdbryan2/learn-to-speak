@@ -51,6 +51,10 @@ def Plot3DSamples(index_list):
 
     plt.show()
 
+    fig = plt.figure()
+    plt.plot(H)
+    plt.show()
+
 
 data_dir = '../data'
 #dirname = '../data/batch_random_20_5'
@@ -68,7 +72,7 @@ ss.LoadPrimitives(fname=load_fname, directory = dirname)
 past = ss._past
 future = ss._future
 print data_dir+'/rand_steps'
-mfcc_data, labels = mfcc_cluster(directory = data_dir+'/rand_steps', full_reload=False)
+mfcc_data, labels = mfcc_cluster(directory = data_dir+'/rand_steps_threshold', full_reload=False)
 
 
 clusters = set(labels)
