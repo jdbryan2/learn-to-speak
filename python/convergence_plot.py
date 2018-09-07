@@ -3,13 +3,13 @@ import os
 import numpy as np
 import pylab as plt
 
-from plot_functions import *
+from genfigures.plot_functions import *
 
 tikz_dir = '/home/jacob/Projects/Dissertation/Doc/tikz/'
 
 #directory = "data/batch_zeros_100_10"
-directory = "data/batch_random_12_12"
-#directory = "data/batch_random_20_10"
+#directory = "data/batch_random_12_12"
+directory = "data/batch_random_20_10"
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):
