@@ -12,36 +12,39 @@ from primitive.ActionSequence import ActionSequence
 from primitive.DataHandler import DataHandler
 
 import pylab as plt
+from genfigures.plot_functions import *
 
-def get_last_index(directory):
-    index_list = []  # using a list for simplicity
-    if os.path.exists(directory):
-        for filename in os.listdir(directory):
-            if filename.startswith('data') and filename.endswith(".npz"):
-                index = filter(str.isdigit, filename)
-                if len(index) > 0:
-                    index_list.append(int(index))
-
-    if len(index_list):
-        return max(index_list)
-    else:
-        return 0
+#def get_last_index(directory):
+#    index_list = []  # using a list for simplicity
+#    if os.path.exists(directory):
+#        for filename in os.listdir(directory):
+#            if filename.startswith('data') and filename.endswith(".npz"):
+#                index = filter(str.isdigit, filename)
+#                if len(index) > 0:
+#                    index_list.append(int(index))
+#
+#    if len(index_list):
+#        return max(index_list)
+#    else:
+#        return 0
     
-loops = 100 
+loops = 10 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/rand_steps_threshold'
+savedir = 'data/rand_steps_threshold2'
 #savedir = 'data/rand_full'
 
 #prim_filename = 'round411'
 #prim_dirname = 'data/batch_random_12_12'
 
-prim_filename = 'primitives.npz'
-prim_dirname = 'data/art3D'
-full_filename = os.path.join(prim_dirname, prim_filename)
+#prim_filename = 'primitives.npz'
+#prim_dirname = 'data/art3D'
+prim_dirname = 'data/batch_random_20_10'
+ind= get_last_index(prim_dirname, 'round')
+prim_filename = 'round%i.npz'%ind
+#full_filename = os.path.join(prim_dirname, prim_filename)
 
-#true_dim = prim._dim 
 #print true_dim
 #exit()
 
@@ -52,6 +55,7 @@ print loop_start
 prim = PrimitiveUtterance()
 prim.LoadPrimitives(prim_filename, prim_dirname)
 
+true_dim = prim.K.shape[0]
 dim = 3
 
 #for k in range(loop_start, loop_start+loops):
@@ -62,9 +66,9 @@ failed_attempts = 0
 while k < loop_start + loops:
 
     # random steps
-    initial_control = np.zeros(dim)
+    initial_control = np.zeros(true_dim)
     initial_control[:dim] = np.random.random(dim)*2. - 1.
-    end_control = np.zeros(dim)
+    end_control = np.zeros(true_dim)
     end_control[:dim] = np.random.random(dim)*2 - 1.
 
     prim.utterance = Utterance(directory = savedir, 
@@ -108,13 +112,13 @@ while k < loop_start + loops:
         prim.SimulatePeriod(control_action=action)
 
     # debug outputs, plot state, actions, and sound
-    #plt.figure()
-    #plt.plot(prim.state_hist.T)
-    #plt.figure()
-    #plt.plot(prim.action_hist.T)
-    #plt.figure()
-    #plt.plot(prim.utterance.data['sound_wave'])
-    #plt.show()
+    plt.figure()
+    plt.plot(prim.state_hist.T)
+    plt.figure()
+    plt.plot(prim.action_hist.T)
+    plt.figure()
+    plt.plot(prim.utterance.data['sound_wave'])
+    plt.show()
 
     ## manually save state action history
     #save_data = {}

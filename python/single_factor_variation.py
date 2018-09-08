@@ -21,10 +21,10 @@ loops = 59
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/covariance/D'
+savedir = 'data/covariance_20_10/D'
 
 #prim_filename = 'round411'
-prim_dirname = 'data/batch_random_12_12'
+prim_dirname = 'data/batch_random_20_10'
 
 ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
