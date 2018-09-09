@@ -10,54 +10,41 @@ from primitive.PrimitiveUtterance import PrimitiveUtterance
 from primitive.Utterance import Utterance
 from primitive.ActionSequence import ActionSequence
 from primitive.DataHandler import DataHandler
+from genfigures.plot_functions import *
 
 import pylab as plt
 
 DEBUG = False
 
-def get_last_index(directory):
-    index_list = []  # using a list for simplicity
-    if os.path.exists(directory):
-        for filename in os.listdir(directory):
-            if filename.startswith('state_action') and filename.endswith(".npz"):
-                index = filter(str.isdigit, filename)
-                if len(index) > 0:
-                    index_list.append(int(index))
-
-    if len(index_list):
-        return max(index_list)
-    else:
-        return 0
     
-loops = 200 
+loops = 10 
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
 savedir = 'data/fixed_target/D'
 
 #prim_filename = 'round411'
-prim_filename = 'primitives.npz'
-prim_dirname = 'data/art3D'
+prim_dirname = 'data/batch_random_20_10'
+prim_filename = 'round'+str(get_last_index(prim_dirname, 'round'))+'.npz'
 
-dim = 3
 
 # load 3D primitives from file
 ##################################################
 prim = PrimitiveUtterance()
+prim.LoadPrimitives(fname=prim_filename, directory = prim_dirname)
+dim = prim.K.shape[0]
+print dim
 
 
 for act_dim in range(dim):
 
     loop_start = get_last_index(savedir+str(act_dim))+1
-    print act_dim, loop_start
 
     for k in range(loop_start, loop_start+loops):
-        prim = PrimitiveUtterance()
-        prim.LoadPrimitives(fname=prim_filename, directory = prim_dirname)
-
         initial_control = np.zeros(dim)
         initial_control[act_dim] = np.random.random(1)*2. - 1.
-        print initial_control
+        print "Loop: ", k, " Dim: ", act_dim
+        print "Initial Input: ", initial_control[act_dim]
         end_control = np.zeros(dim)
         #end_control[:dim] = np.random.random(dim)*2 - 1.
 
@@ -66,8 +53,6 @@ for act_dim in range(dim):
                                    loops=loops,
                                    addDTS=False)
                                    #initial_art = prim.GetControlMean(),
-
-
 
 # compute sample period in seconds
         #sample_period = prim.control_period/prim.utterance.sample_freq
