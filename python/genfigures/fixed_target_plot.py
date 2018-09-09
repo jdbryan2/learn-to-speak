@@ -33,11 +33,8 @@ loops = 200
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/fixed_target/D2'
+savedir = '../data/fixed_target/D1'
 
-#prim_filename = 'round411'
-prim_filename = 'primitives.npz'
-prim_dirname = 'data/art3D'
 
 dim = 3
 
@@ -49,7 +46,7 @@ loop_end = get_last_index(savedir)
 #loop_end = 20
 state = [[] for k in range(dim)]
 action = [[] for k in range(dim)]
-for k in range(19 , loop_end):
+for k in range(1, loop_end):
     load_data = np.load(os.path.join(savedir, 'state_action_'+str(k)+'.npz'))
     for n in range(dim):
         if len(state[n]) == 0:
@@ -64,6 +61,8 @@ for k in range(19 , loop_end):
 for d in range(dim):
     plt.figure()
     plt.plot(state[d].T)
+    plt.title('State '+str(d))
     plt.figure()
     plt.plot(action[d].T)
+    plt.title('Action ' + str(d))
 plt.show()

@@ -36,7 +36,7 @@ dim = prim.K.shape[0]
 print dim
 
 
-for act_dim in range(dim):
+for act_dim in range(4, dim):
 
     loop_start = get_last_index(savedir+str(act_dim))+1
 
