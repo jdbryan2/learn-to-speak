@@ -2,7 +2,7 @@ import primitive.Utterance as ut
 import Artword as aw
 
 # Default initial_art is all zeros
-ipa101 = ut.Utterance(dirname="ipa101",
+ipa101 = ut.Utterance(dirname="../data/utterances/ipa101",
                 loops=1,
                 utterance_length=0.5,
                 addDTS=False)
