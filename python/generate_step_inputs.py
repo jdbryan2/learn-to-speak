@@ -14,40 +14,17 @@ from primitive.DataHandler import DataHandler
 import pylab as plt
 from genfigures.plot_functions import *
 
-#def get_last_index(directory):
-#    index_list = []  # using a list for simplicity
-#    if os.path.exists(directory):
-#        for filename in os.listdir(directory):
-#            if filename.startswith('data') and filename.endswith(".npz"):
-#                index = filter(str.isdigit, filename)
-#                if len(index) > 0:
-#                    index_list.append(int(index))
-#
-#    if len(index_list):
-#        return max(index_list)
-#    else:
-#        return 0
-    
-loops = 10 
+DEBUG = False
+loops = 50 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/rand_steps_threshold2'
+savedir = 'data/steps_threshold_20_10'
 #savedir = 'data/rand_full'
 
-#prim_filename = 'round411'
-#prim_dirname = 'data/batch_random_12_12'
-
-#prim_filename = 'primitives.npz'
-#prim_dirname = 'data/art3D'
 prim_dirname = 'data/batch_random_20_10'
 ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
-#full_filename = os.path.join(prim_dirname, prim_filename)
-
-#print true_dim
-#exit()
-
 
 loop_start = get_last_index(savedir)+1
 print loop_start
@@ -56,7 +33,7 @@ prim = PrimitiveUtterance()
 prim.LoadPrimitives(prim_filename, prim_dirname)
 
 true_dim = prim.K.shape[0]
-dim = 3
+dim = true_dim
 
 #for k in range(loop_start, loop_start+loops):
 #for k in range(loops):
@@ -104,7 +81,6 @@ while k < loop_start + loops:
     handler = DataHandler()
     handler.params = prim.GetParams()
 
-
     while prim.NotDone():
         action = rand.GetAction(prim.NowSecondsLooped())
         #print action
@@ -112,13 +88,14 @@ while k < loop_start + loops:
         prim.SimulatePeriod(control_action=action)
 
     # debug outputs, plot state, actions, and sound
-    plt.figure()
-    plt.plot(prim.state_hist.T)
-    plt.figure()
-    plt.plot(prim.action_hist.T)
-    plt.figure()
-    plt.plot(prim.utterance.data['sound_wave'])
-    plt.show()
+    if DEBUG:
+        plt.figure()
+        plt.plot(prim.state_hist.T)
+        plt.figure()
+        plt.plot(prim.action_hist.T)
+        plt.figure()
+        plt.plot(prim.utterance.data['sound_wave'])
+        plt.show()
 
     ## manually save state action history
     #save_data = {}
@@ -128,11 +105,11 @@ while k < loop_start + loops:
     #print prim.state_hist.shape
     
     sound = prim.GetSoundWave()
-    energy = np.sum((sound[1:] - sound[:-1])**2)/sound.size
+    energy = np.sum((sound[1:] - sound[:-1])**2)
 
     print "*"*50
-    print "Average energy: %f"%energy
-    if energy > 0.002:
+    print "Total energy: %f"%energy
+    if energy > 10**(-3):
         prim.SaveOutputs(fname=str(k))
         print "Saved k=%i"%k
         k = k+1
