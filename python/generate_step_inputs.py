@@ -20,6 +20,7 @@ utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
 savedir = 'data/steps_threshold_20_10'
+sequence_dir = 'data/noisy_inputs'
 #savedir = 'data/rand_full'
 
 prim_dirname = 'data/batch_random_20_10'
@@ -42,39 +43,55 @@ k = loop_start
 failed_attempts = 0
 while k < loop_start + loops:
 
-    # random steps
-    initial_control = np.zeros(true_dim)
-    initial_control[:dim] = np.random.random(dim)*2. - 1.
-    end_control = np.zeros(true_dim)
-    end_control[:dim] = np.random.random(dim)*2 - 1.
-
+    # initialize new utterance object
     prim.utterance = Utterance(directory = savedir, 
                                utterance_length=utterance_length, 
                                loops=loops,
                                addDTS=False)
                                #initial_art = prim.GetControlMean(),
 
-
-
     # compute sample period in seconds
     sample_period = 1./8000 #prim.control_period/prim.utterance.sample_freq
 
-    # setup action sequence
-    rand = ActionSequence(dim=dim,
-                          initial_action=initial_control,
-                          sample_period=sample_period,
-                          random=False,
-                          min_increment=0.1, # 20*sample_period, 
-                          max_increment=0.1, # 20*sample_period,
-                          max_delta_target=0.8)
+    ind= get_last_index(sequence_dir, 'sequence')
 
-    # set intial and final targets
-    for factor in range(dim):
-        #print factor, initial_control[factor], end_control[factor]
-        rand.SetManualTarget(factor, initial_control[factor], 0.)
-        rand.SetManualTarget(factor, initial_control[factor], 0.1)
-        rand.SetManualTarget(factor, end_control[factor], 0.2) # need to look at effect of transition time too
-        rand.SetManualTarget(factor, end_control[factor], 1.0)
+    if np.random.random() > 0.8 or ind==0:
+            
+        print "Generating random input sequence"
+        # random steps
+        initial_control = np.zeros(true_dim)
+        initial_control[:dim] = np.random.random(dim)*2. - 1.
+        end_control = np.zeros(true_dim)
+        end_control[:dim] = np.random.random(dim)*2 - 1.
+
+        # setup action sequence
+        rand = ActionSequence(dim=dim,
+                              initial_action=initial_control,
+                              sample_period=sample_period,
+                              random=False,
+                              min_increment=0.1, # 20*sample_period, 
+                              max_increment=0.1, # 20*sample_period,
+                              max_delta_target=0.8)
+
+        # set intial and final targets
+        for factor in range(dim):
+            #print factor, initial_control[factor], end_control[factor]
+            rand.SetManualTarget(factor, initial_control[factor], 0.)
+            rand.SetManualTarget(factor, initial_control[factor], 0.1)
+            rand.SetManualTarget(factor, end_control[factor], 0.2) # need to look at effect of transition time too
+            rand.SetManualTarget(factor, end_control[factor], 1.0)
+
+    else:
+        rand = ActionSequence(dim=dim,
+                              sample_period=sample_period,
+                              random=False,
+                              min_increment=0.1, # 20*sample_period, 
+                              max_increment=0.1, # 20*sample_period,
+                              max_delta_target=0.8)
+        rand.LoadSequence(fname='sequence'+str(ind), directory=sequence_dir)
+        rand.PerturbManualTargets(epsilon=0.2)
+
+
 
     prim.InitializeControl(initial_art = prim.GetControl(rand.GetAction(time=0.0)))
 
@@ -95,7 +112,7 @@ while k < loop_start + loops:
         plt.plot(prim.action_hist.T)
         plt.figure()
         plt.plot(prim.utterance.data['sound_wave'])
-        plt.show()
+        plt.show(block=False)
 
     ## manually save state action history
     #save_data = {}
@@ -111,9 +128,9 @@ while k < loop_start + loops:
     print "Total energy: %f"%energy
     if energy > 10**(-3):
         prim.SaveOutputs(fname=str(k))
+        rand.SaveSequence(fname='sequence'+str(k), directory=sequence_dir)
         print "Saved k=%i"%k
         k = k+1
-
     else:
         failed_attempts= failed_attempts + 1
         print "Utterance below sound threshold: %i"%failed_attempts

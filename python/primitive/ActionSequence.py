@@ -113,6 +113,18 @@ class ActionSequence(object):
             data = np.load(os.path.join(self.directory, fname))
             self.manual_targets = data['manual_targets'].item()
 
+        self.UpdateManualInit()
+
+        
+    def UpdateManualInit(self):
+        # take care of initial_action
+        for muscle in self.manual_targets:
+            where_init = np.where(self.manual_targets[muscle][:, 0] == 0.)
+            if len(where_init)>0:
+                self.current_target[muscle, 0] = 0.;
+                self.current_target[muscle, 1] = self.manual_targets[muscle][where_init, 1];
+
+
     def Reset(self, initial_art=None):
         if initial_art == None:
             if self._random:
@@ -206,8 +218,10 @@ class ActionSequence(object):
 
         # add manual target to the list
         if muscle in self.manual_targets:
+            # over write if a target already exists at a given point in time
             where_equal = self.manual_targets[muscle][:, 0] == time
-            if np.any(self.manual_targets[muscle][:, 0] == time):
+            #if np.any(self.manual_targets[muscle][:, 0] == time):
+            if np.any(where_equal):
                 self.manual_targets[muscle][np.where(where_equal), 1] = target
             else:
                 self.manual_targets[muscle] = np.vstack((self.manual_targets[muscle], [time, target]))
@@ -217,6 +231,12 @@ class ActionSequence(object):
         sort_ind = np.argsort(self.manual_targets[muscle][:, 0])
         self.manual_targets[muscle][:, 0] = self.manual_targets[muscle][sort_ind, 0]
         self.manual_targets[muscle][:, 1] = self.manual_targets[muscle][sort_ind, 1]
+
+    def PerturbManualTargets(self, epsilon=0.1):
+        for muscle in self.manual_targets:
+            self.manual_targets[muscle][:, 1] += (np.random.random(self.manual_targets[muscle].shape[0])-0.5)*epsilon
+
+        self.UpdateManualInit()
     
     def UpdateTime(self, now):
         # set current time to now
@@ -249,12 +269,13 @@ class ActionSequence(object):
 
 if __name__ == '__main__':
     d = 9
-    rand = ActionSequence(dim=d, initial_action=np.zeros(d), sample_period=1./8000, delayed_start = 0.1, random=True)
+    rand = ActionSequence(dim=d, initial_action=np.zeros(d), sample_period=1./8000, delayed_start = 0.0, random=True)
                         #initial_art=np.random.random(self._dim))
     print rand._dim
 
     rand.SetManualTarget(0, 0.0, 0.5)
     rand.SetManualTarget(0, 0.5, 1.)
+    rand.PerturbManualTargets()
     N= 10000
     x = np.zeros((N, rand._dim))
 
@@ -273,8 +294,9 @@ if __name__ == '__main__':
     print rand.manual_targets
     
     import pylab as plt
-    for k in range(x.shape[1]):
-        plt.plot(x[:, k])
+#    for k in range(x.shape[1]):
+#        plt.plot(x[:, k])
+    plt.plot(x[:, 0])
     plt.show()
 
 
