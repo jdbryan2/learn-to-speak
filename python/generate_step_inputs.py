@@ -11,11 +11,13 @@ from primitive.Utterance import Utterance
 from primitive.ActionSequence import ActionSequence
 from primitive.DataHandler import DataHandler
 
+from features.BaseFeatures import moving_average as moving_average
+
 import pylab as plt
 from genfigures.plot_functions import *
 
 DEBUG = False
-loops = 50 
+loops = 100 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
@@ -55,7 +57,7 @@ while k < loop_start + loops:
 
     ind= get_last_index(sequence_dir, 'sequence')
 
-    if np.random.random() > 0.8 or ind==0:
+    if np.random.random() < 0.9**(0.05*k) or ind==0:
             
         print "Generating random input sequence"
         # random steps
@@ -82,16 +84,17 @@ while k < loop_start + loops:
             rand.SetManualTarget(factor, end_control[factor], 1.0)
 
     else:
+
         rand = ActionSequence(dim=dim,
                               sample_period=sample_period,
                               random=False,
                               min_increment=0.1, # 20*sample_period, 
                               max_increment=0.1, # 20*sample_period,
                               max_delta_target=0.8)
-        rand.LoadSequence(fname='sequence'+str(ind), directory=sequence_dir)
+        selection = np.random.randint(1, ind+1)
+        print "Generating perturbation of sequence "+str(selection)
+        rand.LoadSequence(fname='sequence'+str(selection), directory=sequence_dir)
         rand.PerturbManualTargets(epsilon=0.2)
-
-
 
     prim.InitializeControl(initial_art = prim.GetControl(rand.GetAction(time=0.0)))
 
@@ -122,15 +125,23 @@ while k < loop_start + loops:
     #print prim.state_hist.shape
     
     sound = prim.GetSoundWave()
-    energy = np.sum((sound[1:] - sound[:-1])**2)
+    total_energy = np.sum((sound[1:] - sound[:-1])**2)
+
 
     print "*"*50
-    print "Total energy: %f"%energy
-    if energy > 10**(-3):
+    print "Total energy: %f"%total_energy
+
+    if total_energy > 10**(-3):
         prim.SaveOutputs(fname=str(k))
         rand.SaveSequence(fname='sequence'+str(k), directory=sequence_dir)
         print "Saved k=%i"%k
         k = k+1
+
+        #energy = (sound[1:] - sound[:-1])**2
+        #average_energy = moving_average(energy.reshape((1,-1)), 100)
+        #plt.plot(average_energy.flatten())
+        #plt.show()
+
     else:
         failed_attempts= failed_attempts + 1
         print "Utterance below sound threshold: %i"%failed_attempts
