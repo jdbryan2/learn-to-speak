@@ -17,7 +17,7 @@ import pylab as plt
 from genfigures.plot_functions import *
 
 DEBUG = False
-loops = 100 
+loops = 400 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
@@ -57,7 +57,7 @@ while k < loop_start + loops:
 
     ind= get_last_index(sequence_dir, 'sequence')
 
-    if np.random.random() < 0.9**(0.05*k) or ind==0:
+    if ind==0 or np.random.random() > 0.2: #0.9**(0.05*k):
             
         print "Generating random input sequence"
         # random steps
