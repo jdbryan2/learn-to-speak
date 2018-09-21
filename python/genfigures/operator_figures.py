@@ -3,13 +3,13 @@ import os
 import numpy as np
 import pylab as plt
 from primitive.IncrementalDFA import SubspaceDFA
-from matplotlib2tikz import save as tikz_save
+#from matplotlib2tikz import save as tikz_save
 
 from plot_functions import *
 
 #dim = 8
 #sample_period = 10
-dirname = '../data/batch_random_12_12'
+dirname = '../data/batch_random_20_10'
 #from test_params import *
 
 savedir = '../data/' + dirname + '/figures/learn/'

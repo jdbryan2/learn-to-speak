@@ -16,13 +16,19 @@ from features.BaseFeatures import moving_average as moving_average
 import pylab as plt
 from genfigures.plot_functions import *
 
+NO_THRESHOLD = True
 DEBUG = False
 loops = 400 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/steps_threshold_20_10'
-sequence_dir = 'data/noisy_inputs'
+if NO_THRESHOLD:
+    savedir = 'data/steps_20_10'
+    sequence_dir = 'data/all_sequences'
+else:
+    savedir = 'data/steps_threshold_20_10'
+    sequence_dir = 'data/noisy_inputs'
+
 #savedir = 'data/rand_full'
 
 prim_dirname = 'data/batch_random_20_10'
@@ -57,7 +63,7 @@ while k < loop_start + loops:
 
     ind= get_last_index(sequence_dir, 'sequence')
 
-    if ind==0 or np.random.random() > 0.2: #0.9**(0.05*k):
+    if ind==0 or np.random.random() > 0.2 or NO_THRESHOLD: #0.9**(0.05*k):
             
         print "Generating random input sequence"
         # random steps
@@ -131,7 +137,7 @@ while k < loop_start + loops:
     print "*"*50
     print "Total energy: %f"%total_energy
 
-    if total_energy > 10**(-3):
+    if total_energy > 10**(-3) or NO_THRESHOLD:
         prim.SaveOutputs(fname=str(k))
         rand.SaveSequence(fname='sequence'+str(k), directory=sequence_dir)
         print "Saved k=%i"%k

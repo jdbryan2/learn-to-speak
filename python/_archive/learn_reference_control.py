@@ -5,7 +5,7 @@ import pylab as plt
 
 #directory = "data/batch_zeros_100_10"
 #directory = "data/rand_steps_full"
-directory = "data/rand_prim_5sec"
+directory = "../data/steps_threshold_20_10"
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):
@@ -16,6 +16,7 @@ if os.path.exists(directory):
 
 
 index_list = np.array(sorted(index_list))
+print index_list
 
 is_init = False
 A_dim = 10

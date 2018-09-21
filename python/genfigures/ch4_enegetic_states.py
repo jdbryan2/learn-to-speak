@@ -31,9 +31,10 @@ index_list = handler.GetIndexList(directory=directory)
 print "Loading data from: " + directory
 E = np.array([])
 M = np.array([])
-for index in index_list[:10]:
+for index in index_list[:100]:
     handler.LoadDataDir(directory=directory, min_index=index, max_index=index)
     state = handler.raw_data['state_hist_1']
+    #state = handler.raw_data['action_hist_1']
     sound = handler.raw_data['sound_wave'][0]
 
     # find states where the energy is above average
@@ -78,6 +79,9 @@ plt.scatter(E[1, :], E[2, :])
 #plt.plot(E)
 plt.figure()
 plt.imshow(M, interpolation='none', aspect=1.*M.shape[1]/M.shape[0])
+
+plt.figure()
+plt.plot(state.T)
 plt.show()
 
 
