@@ -17,19 +17,6 @@ from matplotlib2tikz import save as tikz_save
 
 from genfigures.plot_functions import *
 
-#def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_style='b-'):
-#    #if data.shape[1] < max_length:
-#    #    max_length= data.shape[1]
-#
-#    print max_length
-#
-#    for k in range(rows.size):
-#        if k == highlight: 
-#            plt.plot(np.arange(max_length)*sample_period/8000., data[rows[k], :max_length], highlight_style, linewidth=2)
-#        else:
-#            plt.plot(np.arange(max_length)*sample_period/8000., data[rows[k], :max_length], 'b-', alpha=0.3)
-#
-#    plt.xlim((0, max_length*sample_period/8000.))
 
 #import test_params
 from test_params import *
