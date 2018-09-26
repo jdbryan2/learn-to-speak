@@ -15,25 +15,19 @@ from primitive.Utterance import Utterance
 import Artword as aw
 from matplotlib2tikz import save as tikz_save
 
-def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_style='b-'):
-    #if data.shape[1] < max_length:
-    #    max_length= data.shape[1]
+from genfigures.plot_functions import *
 
-    print max_length
-
-    for k in range(rows.size):
-        if k == highlight: 
-            plt.plot(np.arange(max_length)*sample_period/8000., data[rows[k], :max_length], highlight_style, linewidth=2)
-        else:
-            plt.plot(np.arange(max_length)*sample_period/8000., data[rows[k], :max_length], 'b-', alpha=0.3)
-
-    plt.xlim((0, max_length*sample_period/8000.))
 
 #import test_params
 from test_params import *
 #primdir = dirname+'_prim'
 #primdir = "data/batch_zeros_100_10/"
-primdir = "data/batch_random_12_12/"
+prim_dirname = '../data/batch_random_20_10'
+ind= get_last_index(prim_dirname, 'round')
+prim_filename = 'round%i.npz'%ind
+
+feedback_dir = "../data/steps_20_10"
+
 #fname = "round1"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
@@ -41,7 +35,7 @@ ATM = 101325. # one atm in pascals
 rnd = 411
 
 #load learned feedback params
-feedback = np.load('data/rand_prim_5sec/feedback.npz')
+feedback = np.load(feedback_dir+'/feedback.npz')
 #feedback = np.load('data/rand_full/feedback.npz')
 gain = feedback['K']
 A = feedback['A']
@@ -49,8 +43,10 @@ B = feedback['B']
 I = np.eye(A.shape[0])
 
 
-control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
-control.utterance = Utterance(directory="data/%i_out"%rnd, utterance_length=3.)
+control = PrimitiveUtterance()
+control.LoadPrimitives(prim_filename, prim_dirname)
+#control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
+control.utterance = Utterance(directory="../data/%i_out"%rnd, utterance_length=3.)
 #control.SetUtterance(utterance)
 
 print control.K
@@ -71,8 +67,8 @@ Ts = 1000/(sample_period)
 
 # Setup state variables
 current_state = control.current_state
-desired_state = np.zeros(current_state.shape)
-#desired_state = -0.5*np.ones(current_state.shape)
+#desired_state = np.zeros(current_state.shape)
+desired_state = -0.5*np.ones(current_state.shape)
 #desired_state[0] = -0.5
 
 delta_action = np.zeros(initial_action.shape)
@@ -82,7 +78,7 @@ current_action = np.copy(initial_action)
 j=0
 max_inc = 0.5
 #target_action = np.dot(gain, current_state) 
-scale = 0.9
+scale = 0.2
 while control.NotDone():
     
     #delta_action = np.dot(la.pinv(B), desired_state-np.dot(A, current_state))

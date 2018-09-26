@@ -13,40 +13,33 @@ from primitive.DataHandler import DataHandler
 
 import pylab as plt
 
-def get_last_index(directory):
-    index_list = []  # using a list for simplicity
-    if os.path.exists(directory):
-        for filename in os.listdir(directory):
-            if filename.startswith('data') and filename.endswith(".npz"):
-                index = filter(str.isdigit, filename)
-                if len(index) > 0:
-                    index_list.append(int(index))
-
-    if len(index_list):
-        return max(index_list)
-    else:
-        return 0
+from genfigures.plot_functions import *
     
-loops = 10 
+loops = 500 
 utterance_length = 5. #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/rand_steps_full'
+#savedir = 'data/rand_steps_full'
 savedir = 'data/rand_prim_5sec'
 
-prim_filename = 'round550'
-prim_dirname = 'data/batch_random_1_1'
-full_filename = os.path.join(prim_dirname, prim_filename)
+#prim_filename = 'round550'
+#prim_dirname = 'data/batch_random_1_1'
+#full_filename = os.path.join(prim_dirname, prim_filename)
+
+prim_dirname = 'data/batch_random_20_10'
+ind= get_last_index(prim_dirname, 'round')
+prim_filename = 'round%i.npz'%ind
 
 true_dim = 10#prim._dim 
 
 
-loop_start = get_last_index(savedir)+1
+loop_start = get_last_index(savedir, 'data')+1
 print loop_start
 
 for k in range(loop_start, loop_start+loops):
     prim = PrimitiveUtterance()
-    prim.LoadPrimitives(full_filename)
+    #prim.LoadPrimitives(full_filename)
+    prim.LoadPrimitives(prim_filename, prim_dirname) # updated loading function
 
     initial_control = np.zeros(prim._dim)
     initial_control[:true_dim] = np.random.random(true_dim)*2. - 1.
@@ -62,7 +55,7 @@ for k in range(loop_start, loop_start+loops):
 
 
 # compute sample period in seconds
-    sample_period = prim.control_period/prim.utterance.sample_freq
+    sample_period = prim._sample_period/prim.utterance.sample_freq
 
 # setup action sequence
     rand = ActionSequence(dim=prim._dim,
@@ -94,15 +87,15 @@ for k in range(loop_start, loop_start+loops):
     #    #print prim.NowSecondsLooped()
     #    prim.SimulatePeriod(control_action=action)
 
-    plt.figure()
-    plt.plot(prim.state_hist.T)
-    plt.figure()
-    plt.plot(prim.action_hist.T)
-    plt.show()
+    #plt.figure()
+    #plt.plot(prim.state_hist.T)
+    #plt.figure()
+    #plt.plot(prim.action_hist.T)
+    #plt.show()
 
-    handler.raw_data = prim.GetOutputs()
+    #handler.raw_data = prim.GetOutputs()
     #handler.SaveAnimation(directory=prim.utterance.directory,fname="vid"+str(k))
-    #prim.SaveOutputs(fname=str(k))
+    prim.SaveOutputs(fname=str(k))
 
 
     

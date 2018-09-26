@@ -217,6 +217,8 @@ class PrimitiveHandler(BaseObject):
         self._past = primitives['past'].item()
         self._future = primitives['future'].item()
 
+        self._dim = self.K.shape[0]
+
         # Fucking backward compatibility
         if 'sample_period' in primitives:
             self._sample_period = primitives['sample_period'].item() 
