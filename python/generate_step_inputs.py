@@ -18,7 +18,7 @@ from genfigures.plot_functions import *
 
 NO_THRESHOLD = True
 DEBUG = False
-loops = 400 
+loops = 500 
 utterance_length = 0.5 #10.0
 #full_utterance = loops*utterance_length
 
