@@ -15,7 +15,7 @@ import pylab as plt
 
 from genfigures.plot_functions import *
     
-loops = 1 
+loops = 500 
 utterance_length = 5. #10.0
 #full_utterance = loops*utterance_length
 
@@ -33,7 +33,7 @@ prim_filename = 'round%i.npz'%ind
 true_dim = 10#prim._dim 
 
 
-loop_start = get_last_index(savedir)+1
+loop_start = get_last_index(savedir, 'data')+1
 print loop_start
 
 for k in range(loop_start, loop_start+loops):
@@ -87,15 +87,15 @@ for k in range(loop_start, loop_start+loops):
     #    #print prim.NowSecondsLooped()
     #    prim.SimulatePeriod(control_action=action)
 
-    plt.figure()
-    plt.plot(prim.state_hist.T)
-    plt.figure()
-    plt.plot(prim.action_hist.T)
-    plt.show()
+    #plt.figure()
+    #plt.plot(prim.state_hist.T)
+    #plt.figure()
+    #plt.plot(prim.action_hist.T)
+    #plt.show()
 
-    handler.raw_data = prim.GetOutputs()
+    #handler.raw_data = prim.GetOutputs()
     #handler.SaveAnimation(directory=prim.utterance.directory,fname="vid"+str(k))
-    #prim.SaveOutputs(fname=str(k))
+    prim.SaveOutputs(fname=str(k))
 
 
     
