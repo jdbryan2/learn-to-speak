@@ -19,16 +19,17 @@ from __future__ import division, print_function, absolute_import
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
+#mnist = input_data.read_data_sets("/home/jacob/Projects/Data/MNIST_data", one_hot=True)
 
 BATCH_SIZE = 50
 GRID_ROWS = 5
 GRID_COLS = 10
 USE_RELU = True
-num_steps = 100000
+num_steps = 1000
 display_step = 1000
 
 def weight_variable(shape):
@@ -71,7 +72,8 @@ def autoencoder(x, squeeze=2):
 
 def main():
     # initialize the data
-    mnist = input_data.read_data_sets('/tmp/MNIST_data')
+    mnist = input_data.read_data_sets("/home/jacob/Projects/Data/MNIST_data")
+
 
     # placeholders for the images
     x = tf.placeholder(tf.float32, shape=[None, 784])
@@ -87,10 +89,24 @@ def main():
 
     first_batch = mnist.train.next_batch(BATCH_SIZE)
 
+    init_op = tf.global_variables_initializer()
+
+    saver = tf.train.Saver()
+    save_file = "/home/jacob/Projects/Data/model.ckpt"
+
     # Run the training loop
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
 
+        sess.run(init_op)
+
+        # load previous model if it already exists
+        if os.path.exists(save_file+'.index'):
+            print("#########################")
+            print("Loading previous model...")
+            print("#########################")
+            saver.restore(sess, save_file)
+
+        # run another round of iterations
         for i in range(1, int(num_steps+1)):
             batch, _ = mnist.train.next_batch(BATCH_SIZE)
             #feed = {x : batch[0]}
@@ -100,6 +116,8 @@ def main():
             # Display logs per step
             if i % display_step == 0 or i == 1:
                 print('Step %i: Minibatch Loss: %f' % (i, l))
+
+            save_path = saver.save(sess, save_file)
 
 
         # Testing
