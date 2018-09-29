@@ -5,7 +5,8 @@
 import numpy as np
 import pylab as plt
 import scipy.linalg as lin
-from primitive.SubspacePrim import PrimLearn
+from primitive.SubspaceDFA import SubspaceDFA
+from features.ArtFeatures import ArtFeatures
 from matplotlib2tikz import save as tikz_save
 ## pretty sure these aren't used ##
 #import scipy.signal as signal
@@ -41,35 +42,41 @@ def AIC(X):
 
 
 dim = 8
-sample_period = 5
-dirname = 'full_random_500'
-dirname = 'structured_masseter_500'
+sample_period = 8
+sample_period_ms = sample_period/8.
+dirname = '../data (prelim)/full_random_10'
+#dirname = 'structured_masseter_500'
 
-ss = PrimLearn()
+ss = SubspaceDFA(sample_period=sample_period)
+ss.Features = ArtFeatures()
 #ss.LoadDataDir(dirname)
 #ss.ConvertData(sample_period)
-ss.ConvertDataDir(dirname, sample_period=sample_period)
+ss.LoadDataDir(directory=dirname, sample_period=sample_period)
 
-feature_dim = ss._data.shape[0]
+feature_dim = ss.feature_data.shape[0]
 
 #aic_0 = AIC(ss._data)
 #plt.plot(aic_0)
 #plt.show()
 
-
-max_dim = 50
-ss.PreprocessData(0, max_dim, sample_period=sample_period)
+#print ss.feature_data.shape
+print "Data matrix: %i x %i"% (feature_dim, ss.feature_data.shape[1])
+max_dim = 20
+print "Preprocessing..."
+ss.PreprocessData(0, max_dim)
+print "Restructured matrix shape: %i x %i"%ss.Xf.shape
+print "Computing AIC..."
 aic_50 = AIC(ss.Xf)
-plt.plot(np.arange(max_dim*feature_dim-1)*1.0*sample_period/feature_dim, aic_50/np.max(aic_50))
+plt.plot(np.arange(max_dim*feature_dim-1)*1.0*sample_period_ms/feature_dim, aic_50/np.max(aic_50))
 plt.xlabel("Time (ms)")
 plt.ylabel("AIC")
 plt.grid(True)
 aic_min = np.argmin(aic_50)
-plt.plot([aic_min*1.0*sample_period/feature_dim], [aic_50[aic_min]/np.max(aic_50)], 'ro')
+plt.plot([aic_min*1.0*sample_period_ms/feature_dim], [aic_50[aic_min]/np.max(aic_50)], 'ro')
 
-print "Min Value: ", aic_min*1.*sample_period/feature_dim
+print "Min Value: ", aic_min*1.*sample_period_ms/feature_dim
 
-tikz_save('data/' + dirname + '/aic.tikz',
+tikz_save('aic.tikz',
     figureheight = '\\figureheight',
     figurewidth = '\\figurewidth')
 plt.show()

@@ -49,6 +49,7 @@ class SubspaceDFA(DataHandler):
 
         """
         # initialize the variables
+        super(SubspaceDFA, self).InitVars()
 
         # preprocessed data matrices
         self.Xf = np.array([])
@@ -78,7 +79,6 @@ class SubspaceDFA(DataHandler):
             N/A
 
         """
-
         super(SubspaceDFA, self).DefaultParams()
         # internal paramters 
         # dimensions of past and future histories and internal state dimension
@@ -103,7 +103,7 @@ class SubspaceDFA(DataHandler):
 
         """
 
-        super(SubspaceDFA, self).InitParams(**kwargs)
+        super(SubspaceDFA, self).UpdateParams(**kwargs) # parent class had this method name changed, too lazy to update this outdated class
         self._past = kwargs.get('past', self._past)
         self._future = kwargs.get('future', self._future)
         self._dim = kwargs.get('dim', self._dim)

@@ -184,7 +184,7 @@ for k in range(dim):
         #plt.show()
         plt.close()
 
-    plt.show()
+    #plt.show()
 
-plt.show()
+#plt.show()
 
