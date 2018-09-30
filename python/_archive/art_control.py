@@ -27,6 +27,7 @@ ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
 
 feedback_dir = "../data/steps_20_10"
+feedback_dir = "../data/rand_prim_5sec"
 
 #fname = "round1"
 ATM = 14696. # one atmosphere in mPSI

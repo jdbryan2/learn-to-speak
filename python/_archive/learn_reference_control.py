@@ -5,7 +5,8 @@ import pylab as plt
 
 #directory = "data/batch_zeros_100_10"
 #directory = "data/rand_steps_full"
-directory = "../data/steps_20_10"
+#directory = "../data/steps_20_10"
+directory = "../data/rand_prim_5sec" # random stimulation at primitive inputs
 
 index_list = []  # using a list for simplicity
 if os.path.exists(directory):
