@@ -14,9 +14,10 @@ from primitive.PrimitiveUtterance import PrimitiveUtterance
 from primitive.Utterance import Utterance
 import Artword as aw
 from learners.Learner import Learner
+
 # For getting tracking
-from primitive.SubspaceDFA import SubspaceDFA
-from features.ArtFeatures import ArtFeatures
+#from primitive.SubspaceDFA import SubspaceDFA
+#from features.ArtFeatures import ArtFeatures
 
 # Hacky way to get initial articulation/primitive value from some desired vocal tract shape
 
@@ -24,9 +25,15 @@ from features.ArtFeatures import ArtFeatures
 
 
 
+from genfigures.plot_functions import *
 #import test_params
-from test_params import *
-primdir = dirname+'_prim'
+#from test_params import *
+#primdir = dirname+'_prim'
+primdir = '../data/batch_random_20_10'
+ind= get_last_index(primdir, 'round')
+prim_fname = 'round%i.npz'%ind
+print "Loading from: %s/%s"%(primdir, prim_fname)
+save_dir = '../data/qlearn/output'
 
 # With no reset and using simple reward
 # this scheme works well to oscillate right about goal state
@@ -50,7 +57,7 @@ primdir = dirname+'_prim'
 # we get good results. It oscilates about the goal, with occasional disturbances popping
 # up.
 
-max_seconds =   5.0
+max_seconds =   1.0
 # RANDOM INIT
 initial_art=np.random.random((aw.kArt_muscle.MAX, )) #------
 # STATIC INIT
@@ -77,23 +84,36 @@ initial_art[aw.kArt_muscle.SPHINCTER] = 0.7
 initial_art[aw.kArt_muscle.HYOGLOSSUS] = 0.3
 """
 
+
+control = PrimitiveUtterance()
+control.LoadPrimitives(prim_fname, primdir)
+control.utterance = Utterance(directory=save_dir, utterance_length=max_seconds)
+
+# pull in relevant stuff from PrimitiveUtterance
+sample_period = control._sample_period
+dim = 2 # dimension of states we will try to control
+full_dim = control._dim
+past = control._past
+future = control._future
+
+initial_action = np.random.random(control._dim)
+initial_art = control.GetControl(initial_action)
 print "Initial Articulation"
 print initial_art
+control.InitializeControl(initial_art=initial_art)
 
-control = PrimitiveUtterance(dir_name=primdir,
-                             prim_fname=load_fname,
-                             loops=1,
-                             utterance_length=max_seconds,
-                             initial_art = initial_art)
-
+sample_period_ms = sample_period/8.
 Ts = 1000/(sample_period_ms)
+print "Sample Period (ms): ", sample_period_ms
 
 
 # Initialize q learning class
-num_state_bins = 10
+num_state_bins = 11
 num_action_bins = 3
-num_int_state_bins = 10
+num_int_state_bins = 11
 reset_action = 100
+
+action_lims = 0.1
 # 1DState
 """
 goal_state = 1
@@ -111,9 +131,9 @@ states = states.reshape(1,states.shape[0])
 #first_state = first_state.reshape(1,first_state.shape[0])
 #states = np.concatenate((first_state,first_state),axis=0)
 
-first_state = np.linspace(-4,2,num=num_state_bins)
+first_state = np.linspace(-2,2,num=num_state_bins)
 first_state = first_state.reshape(1,first_state.shape[0])
-other_state = np.linspace(-4,2,num=num_state_bins)
+other_state = np.linspace(-2,2,num=num_state_bins)
 other_state = other_state.reshape(1,other_state.shape[0])
 states = np.concatenate((first_state,other_state),axis=0)
 
@@ -137,7 +157,8 @@ print states
 #goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0),-1,-1])
 #goal_state_index = np.array([7,5])
 #1.2,-1.7 # For IPA 305
-goal_state_index = np.array([8,4])
+#goal_state_index = np.array([8,4])
+goal_state_index = np.array([5,5])
 print("Goal State")
 #print goal_state_index
 # 1DSTATE OR 2DSTATE
@@ -150,12 +171,14 @@ ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
 
 #1DACTION
-actions_inc = np.linspace(-0.5,0.5,num=num_action_bins)
+actions_inc = np.linspace(-action_lims, action_lims,num=num_action_bins)
 #actions_inc = np.linspace(-4.0,4.0,num=num_action_bins)
 #actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
 # 2DACTION
-actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
+#actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
+#actions_inc = np.tile(actions_inc, (control._dim, 1)) # full dimension action
+actions_inc = np.tile(actions_inc, (dim, 1)) # full dimension action
 print actions_inc
 
 q_learn = Learner(states = states,
@@ -164,10 +187,18 @@ q_learn = Learner(states = states,
                   actions = actions_inc,
                   alpha = 0.99)
 
+
+print "Q matrix: ", q_learn.Q.shape
+#plt.plot(_h)
+#savedir = 'data/' + primdir + '/figures/in_out/'
+#if not os.path.exists(savedir):
+#    os.makedirs(savedir)
+
+
 # Perform Q learning Control
 num_episodes = 100 #----10
-num_view_episodes = 2
-num_tests = 5
+num_view_episodes = 2 
+num_tests = 1
 rewards = np.zeros(num_episodes+num_tests)
 # TODO: Change to condition checking some change between Q functions
 for e in range(num_episodes+num_tests):
@@ -177,7 +208,10 @@ for e in range(num_episodes+num_tests):
     # STATIC INIT
     #control.InitializeControl(initial_art = initial_art)
     # RANDOM INIT
-    control.InitializeControl(initial_art = np.random.random((aw.kArt_muscle.MAX, )))
+    #initial_action = np.random.random(control._dim)
+    initial_action = np.random.randint(-10, 10, size=control._dim)/10.
+    initial_art = control.GetControl(initial_action)
+    control.InitializeControl(initial_art = initial_art)
     
     learning_offset = 5 #------0
     if e<learning_offset:
@@ -228,8 +262,11 @@ for e in range(num_episodes+num_tests):
 
     i = 0
     # Cumulative action command
-    action = np.zeros(actions_inc.shape[0])
-    action.reshape(1,action.shape[0])
+    action = np.copy(initial_action[:actions_inc.shape[0]])
+    print action
+    #action = np.zeros(actions_inc.shape[0])
+    #action.reshape(1,action.shape[0])
+
     # Get initial state
     state = control.current_state
     # INTSTATE
@@ -244,7 +281,8 @@ for e in range(num_episodes+num_tests):
     
         # Reset the acumulated action command to 0 if the reset action is taken
         # or if we are still in the transient due to initialization of past in primitives
-        if action_inc.all() == reset_action or i < past + 10:
+        #if action_inc.all() == reset_action or i < past + 10:
+        if action_inc.all() == reset_action: # don't worry about transient at initialization
             action = np.zeros(action.shape)
         else:
             # Make action state incremental
@@ -252,10 +290,13 @@ for e in range(num_episodes+num_tests):
             # Make action state absolute
             #action = action_inc
 
+        #action_padded = np.append(action, np.zeros(control._dim-dim))
+        action_padded = np.append(action, initial_action[dim:])
+
         ## Step Simulation
         # Currently give uncontrolled state zero command
         # 1DSTATE
-        next_state = control.SimulatePeriod(control_action=action)
+        next_state = control.SimulatePeriod(control_action=action_padded)
         # 2DSTATE with 1D control
         #next_state = control.SimulatePeriod(control_action=np.append(action,0))
         # INTSTATE
@@ -280,28 +321,41 @@ for e in range(num_episodes+num_tests):
     #pltm.imshow(q_learn.Q)
     #pltm.show()
     q_learn.resetEpisode()
-
+ 
+    print e, num_episodes, num_view_episodes
     if e >= num_episodes-num_view_episodes:
         _h = control.state_hist
 
-        prim_nums = np.arange(0,dim)
-        colors = ['b','g','r','c','m','y','k','0.75']
-        markers = ['o','o','o','o','x','x','x','x']
-        fig = plt.figure()
-        for prim_num, c, m in zip(prim_nums,colors,markers):
-            plt.plot(_h[prim_num][:],color=c)
+        #prim_nums = np.arange(0,dim)
+        #colors = ['b','g','r','c','m','y','k','0.75']
+        #markers = ['o','o','o','o','x','x','x','x']
+        ##for prim_num, c, m in zip(prim_nums,colors,markers):
+        #    #plt.plot(_h[prim_num][:],color=c)
         
+
+        fig = plt.figure()
+        MultiPlotTraces(control.state_hist, np.arange(control.state_hist.shape[0]), control.state_hist.shape[1],
+                        control._sample_period, highlight=[0, 1])
+        plt.title("Trial Run - Exploiting Q")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Primitive State")
+
         print("states")
         print states
         print("Goal State")
         print states[tuple(ind2d.astype(int))]
         # Remove last element from plot because we didn't perform an action
         # after the last update of the state history.
-        for k in range(actions_inc.shape[0]):
-            plt.plot(control.action_hist[k][0:-1], color=str(0.5+k/(2*actions_inc.shape[0])))
+        #for k in range(actions_inc.shape[0]):
+            #plt.plot(control.action_hist[k][0:-1], color=str(0.5+k/(2*actions_inc.shape[0])))
+
+        plt.figure()
+        MultiPlotTraces(control.action_hist, np.arange(control.action_hist.shape[0]), control.action_hist.shape[1],
+                        control._sample_period, highlight=[1])
+
         plt.title("Trial Run - Exploiting Q")
-        plt.xlabel("Samples taken at 50 Hz")
-        plt.ylabel("Primitive State")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Primitive Inputs")
         # 1DSTATE
         #fig = plt.figure()
         #pltm.imshow(q_learn.Q)
@@ -325,14 +379,14 @@ for e in range(num_episodes+num_tests):
         plt.title("Undiscounted Accumulated Reward throughout Training")
         plt.xlabel("Episode")
         plt.ylabel("Total Reward")
-        control.Save()
-        pltm.show()
+        control.SaveOutputs()
+        plt.show()
 
-print q_learn.Q
+print q_learn.Q.shape
 #plt.plot(_h)
-savedir = 'data/' + primdir + '/figures/in_out/'
-if not os.path.exists(savedir):
-    os.makedirs(savedir)
+#savedir = 'data/' + primdir + '/figures/in_out/'
+#if not os.path.exists(savedir):
+#    os.makedirs(savedir)
 
 
 
