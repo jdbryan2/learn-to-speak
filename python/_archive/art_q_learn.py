@@ -57,7 +57,7 @@ save_dir = '../data/qlearn/output'
 # we get good results. It oscilates about the goal, with occasional disturbances popping
 # up.
 
-max_seconds =   1.0
+max_seconds =   5.0
 # RANDOM INIT
 initial_art=np.random.random((aw.kArt_muscle.MAX, )) #------
 # STATIC INIT
@@ -91,7 +91,8 @@ control.utterance = Utterance(directory=save_dir, utterance_length=max_seconds)
 
 # pull in relevant stuff from PrimitiveUtterance
 sample_period = control._sample_period
-dim = 2 # dimension of states we will try to control
+dim = control._dim # dimension of states we will try to control
+target_dim = 2 # dimension of states we will try to control
 full_dim = control._dim
 past = control._past
 future = control._future
@@ -114,6 +115,7 @@ num_int_state_bins = 11
 reset_action = 100
 
 action_lims = 0.1
+state_lims = 1.
 # 1DState
 """
 goal_state = 1
@@ -131,9 +133,9 @@ states = states.reshape(1,states.shape[0])
 #first_state = first_state.reshape(1,first_state.shape[0])
 #states = np.concatenate((first_state,first_state),axis=0)
 
-first_state = np.linspace(-2,2,num=num_state_bins)
+first_state = np.linspace(-state_lims,state_lims,num=num_state_bins)
 first_state = first_state.reshape(1,first_state.shape[0])
-other_state = np.linspace(-2,2,num=num_state_bins)
+other_state = np.linspace(-state_lims,state_lims,num=num_state_bins)
 other_state = other_state.reshape(1,other_state.shape[0])
 states = np.concatenate((first_state,other_state),axis=0)
 
@@ -162,7 +164,7 @@ goal_state_index = np.array([5,5])
 print("Goal State")
 #print goal_state_index
 # 1DSTATE OR 2DSTATE
-ind2d = np.zeros((2,dim))
+ind2d = np.zeros((2,target_dim))
 # INTSTATE
 #ind2d = np.zeros((2,dim+1))
 #ind2d = np.zeros((2,dim*2))
@@ -210,6 +212,7 @@ for e in range(num_episodes+num_tests):
     # RANDOM INIT
     #initial_action = np.random.random(control._dim)
     initial_action = np.random.randint(-10, 10, size=control._dim)/10.
+    initial_action[dim:] = 0.
     initial_art = control.GetControl(initial_action)
     control.InitializeControl(initial_art = initial_art)
     
