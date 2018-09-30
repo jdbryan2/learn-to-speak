@@ -27,13 +27,15 @@ ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
 
 feedback_dir = "../data/steps_20_10"
-feedback_dir = "../data/rand_prim_5sec"
+feedback_dir = "./" # the feedback is coming from INSIDE THE HOUSE!
+
+save_dir = prim_dirname+("/%i_out"%ind)
 
 #fname = "round1"
 ATM = 14696. # one atmosphere in mPSI
 ATM = 101325. # one atm in pascals
 
-rnd = 411
+#rnd = ind
 
 #load learned feedback params
 feedback = np.load(feedback_dir+'/feedback.npz')
@@ -47,7 +49,9 @@ I = np.eye(A.shape[0])
 control = PrimitiveUtterance()
 control.LoadPrimitives(prim_filename, prim_dirname)
 #control = PrimitiveUtterance( prim_fname=primdir+"round%i"%rnd)
-control.utterance = Utterance(directory="../data/%i_out"%rnd, utterance_length=3.)
+control.utterance = Utterance(directory=save_dir, utterance_length=3.)
+save_dir = control.utterance.directory
+print save_dir
 #control.SetUtterance(utterance)
 
 print control.K
@@ -68,12 +72,19 @@ Ts = 1000/(sample_period)
 
 # Setup state variables
 current_state = control.current_state
-#desired_state = np.zeros(current_state.shape)
-desired_state = -0.5*np.ones(current_state.shape)
+desired_state = np.zeros(current_state.shape)
+desired_state = current_state+0.1
+#desired_state = -0.5*np.ones(current_state.shape)
 #desired_state[0] = -0.5
+
+initial_state = np.copy(current_state)
+
+plt.plot(current_state)
+plt.show()
 
 delta_action = np.zeros(initial_action.shape)
 current_action = np.copy(initial_action)
+
 
 # Perform Control
 j=0
@@ -111,12 +122,14 @@ while control.NotDone():
     #plt.show()
     j+=1
 
+
 plt.plot(control.utterance.data['sound_wave'])
 plt.show()
 plt.plot(control.state_hist[:, :].T)
 plt.show()
 control.SaveOutputs()
 #plt.plot(_h)
+np.savez(control.utterance.directory+"/target_data", initial_state=initial_state, desired_state=desired_state)
 
 #savedir = 'data/' + primdir + '/figures/in_out/'
 #if not os.path.exists(savedir):
@@ -137,22 +150,7 @@ PlotTraces(art_hist, np.arange(art_hist.shape[0]), art_hist.shape[1], sample_per
 #plt.plot(art_hist.T)
 plt.show()
 
-#prim_nums = np.arange(0,dim)
-#prim_nums = np.arange(3)
-##prim_nums = np.array([test_dim])
-#colors = ['b','g','r','c','m','y','k','0.75']
-#markers = ['o','o','o','o','x','x','x','x']
-#fig = plt.figure()
-#for prim_num, c, m in zip(prim_nums,colors,markers):
-#    plt.plot(_h[prim_num][:],color=c)
-#    plt.plot(control.action_hist[prim_num][0:-1], color=str(0.5+0.2*prim_num/prim_nums[-1]))
-#
-#
-## Remove last element from plot because we didn't perform an action
-## after the last update of the state history.
-##plt.plot(control.action_hist[test_dim][0:-1], color="0.5")
-#plt.show()
-#
+
 
 
 
