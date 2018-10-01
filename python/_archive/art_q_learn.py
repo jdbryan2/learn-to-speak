@@ -91,7 +91,7 @@ control.utterance = Utterance(directory=save_dir, utterance_length=max_seconds)
 
 # pull in relevant stuff from PrimitiveUtterance
 sample_period = control._sample_period
-dim = control._dim # dimension of states we will try to control
+dim = 2 #control._dim # dimension of states we will try to control
 target_dim = 2 # dimension of states we will try to control
 full_dim = control._dim
 past = control._past
