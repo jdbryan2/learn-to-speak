@@ -9,7 +9,9 @@ import os
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("/home/jacob/Projects/Data/MNIST_data")
 
+LOAD = True
 tf.reset_default_graph()
+
 
 batch_size = 64
 
@@ -76,23 +78,48 @@ sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
 
-for i in range(30000):
-    batch = [np.reshape(b, [28, 28]) for b in mnist.train.next_batch(batch_size=batch_size)[0]]
-    sess.run(optimizer, feed_dict = {X_in: batch, Y: batch, keep_prob: 0.8})
-        
-    if not i % 200:
-        ls, d, i_ls, d_ls, mu, sigm = sess.run([loss, dec, img_loss, latent_loss, mn, sd], feed_dict = {X_in: batch, Y: batch, keep_prob: 1.0})
-        plt.imshow(np.reshape(batch[0], [28, 28]), cmap='gray')
-        plt.show()
-        plt.imshow(d[0], cmap='gray')
-        plt.show()
-        print(i, ls, np.mean(i_ls), np.mean(d_ls))
+flavor_saver = tf.train.Saver()
+if LOAD:
+    flavor_saver.restore(sess, '/home/jacob/Desktop/model.ckpt')
+    
+else:
+    for i in range(400):
+        batch = [np.reshape(b, [28, 28]) for b in mnist.train.next_batch(batch_size=batch_size)[0]]
+        sess.run(optimizer, feed_dict = {X_in: batch, Y: batch, keep_prob: 0.8})
+            
+        if not i % 200:
+            ls, d, i_ls, d_ls, mu, sigm = sess.run([loss, dec, img_loss, latent_loss, mn, sd], feed_dict = {X_in: batch, Y: batch, keep_prob: 1.0})
+            plt.imshow(np.reshape(batch[0], [28, 28]), cmap='gray')
+            plt.show(block=False)
+            plt.imshow(d[0], cmap='gray')
+            plt.show(block=False)
+            print(i, ls, np.mean(i_ls), np.mean(d_ls))
+
+    flavor_saver.save(sess, '/home/jacob/Desktop/model.ckpt')
 
 randoms = [np.random.normal(0, 1, n_latent) for _ in range(10)]
+print(randoms)
 imgs = sess.run(dec, feed_dict = {sampled: randoms, keep_prob: 1.0})
-imgs = [np.reshape(imgs[i], [28, 28]) for i in range(len(imgs))]
+imgs_view = [np.reshape(imgs[i], [28, 28]) for i in range(len(imgs))] 
 
-for img in imgs:
-    plt.figure(figsize=(1,1))
-    plt.axis('off')
-    plt.imshow(img, cmap='gray')
+est_randoms = sess.run(sampled, feed_dict = {X_in:imgs, keep_prob:1.0})
+est_randoms2 = sess.run(mn, feed_dict = {X_in:imgs, keep_prob:1.0})
+print(est_randoms)
+
+for k in range(len(randoms)):
+    plt.plot(randoms[k])
+    plt.plot(est_randoms2[k])
+    plt.figure()
+    plt.plot(randoms[k]-est_randoms2[k])
+    plt.title('Error')
+    plt.show()
+
+
+#for img in imgs:
+#    plt.figure(figsize=(1,1))
+#    plt.axis('off')
+#    plt.imshow(img, cmap='gray')
+#
+#    plt.show(block=False)
+
+plt.show()
