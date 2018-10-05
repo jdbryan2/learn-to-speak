@@ -70,7 +70,8 @@ def autoencoder(x, squeeze=2):
     return loss, out, l3
 
 
-def main():
+if __name__ == '__main__':
+
     # initialize the data
     mnist = input_data.read_data_sets("/home/jacob/Projects/Data/MNIST_data")
 
@@ -153,5 +154,3 @@ def main():
         plt.show()
 
 
-if __name__ == '__main__':
-    main()
