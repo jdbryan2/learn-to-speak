@@ -16,6 +16,8 @@ class VAE(Autoencoder):
         # input
         x = tf.placeholder(tf.float32, (None, 28*28))
         self.x = x
+        y = tf.placeholder(tf.float32, (None, 28*28))
+        self._y = y
         # encoder
         with tf.name_scope('encoder'):
             enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
@@ -59,11 +61,11 @@ class VAE(Autoencoder):
         # quality metrics
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
-            self.accuracy = tf.reduce_mean(tf.squared_difference(x, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            self.accuracy = tf.reduce_mean(tf.squared_difference(y, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            img_loss = tf.reduce_sum(tf.squared_difference(x, x_out), 1)
+            img_loss = tf.reduce_sum(tf.squared_difference(y, x_out), 1)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             loss = tf.reduce_mean(img_loss + latent_loss)
             #loss = tf_util.sigmoid_cross_entropy_loss( x, rx_logits, name='loss')
@@ -84,6 +86,15 @@ class VAE(Autoencoder):
     def encode_std(self, x):
         return self.sess.run(self.encoder_std.output, {self.encoder_std.input: x})
 
+    def get_feed_dict(self, dset, n=None, batch_size=None):
+        if n is None or batch_size is None:
+            y = dset.data()
+        else:
+            y = dset.get_batch(n, batch_size)
+
+        x = distortion(y)
+
+        return {self.x: x, self._y:y}
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -135,14 +146,12 @@ class MNIST_Dataset:
 
 if __name__ == '__main__':
     import pylab as plt
-    TRAIN = False
+    TRAIN = True
 
-    log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
-    #log_dir = '/home/jbryan/Data/vae-test'
+    #log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
+    log_dir = '/home/jbryan/Data/vae-test'
     save_path = './trained/mnist_vae.ckpt'
-    load_path = './simple_trained/mnist_vae.ckpt'
-    mnist_path = '/home/jacob/Projects/Data/MNIST_data'
-    #mnist_path = '/home/jbryan/mnist'
+    mnist_path = '/home/jbryan/mnist'
 
     #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
     session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
@@ -156,36 +165,29 @@ if __name__ == '__main__':
     d_val = MNIST_Dataset(mnist_path, train=False)
     if TRAIN:
         model.train(d_train, epochs=1, batch_size=50, d_val=d_val)
-        model.save(save_path)
+        model.save('./trained/mnist_vae.ckpt')
     else:
-        model.load(load_path)
+        model.load('./trained/mnist_vae.ckpt')
 
 
 
     tx = (0.5-np.random.random((5,5)))*2.
     img_out = model.decode(tx)
-    #img_in = distortion(img_out)
+    img_in = distortion(img_out)
     rx = model.encode(img_out)
     rx_std = model.encode_std(img_out)
 
     error = np.abs(tx-rx)
     print(error)
 
-    for k in range(error.shape[0]):
-        plt.figure()
-        plt.plot(error[k])
-        plt.plot(rx_std[k], 'r--')
-        plt.plot(-1.*rx_std[k], 'r--')
+    #for k in range(error.shape[0]):
+    #    plt.figure()
+    #    plt.plot(error[k])
+    #    plt.plot(rx_std[k], 'r--')
+    #    plt.plot(-1.*rx_std[k], 'r--')
 
-    plt.show()
+    #plt.show()
 
-    for k in range(error.shape[0]):
-        plt.figure()
-        plt.imshow(img_out[k].reshape((28, 28)))
-
-    plt.show()
-
-    
 
     #img_in = d_val.get_batch(5)
     #encoded = model.encode(img_in)
