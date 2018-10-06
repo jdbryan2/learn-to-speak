@@ -63,42 +63,30 @@ class NeuralNetwork(object):
             print('Epoch {0}/{1}'.format(m + 1, epochs))
             for n in range(num_batches):
                 train_feed_dict = self.get_feed_dict(d_train, n, batch_size)
+
                 if n % 100 == 0:
-                    train_metrics = self.sess.run(
-                        self.train_metrics, feed_dict=train_feed_dict
-                    )
-                    train_metric_str = ', '.join(
-                        ['{0}: {1}'.format(lbl, tm)
-                        for tm, lbl in
-                         zip(train_metrics, self.train_metric_labels)])
-                    print('Batch {0} Training Metrics: {1}'.format(
-                        n, train_metric_str))
+                    train_metrics = self.sess.run( self.train_metrics, feed_dict=train_feed_dict)
+                    train_metric_str = ', '.join( ['{0}: {1}'.format(lbl, tm) for tm, lbl in zip(train_metrics, self.train_metric_labels)])
+                    print('Batch {0} Training Metrics: {1}'.format( n, train_metric_str))
+
                     if d_val is not None:
                         val_feed_dict = self.get_feed_dict(d_val)
-                        val_metrics = self.sess.run(
-                            self.val_metrics, feed_dict=val_feed_dict
-                        )
-                        val_metric_str = ', '.join(
-                            ['{0}: {1}'.format(lbl, vm)
-                            for vm, lbl in
-                             zip(val_metrics, self.val_metric_labels)])
-                        print('Batch {0} Validation Metrics: {1}'.format(
-                            n, val_metric_str))
+                        val_metrics = self.sess.run( self.val_metrics, feed_dict=val_feed_dict)
+                        val_metric_str = ', '.join( ['{0}: {1}'.format(lbl, vm) for vm, lbl in zip(val_metrics, self.val_metric_labels)])
+                        print('Batch {0} Validation Metrics: {1}'.format( n, val_metric_str))
+
                 if self.merged_summaries is not None:
-                    merged, _ = self.sess.run(
-                        [self.merged_summaries, self.train_step],
-                        feed_dict=train_feed_dict
-                    )
+                    merged, _ = self.sess.run( [self.merged_summaries, self.train_step], feed_dict=train_feed_dict)
+
                     if self.train_writer is not None:
                         self.train_writer.add_summary(merged, m * n)
+
                 else:
                     self.sess.run(self.train_step, feed_dict=train_feed_dict)
 
     def test(self, d_test):
         test_feed_dict = self.get_feed_dict(d_test)
-        return self.sess.run(
-            self.test_metrics, feed_dict=test_feed_dict
-        )
+        return self.sess.run( self.test_metrics, feed_dict=test_feed_dict)
 
     def predict(self, x):
         return self.sess.run(self.y, feed_dict={self.x: x})

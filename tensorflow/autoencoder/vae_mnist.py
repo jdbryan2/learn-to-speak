@@ -6,6 +6,8 @@ from autoencoder import Autoencoder
 from neural_network import NeuralNetwork
 import tensorflow_utilities as tf_util
 
+from tensorflow.examples.tutorials.mnist import input_data
+
 
 class VAE(Autoencoder):
     def __init__(self, latent_size, lr=1e-4, **kwargs):
@@ -17,17 +19,18 @@ class VAE(Autoencoder):
             enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
             enc2 = dense(enc1, 50, activation=tf.nn.relu, name='enc2')
             enc3 = dense(enc2, 50, activation=tf.nn.relu, name='enc3')
-            enc4 = dense(enc3, 50, activation=tf.nn.relu, name='enc4')
+            #enc4 = dense(enc3, 50, activation=tf.nn.relu, name='enc4')
 
             # variational layers
-            mn = dense(enc4, units=latent_size)
-            sd       = 0.5 * tf.layers.dense(enc4, units=latent_size)            
             # note: epsilon is shaped based on zeroth dim of enc4 so that it won't break if 
             #       enc4 is made convolutional
-            epsilon = tf.random_normal(tf.stack([tf.shape(enc4)[0], latent_size])) 
+            mn = dense(enc3, units=latent_size)
+            sd       = 0.5 * tf.layers.dense(enc3, units=latent_size)            
+            epsilon = tf.random_normal(tf.stack([tf.shape(enc3)[0], latent_size])) 
 
             samples  = mn + tf.multiply(epsilon, tf.exp(sd))
             self.tx = mn
+            self.tx_std = sd
             self.rx = samples
             
             #tx = tf_util.normalize_power(enc5, name='tx')
@@ -40,22 +43,22 @@ class VAE(Autoencoder):
 
         # decoder
         with tf.name_scope('decoder'):
-            dec1 = conv1d(x, 4, 11, activation=tf.nn.relu, name='dec1')
+            #dec1 = conv1d(x, 4, 11, activation=tf.nn.relu, name='dec1')
             # NOTE: following line is tightly coupled to the architecture
             # dec1 is of size (None, 236, 4)
             dec1 = dense(self.rx, 50, activation=tf.nn.relu, name='dec1')
             dec2 = dense(dec1, 50, activation=tf.nn.relu, name='dec2')
             dec3 = dense(dec2, 50, activation=tf.nn.relu, name='dec3')
-            dec4 = dense(dec3, 50, activation=tf.nn.relu, name='dec4')
+            #dec4 = dense(dec3, 50, activation=tf.nn.relu, name='dec4')
 
-            x_out = dense(dec4, 128, activation=tf.nn.sigmoid, name='rx_out')
+            x_out = dense(dec3, 28*28, activation=tf.nn.sigmoid, name='rx_out')
             self.x_out = x_out
 
         # quality metrics
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
-            self.accuracy = tf_util.accuracy(x, self.rx_bits, name='accuracy')
-            self.tx_power = tf_util.power(tx, name='tx_power')
+            self.accuracy = tf.reduce_mean(tf.squared_difference(x, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
             img_loss = tf.reduce_sum(tf.squared_difference(x, x_out), 1)
@@ -67,9 +70,10 @@ class VAE(Autoencoder):
         with tf.name_scope('optimizer'):
             self.train_step = tf.train.AdamOptimizer(lr).minimize(loss)
         # initialize the base class
-        metrics = [self.loss, self.accuracy, self.tx_power]
-        encoder = NeuralNetwork(x, tx)
-        decoder = NeuralNetwork(rx, self.rx_bits)
+        #metrics = [self.loss, self.accuracy, self.tx_power]
+        metrics = [self.loss, self.accuracy]
+        encoder = NeuralNetwork(x, self.tx)
+        decoder = NeuralNetwork(self.rx, self.x_out)
         Autoencoder.__init__(
             self, encoder, decoder, self.train_step, metrics=metrics, **kwargs
         )
@@ -100,18 +104,63 @@ class UnsupervisedDataset:
     def data(self):
         return self._data
 
+class MNIST_Dataset:
+    def __init__(self, directory, train=True):
+        mnist = input_data.read_data_sets(directory)
+        if train:
+            self.mnist = mnist.train
+        else:
+            self.mnist = mnist.test
+
+    def num_batches(self, batch_size):
+        return int(np.floor(self.mnist.num_examples/batch_size))
+
+    def num_points(self):
+        return self.mnist.num_examples
+
+    def get_batch(self, batch_size, n=0):
+        batch, _  = self.mnist.next_batch(batch_size)
+        return batch
+
+    def data(self):
+        batch, _  = self.mnist.next_batch(self.num_points())
+        return batch
+        #return self._data
+
 if __name__ == '__main__':
+    import pylab as plt
+    TRAIN = True
+
     #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
     session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-    model = ChAE(
-        5, log_dir='/home/jacob/Projects/sandbox/tensorflow/test-1', auto_logging=False,
-        sess=session
-    )
-    session.run(tf.global_variables_initializer())
-    for n in range(1):
-        print('Training iteration #{0}'.format(n))
-        d_train = UnsupervisedDataset(np.random.randint(0, 2, (100000, 128)))
-        d_val = UnsupervisedDataset(np.random.randint(0, 2, (1024, 128)))
-        model.train(d_train, epochs=2, batch_size=128, d_val=d_val)
 
-    model.save('./')
+    model = VAE( 5, log_dir='/home/jacob/Projects/Data/vae/mnist-test', auto_logging=False, sess=session)
+
+    session.run(tf.global_variables_initializer())
+
+    #print('Training iteration #{0}'.format(n))
+    d_train = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data")
+    d_val = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data", train=False)
+    if TRAIN:
+        model.train(d_train, epochs=5, batch_size=50, d_val=d_val)
+        model.save('./trained/mnist_vae.ckpt')
+    else:
+        model.load('./trained/mnist_vae.ckpt')
+
+
+
+    img_in = d_val.get_batch(5)
+    encoded = model.encode(img_in)
+    img_out = model.decode(encoded)
+
+    for k in range(img_in.shape[0]):
+        plt.figure()
+        plt.imshow(img_in[k].reshape((28, 28)))
+        plt.figure()
+        plt.imshow(img_out[k].reshape((28, 28)))
+        plt.show()
+
+    
+
+    print encoded
+    
