@@ -148,20 +148,21 @@ if __name__ == '__main__':
     import pylab as plt
     TRAIN = True
 
-    log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
-    #log_dir = '/home/jbryan/Data/vae-test'
+    #log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
+    log_dir = '/home/jbryan/Data/vae-test'
     save_path = './trained/mnist_vae.ckpt'
+    mnist_path = '/home/jbryan/mnist'
 
     #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
     session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
-    model = VAE( 5, log_dir='/home/jacob/Projects/Data/vae/mnist-test', auto_logging=False, sess=session)
+    model = VAE( 5, log_dir=log_dir, auto_logging=False, sess=session)
 
     session.run(tf.global_variables_initializer())
 
     #print('Training iteration #{0}'.format(n))
-    d_train = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data")
-    d_val = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data", train=False)
+    d_train = MNIST_Dataset(mnist_path)
+    d_val = MNIST_Dataset(mnist_path, train=False)
     if TRAIN:
         model.train(d_train, epochs=1, batch_size=50, d_val=d_val)
         model.save('./trained/mnist_vae.ckpt')
