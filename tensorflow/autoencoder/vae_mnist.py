@@ -8,12 +8,16 @@ import tensorflow_utilities as tf_util
 
 from tensorflow.examples.tutorials.mnist import input_data
 
+def distortion(x):
+    return np.fft.fftshift(np.abs(np.fft.fft(x)))
 
 class VAE(Autoencoder):
     def __init__(self, latent_size, lr=1e-4, **kwargs):
         # input
         x = tf.placeholder(tf.float32, (None, 28*28))
         self.x = x
+        y = tf.placeholder(tf.float32, (None, 28*28))
+        self._y = y
         # encoder
         with tf.name_scope('encoder'):
             enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
@@ -57,11 +61,11 @@ class VAE(Autoencoder):
         # quality metrics
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
-            self.accuracy = tf.reduce_mean(tf.squared_difference(x, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            self.accuracy = tf.reduce_mean(tf.squared_difference(y, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            img_loss = tf.reduce_sum(tf.squared_difference(x, x_out), 1)
+            img_loss = tf.reduce_sum(tf.squared_difference(y, x_out), 1)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             loss = tf.reduce_mean(img_loss + latent_loss)
             #loss = tf_util.sigmoid_cross_entropy_loss( x, rx_logits, name='loss')
@@ -73,11 +77,24 @@ class VAE(Autoencoder):
         #metrics = [self.loss, self.accuracy, self.tx_power]
         metrics = [self.loss, self.accuracy]
         encoder = NeuralNetwork(x, self.tx)
+        self.encoder_std = NeuralNetwork(x, self.tx_std) # get the deviation on the encoder output
         decoder = NeuralNetwork(self.rx, self.x_out)
         Autoencoder.__init__(
             self, encoder, decoder, self.train_step, metrics=metrics, **kwargs
         )
 
+    def encode_std(self, x):
+        return self.sess.run(self.encoder_std.output, {self.encoder_std.input: x})
+
+    def get_feed_dict(self, dset, n=None, batch_size=None):
+        if n is None or batch_size is None:
+            y = dset.data()
+        else:
+            y = dset.get_batch(n, batch_size)
+
+        x = distortion(y)
+
+        return {self.x: x, self._y:y}
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -131,6 +148,10 @@ if __name__ == '__main__':
     import pylab as plt
     TRAIN = True
 
+    log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
+    #log_dir = '/home/jbryan/Data/vae-test'
+    save_path = './trained/mnist_vae.ckpt'
+
     #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
     session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
@@ -142,25 +163,53 @@ if __name__ == '__main__':
     d_train = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data")
     d_val = MNIST_Dataset("/home/jacob/Projects/Data/MNIST_data", train=False)
     if TRAIN:
-        model.train(d_train, epochs=5, batch_size=50, d_val=d_val)
+        model.train(d_train, epochs=1, batch_size=50, d_val=d_val)
         model.save('./trained/mnist_vae.ckpt')
     else:
         model.load('./trained/mnist_vae.ckpt')
 
 
 
-    img_in = d_val.get_batch(5)
-    encoded = model.encode(img_in)
-    img_out = model.decode(encoded)
+    tx = (0.5-np.random.random((5,5)))*2.
+    img_out = model.decode(tx)
+    img_in = distortion(img_out)
+    rx = model.encode(img_out)
+    rx_std = model.encode_std(img_out)
 
-    for k in range(img_in.shape[0]):
-        plt.figure()
-        plt.imshow(img_in[k].reshape((28, 28)))
-        plt.figure()
-        plt.imshow(img_out[k].reshape((28, 28)))
-        plt.show()
+    error = np.abs(tx-rx)
+    print(error)
+
+    #for k in range(error.shape[0]):
+    #    plt.figure()
+    #    plt.plot(error[k])
+    #    plt.plot(rx_std[k], 'r--')
+    #    plt.plot(-1.*rx_std[k], 'r--')
+
+    #plt.show()
+
+
+    #img_in = d_val.get_batch(5)
+    #encoded = model.encode(img_in)
+    #img_out = model.decode(encoded)
+
+    #re_encoded = model.encode(img_out)
+
+    #error = np.abs(encoded-re_encoded)
+
+    #for k in range(img_in.shape[0]):
+    #    plt.figure()
+    #    plt.imshow(img_in[k].reshape((28, 28)))
+    #    plt.figure()
+    #    plt.imshow(img_out[k].reshape((28, 28)))
+
+    #    plt.figure()
+    #    plt.plot(encoded[k])
+    #    plt.plot(re_encoded[k])
+    #    plt.plot(error[k])
+    #    plt.show()
+
 
     
 
-    print encoded
+    #print encoded
     
