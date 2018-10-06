@@ -60,12 +60,14 @@ class VAE(Autoencoder):
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
             self.accuracy = tf.reduce_mean(tf.squared_difference(x, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            self.latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
             img_loss = tf.reduce_sum(tf.squared_difference(x, x_out), 1)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             loss = tf.reduce_mean(img_loss + latent_loss)
+            loss = tf.reduce_mean(img_loss)
             #loss = tf_util.sigmoid_cross_entropy_loss( x, rx_logits, name='loss')
             self.loss = loss
         # optimizer
@@ -73,7 +75,7 @@ class VAE(Autoencoder):
             self.train_step = tf.train.AdamOptimizer(lr).minimize(loss)
         # initialize the base class
         #metrics = [self.loss, self.accuracy, self.tx_power]
-        metrics = [self.loss, self.accuracy]
+        metrics = [self.loss, self.accuracy, self.latent_loss]
         encoder = NeuralNetwork(x, self.tx)
         self.encoder_std = NeuralNetwork(x, self.tx_std) # get the deviation on the encoder output
         decoder = NeuralNetwork(self.rx, self.x_out)
@@ -135,11 +137,11 @@ class MNIST_Dataset:
 
 if __name__ == '__main__':
     import pylab as plt
-    TRAIN = False
+    TRAIN = True
 
     log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
     #log_dir = '/home/jbryan/Data/vae-test'
-    save_path = './trained/mnist_vae.ckpt'
+    save_path = './garbage/mnist_vae.ckpt'
     load_path = './simple_trained/mnist_vae.ckpt'
     mnist_path = '/home/jacob/Projects/Data/MNIST_data'
     #mnist_path = '/home/jbryan/mnist'
@@ -155,7 +157,7 @@ if __name__ == '__main__':
     d_train = MNIST_Dataset(mnist_path)
     d_val = MNIST_Dataset(mnist_path, train=False)
     if TRAIN:
-        model.train(d_train, epochs=1, batch_size=50, d_val=d_val)
+        model.train(d_train, epochs=3, batch_size=50, d_val=d_val)
         model.save(save_path)
     else:
         model.load(load_path)
@@ -187,28 +189,28 @@ if __name__ == '__main__':
 
     
 
-    #img_in = d_val.get_batch(5)
-    #encoded = model.encode(img_in)
-    #img_out = model.decode(encoded)
+    img_in = d_val.get_batch(5)
+    encoded = model.encode(img_in)
+    img_out = model.decode(encoded)
 
-    #re_encoded = model.encode(img_out)
+    re_encoded = model.encode(img_out)
 
-    #error = np.abs(encoded-re_encoded)
+    error = np.abs(encoded-re_encoded)
 
-    #for k in range(img_in.shape[0]):
-    #    plt.figure()
-    #    plt.imshow(img_in[k].reshape((28, 28)))
-    #    plt.figure()
-    #    plt.imshow(img_out[k].reshape((28, 28)))
+    for k in range(img_in.shape[0]):
+        plt.figure()
+        plt.imshow(img_in[k].reshape((28, 28)))
+        plt.figure()
+        plt.imshow(img_out[k].reshape((28, 28)))
 
-    #    plt.figure()
-    #    plt.plot(encoded[k])
-    #    plt.plot(re_encoded[k])
-    #    plt.plot(error[k])
-    #    plt.show()
+        plt.figure()
+        plt.plot(encoded[k])
+        plt.plot(re_encoded[k])
+        plt.plot(error[k])
+        plt.show()
 
 
     
 
-    #print encoded
+    print encoded
     
