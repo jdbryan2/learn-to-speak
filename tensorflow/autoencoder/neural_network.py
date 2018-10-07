@@ -62,9 +62,10 @@ class NeuralNetwork(object):
         for m in range(epochs):
             print('Epoch {0}/{1}'.format(m + 1, epochs))
             for n in range(num_batches):
+                #print n, batch_size
                 train_feed_dict = self.get_feed_dict(d_train, n, batch_size)
 
-                if n % 100 == 0:
+                if n % 100 == 0 and n != 0:
                     train_metrics = self.sess.run( self.train_metrics, feed_dict=train_feed_dict)
                     train_metric_str = ', '.join( ['{0}: {1}'.format(lbl, tm) for tm, lbl in zip(train_metrics, self.train_metric_labels)])
                     print('Batch {0} Training Metrics: {1}'.format( n, train_metric_str))

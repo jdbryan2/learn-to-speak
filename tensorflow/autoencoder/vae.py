@@ -12,18 +12,12 @@ from tensorflow.examples.tutorials.mnist import input_data
 # rather than the identity function. 
 # This allows it to learn an inverse transform that can be used as a channel for transmitting
 
-def distortion(x):
-    x = np.abs(np.fft.fft(x))
-    return np.fft.fftshift(x, axes=(1,)) # rotation as distortion
-    #return x # null distortion
-    #return np.fft.fftshift(np.abs(np.fft.fft(x))) # fft as a distortion
-
 class VAE(Autoencoder):
-    def __init__(self, latent_size, lr=1e-4, **kwargs):
+    def __init__(self, input_dim, latent_size, output_dim, lr=1e-4, **kwargs):
         # input
-        x = tf.placeholder(tf.float32, (None, 28*28))
+        x = tf.placeholder(tf.float32, (None, input_dim))
         self.x = x
-        self.target = tf.placeholder(tf.float32, (None, 28*28))
+        self.target = tf.placeholder(tf.float32, (None, output_dim))
         #self.y = y
         # encoder
         with tf.name_scope('encoder'):
@@ -46,7 +40,6 @@ class VAE(Autoencoder):
             
         # decoder
         with tf.name_scope('decoder'):
-            #dec1 = conv1d(x, 4, 11, activation=tf.nn.relu, name='dec1')
             # NOTE: following line is tightly coupled to the architecture
             # dec1 is of size (None, 236, 4)
             dec1 = dense(self.rx, 50, activation=tf.nn.relu, name='dec1')
@@ -54,7 +47,7 @@ class VAE(Autoencoder):
             dec3 = dense(dec2, 50, activation=tf.nn.relu, name='dec3')
             #dec4 = dense(dec3, 50, activation=tf.nn.relu, name='dec4')
 
-            x_out = dense(dec3, 28*28, activation=tf.nn.sigmoid, name='rx_out')
+            x_out = dense(dec3, output_dim, activation=tf.nn.sigmoid, name='rx_out')
             self.x_out = x_out
 
         # quality metrics
@@ -74,28 +67,18 @@ class VAE(Autoencoder):
         # optimizer
         with tf.name_scope('optimizer'):
             self.train_step = tf.train.AdamOptimizer(lr).minimize(loss)
+
         # initialize the base class
         #metrics = [self.loss, self.accuracy, self.tx_power]
         metrics = [self.loss, self.accuracy, self.latent_loss]
         encoder = NeuralNetwork(x, self.tx)
         self.encoder_std = NeuralNetwork(x, self.tx_std) # get the deviation on the encoder output
         decoder = NeuralNetwork(self.rx, self.x_out)
-        Autoencoder.__init__(
-            self, encoder, decoder, self.train_step, metrics=metrics, **kwargs
-        )
+        Autoencoder.__init__(self, encoder, decoder, self.train_step, metrics=metrics, **kwargs)
 
     def encode_std(self, x):
         return self.sess.run(self.encoder_std.output, {self.encoder_std.input: x})
 
-    def get_feed_dict(self, dset, n=None, batch_size=None):
-        if n is None or batch_size is None:
-            target = dset.data()
-        else:
-            target = dset.get_batch(n, batch_size)
-        x = np.copy(target)
-        x = distortion(x)
-
-        return {self.x: x, self.target:target}
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -109,21 +92,13 @@ def variable_summaries(var):
     tf.summary.scalar('min', tf.reduce_min(var))
     tf.summary.histogram('histogram', var)
 
-class UnsupervisedDataset:
-    def __init__(self, x):
-        self._data = x
-
-    def num_batches(self, batch_size):
-        return int(np.floor(self._data.shape[0]/batch_size))
-
-    def get_batch(self, batch_size, n=0):
-        return self._data[n*batch_size:(n+1)*batch_size]
-
-    def data(self):
-        return self._data
 
 class MNIST_Dataset:
-    def __init__(self, directory, train=True):
+    def __init__(self, directory, distortion_callback, train=True):
+
+        # save a distortion function as the callback
+        self.distort = distortion_callback
+
         mnist = input_data.read_data_sets(directory)
         if train:
             self.mnist = mnist.train
@@ -136,14 +111,18 @@ class MNIST_Dataset:
     def num_points(self):
         return self.mnist.num_examples
 
-    def get_batch(self, batch_size, n=0):
+    def get_batch(self, n=0, batch_size=50):
         batch, _  = self.mnist.next_batch(batch_size)
-        return batch
+        return self.distort(batch), batch
 
     def data(self):
         batch, _  = self.mnist.next_batch(self.num_points())
-        return batch
+        return self.distort(batch), batch
+
         #return self._data
+
+def null_distortion(x):
+    return np.copy(x)
 
 if __name__ == '__main__':
     import pylab as plt
@@ -165,8 +144,8 @@ if __name__ == '__main__':
     session.run(tf.global_variables_initializer())
 
     #print('Training iteration #{0}'.format(n))
-    d_train = MNIST_Dataset(mnist_path)
-    d_val = MNIST_Dataset(mnist_path, train=False)
+    d_train = MNIST_Dataset(mnist_path, null_distortion)
+    d_val = MNIST_Dataset(mnist_path, nulle_distortion, train=False)
     if LOAD:
         model.load(load_path)
     if TRAIN:
