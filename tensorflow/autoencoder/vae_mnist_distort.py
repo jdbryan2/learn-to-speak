@@ -9,8 +9,10 @@ import tensorflow_utilities as tf_util
 from tensorflow.examples.tutorials.mnist import input_data
 
 def distortion(x):
-    return x
-    #return np.fft.fftshift(np.abs(np.fft.fft(x)))
+    x = np.abs(np.fft.fft(x))
+    return np.fft.fftshift(x, axes=(1,)) # rotation as distortion
+    #return x # null distortion
+    #return np.fft.fftshift(np.abs(np.fft.fft(x))) # fft as a distortion
 
 class VAE(Autoencoder):
     def __init__(self, latent_size, lr=1e-4, **kwargs):
@@ -38,14 +40,6 @@ class VAE(Autoencoder):
             self.tx_std = sd
             self.rx = samples
             
-            #tx = tf_util.normalize_power(enc5, name='tx')
-            #self.tx = tx
-        # channel
-        #with tf.name_scope('channel'):
-            #rx = tf_util.awgn(tx, -snr, name='rx')
-            #self.rx = rx
-
-
         # decoder
         with tf.name_scope('decoder'):
             #dec1 = conv1d(x, 4, 11, activation=tf.nn.relu, name='dec1')
@@ -149,7 +143,7 @@ class MNIST_Dataset:
 
 if __name__ == '__main__':
     import pylab as plt
-    LOAD = False
+    LOAD = True
     TRAIN = True
 
     log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
@@ -172,7 +166,7 @@ if __name__ == '__main__':
     if LOAD:
         model.load(load_path)
     if TRAIN:
-        model.train(d_train, epochs=10, batch_size=50, d_val=d_val)
+        model.train(d_train, epochs=20, batch_size=50, d_val=d_val)
         model.save(save_path)
 
 
