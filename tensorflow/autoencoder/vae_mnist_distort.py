@@ -9,7 +9,7 @@ import tensorflow_utilities as tf_util
 from tensorflow.examples.tutorials.mnist import input_data
 
 def distortion(x):
-    return np.fft.fftshift(x)
+    return x
     #return np.fft.fftshift(np.abs(np.fft.fft(x)))
 
 class VAE(Autoencoder):
@@ -17,8 +17,8 @@ class VAE(Autoencoder):
         # input
         x = tf.placeholder(tf.float32, (None, 28*28))
         self.x = x
-        y = tf.placeholder(tf.float32, (None, 28*28))
-        self._y = y
+        self.target = tf.placeholder(tf.float32, (None, 28*28))
+        #self.y = y
         # encoder
         with tf.name_scope('encoder'):
             enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
@@ -62,12 +62,12 @@ class VAE(Autoencoder):
         # quality metrics
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
-            self.accuracy = tf.reduce_mean(tf.squared_difference(self._y, x_out))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            self.accuracy = tf.reduce_mean(tf.squared_difference(x_out, self.target))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             self.latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            img_loss = tf.reduce_sum(tf.squared_difference(self._y, x_out), 1)
+            img_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             loss = tf.reduce_mean(img_loss + latent_loss)
             #loss = tf.reduce_mean(img_loss)
@@ -91,13 +91,13 @@ class VAE(Autoencoder):
 
     def get_feed_dict(self, dset, n=None, batch_size=None):
         if n is None or batch_size is None:
-            y = dset.data()
+            target = dset.data()
         else:
-            y = dset.get_batch(n, batch_size)
+            target = dset.get_batch(n, batch_size)
+        x = np.copy(target)
+        x = distortion(x)
 
-        x = distortion(y)
-
-        return {self.x: x, self._y:y}
+        return {self.x: x, self.target:target}
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -149,12 +149,13 @@ class MNIST_Dataset:
 
 if __name__ == '__main__':
     import pylab as plt
+    LOAD = False
     TRAIN = True
 
     log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
     #log_dir = '/home/jbryan/Data/vae-test'
     save_path = './garbage/mnist_vae.ckpt'
-    load_path = './trained/mnist_vae.ckpt'
+    load_path = './garbage/mnist_vae.ckpt'
     mnist_path = '/home/jacob/Projects/Data/MNIST_data'
     #mnist_path = '/home/jbryan/mnist'
 
@@ -168,11 +169,11 @@ if __name__ == '__main__':
     #print('Training iteration #{0}'.format(n))
     d_train = MNIST_Dataset(mnist_path)
     d_val = MNIST_Dataset(mnist_path, train=False)
-    if TRAIN:
-        model.train(d_train, epochs=3, batch_size=50, d_val=d_val)
-        model.save(save_path)
-    else:
+    if LOAD:
         model.load(load_path)
+    if TRAIN:
+        model.train(d_train, epochs=10, batch_size=50, d_val=d_val)
+        model.save(save_path)
 
 
 
@@ -195,6 +196,7 @@ if __name__ == '__main__':
 
 
     img_in = d_val.get_batch(5)
+    img_in = distortion(img_in)
     encoded = model.encode(img_in)
     img_out = model.decode(encoded)
 
