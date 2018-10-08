@@ -1,5 +1,6 @@
 
 import numpy as np
+import scipy.signal as sig
 import tensorflow as tf
 from tensorflow.python.layers.layers import conv1d, dense
 from autoencoder import Autoencoder
@@ -123,6 +124,10 @@ class MNIST_Dataset:
 
 def null_distortion(x):
     return np.copy(x)
+
+def blur_distortion(x):
+    blur_size = 5
+    return sig.lfilter(np.ones(blur_size), [1], x)/blur_size
 
 if __name__ == '__main__':
     import pylab as plt

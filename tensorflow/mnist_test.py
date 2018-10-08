@@ -3,10 +3,9 @@ import numpy as np
 import os
 import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
-import scipy.signal as sig
 
 import tensorflow as tf
-from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distortion
+from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distortion, blur_distortion
 
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
@@ -19,11 +18,6 @@ EPOCHS = 50
 # wrapper for showing mnist vectors as images
 def mnist_show(x):
     plt.imshow(x.reshape((28, 28)))
-
-# blur
-def blur_distortion(x):
-    blur_size = 5
-    return sig.lfilter(np.ones(blur_size), [1], x)/blur_size
 
 
 if BLUR:
