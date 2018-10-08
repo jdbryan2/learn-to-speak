@@ -1,5 +1,5 @@
 
-
+import os
 import numpy as np
 import scipy.signal as sig
 import tensorflow as tf
@@ -15,18 +15,19 @@ from tensorflow.examples.tutorials.mnist import input_data
 # This allows it to learn an inverse transform that can be used as a channel for transmitting
 
 class VAE(Autoencoder):
-    def __init__(self, input_dim, latent_size, output_dim, lr=1e-4, **kwargs):
+    def __init__(self, input_dim, latent_size, state_dim, output_dim, inner_width=50, lr=1e-4, **kwargs):
         # input
         x = tf.placeholder(tf.float32, (None, input_dim))
         self.x = x
         self.target = tf.placeholder(tf.float32, (None, output_dim))
+        self.start_state = tf.placeholder(tf.float32, (None, state_dim))
         #self.y = y
         # encoder
         with tf.name_scope('encoder'):
-            enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
-            enc2 = dense(enc1, 50, activation=tf.nn.relu, name='enc2')
-            enc3 = dense(enc2, 50, activation=tf.nn.relu, name='enc3')
-            #enc4 = dense(enc3, 50, activation=tf.nn.relu, name='enc4')
+            enc1 = dense(x, inner_width, activation=tf.nn.relu, name='enc1')
+            enc2 = dense(enc1, inner_width, activation=tf.nn.relu, name='enc2')
+            enc3 = dense(enc2, inner_width, activation=tf.nn.relu, name='enc3')
+            #enc4 = dense(enc3, inner_width, activation=tf.nn.relu, name='enc4')
 
             # variational layers
             # note: epsilon is shaped based on zeroth dim of enc4 so that it won't break if 
@@ -38,16 +39,17 @@ class VAE(Autoencoder):
             samples  = mn + tf.multiply(epsilon, tf.exp(sd))
             self.tx = mn
             self.tx_std = sd
-            self.rx = samples
+            self._latent_in = samples
+            self.rx = tf.concat((samples, self.start_state), axis=1) # starting state feeds into the latent space
             
         # decoder
         with tf.name_scope('decoder'):
             # NOTE: following line is tightly coupled to the architecture
             # dec1 is of size (None, 236, 4)
-            dec1 = dense(self.rx, 50, activation=tf.nn.relu, name='dec1')
-            dec2 = dense(dec1, 50, activation=tf.nn.relu, name='dec2')
-            dec3 = dense(dec2, 50, activation=tf.nn.relu, name='dec3')
-            #dec4 = dense(dec3, 50, activation=tf.nn.relu, name='dec4')
+            dec1 = dense(self.rx, inner_width, activation=tf.nn.relu, name='dec1')
+            dec2 = dense(dec1, inner_width, activation=tf.nn.relu, name='dec2')
+            dec3 = dense(dec2, inner_width, activation=tf.nn.relu, name='dec3')
+            #dec4 = dense(dec3, inner_width, activation=tf.nn.relu, name='dec4')
 
             x_out = dense(dec3, output_dim, activation=tf.nn.sigmoid, name='rx_out')
             self.x_out = x_out
@@ -81,6 +83,19 @@ class VAE(Autoencoder):
     def encode_std(self, x):
         return self.sess.run(self.encoder_std.output, {self.encoder_std.input: x})
 
+    # note: self.target must get defined in the inheriting class
+    def get_feed_dict(self, dset, n=None, batch_size=None):
+        if n is None or batch_size is None:
+            x, target, state = dset.data()
+        else:
+            x, target, state = dset.get_batch(n, batch_size)
+        return {self.x: x, self.target: target, self.start_state: state}
+
+    def encode(self, x):
+        return self.sess.run(self.encoder.output, {self.encoder.input: x})
+
+    def decode(self, y, state):
+        return self.sess.run(self.decoder.output, {self._latent_in: y, self.start_state: state})
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -95,112 +110,79 @@ def variable_summaries(var):
     tf.summary.histogram('histogram', var)
 
 
-class MNIST_Dataset:
-    def __init__(self, directory, distortion_callback, train=True):
+def reshape_data(data,history):
+    max_len = int(np.floor(data.shape[0]/history)*history)
+    return data[:max_len, :].reshape((-1, data.shape[1]*history))
 
-        # save a distortion function as the callback
-        self.distort = distortion_callback
+class Dynamical_Dataset:
+    def __init__(self, directory, history_length, train=True):
+        self.directory = directory
+        self.history_length = history_length
 
-        mnist = input_data.read_data_sets(directory)
-        if train:
-            self.mnist = mnist.train
-        else:
-            self.mnist = mnist.test
+        # pull indeces from the filenames
+        index_list = []  # using a list for simplicity
+        for filename in os.listdir(directory):
+            if filename.startswith('batch_') and filename.endswith(".npz"):
+                index_list.append(int(filter(str.isdigit, str(filename))))
+
+        # sort numerically and load files in order
+        self.index_list = np.array(sorted(index_list))
+        
+        fname=directory+"/batch_%i.npz"
+        self.action = np.array([])
+        self.state = np.array([])
+        self.obs = np.array([])
+        for ind in self.index_list:
+            data = np.load(fname%ind)
+            #print fname%ind
+            #print data.keys()
+            #print self.action.shape, self.state.shape, self.obs.shape
+            action = reshape_data(data['action'], history_length)
+            state = reshape_data(data['state'], history_length)
+            obs = reshape_data(data['observation'], history_length)
+            if self.action.size == 0:
+                self.action = action
+                self.state = state[:, :4] # only keep the starting state
+                self.obs = obs
+            else:
+                self.action = np.append(self.action, action, axis=0)
+                self.state = np.append(self.state, state[:, :4], axis=0)
+                self.obs = np.append(self.obs, obs, axis=0)
+
+        # need to add a step where the data is shuffled 
+        new_index = np.arange(0, self.action.shape[0]).astype('int')
+        np.random.shuffle(new_index)
+
+        self.action = self.action[new_index, :]
+        self.state = self.state[new_index, :]
+        self.obs = self.obs[new_index, :]
+
 
     def num_batches(self, batch_size):
-        return int(np.floor(self.mnist.num_examples/batch_size))
+        return int(np.floor(self.action.shape[0]/batch_size))
 
-    def num_points(self):
-        return self.mnist.num_examples
+    #def num_points(self):
+        #return self.mnist.num_examples
+
+    def parameter_sizes(self):
+        return self.obs.shape[1], self.action.shape[1], self.state.shape[1]
 
     def get_batch(self, n=0, batch_size=50):
-        batch, _  = self.mnist.next_batch(batch_size)
-        return self.distort(batch), batch
+        start = n*batch_size
+        stop = (n+1)*batch_size
+        return self.obs[start:stop, :], self.action[start:stop, :], self.state[start:stop, :] 
 
     def data(self):
-        batch, _  = self.mnist.next_batch(self.num_points())
-        return self.distort(batch), batch
+        start = 0
+        stop = self.action.shape[0]
+        return self.obs[start:stop, :], self.action[start:stop, :], self.state[start:stop, :] 
 
-        #return self._data
 
-def null_distortion(x):
-    return np.copy(x)
-
-def blur_distortion(x):
-    blur_size = 5
-    return sig.lfilter(np.ones(blur_size), [1], x)/blur_size
+        
 
 if __name__ == '__main__':
     import pylab as plt
     LOAD = True
     TRAIN = True
 
-    log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
-    #log_dir = '/home/jbryan/Data/vae-test'
-    save_path = './garbage/mnist_vae.ckpt'
-    load_path = './garbage/mnist_vae.ckpt'
-    mnist_path = '/home/jacob/Projects/Data/MNIST_data'
-    #mnist_path = '/home/jbryan/mnist'
 
-    #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
-    session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
-
-    model = VAE( 5, log_dir=log_dir, auto_logging=False, sess=session)
-
-    session.run(tf.global_variables_initializer())
-
-    #print('Training iteration #{0}'.format(n))
-    d_train = MNIST_Dataset(mnist_path, null_distortion)
-    d_val = MNIST_Dataset(mnist_path, nulle_distortion, train=False)
-    if LOAD:
-        model.load(load_path)
-    if TRAIN:
-        model.train(d_train, epochs=20, batch_size=50, d_val=d_val)
-        model.save(save_path)
-
-
-
-    tx = (0.5-np.random.random((5,5)))*2.
-    img_out = model.decode(tx)
-    img_in = distortion(img_out)
-    rx = model.encode(img_out)
-    rx_std = model.encode_std(img_out)
-
-    error = np.abs(tx-rx)
-    print(error)
-
-    for k in range(error.shape[0]):
-        plt.figure()
-        plt.plot(error[k])
-        plt.plot(rx_std[k], 'r--')
-        plt.plot(-1.*rx_std[k], 'r--')
-
-    plt.show()
-
-
-    img_in = d_val.get_batch(5)
-    img_in = distortion(img_in)
-    encoded = model.encode(img_in)
-    img_out = model.decode(encoded)
-
-    re_encoded = model.encode(img_out)
-
-    error = np.abs(encoded-re_encoded)
-
-    for k in range(img_in.shape[0]):
-        plt.figure()
-        plt.imshow(img_in[k].reshape((28, 28)))
-        plt.figure()
-        plt.imshow(img_out[k].reshape((28, 28)))
-
-        plt.figure()
-        plt.plot(encoded[k])
-        plt.plot(re_encoded[k])
-        plt.plot(error[k])
-        plt.show()
-
-
-    
-
-    #print encoded
-    
