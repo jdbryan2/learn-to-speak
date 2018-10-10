@@ -10,8 +10,8 @@ import tensorflow as tf
 from autoencoder.pyraat_vae import VAE, Dynamical_Dataset, variable_summaries
 from double_pendulum import Pendulum
 
-LOAD = False
-TRAIN = True
+LOAD = True
+TRAIN = False
 EPOCHS = 40
 save_dir = './pendunet'
 test_name = 'pendunet'
@@ -26,7 +26,7 @@ d_train = Dynamical_Dataset('pendulum_train', history_length=2)
 d_val = Dynamical_Dataset('pendulum_val', history_length=2)
 
 input_dim, output_dim, state_dim = d_train.parameter_sizes()
-latent_size = 1
+latent_size = 2
 #print input_size, output_size, state_size 
 
 #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
@@ -51,20 +51,24 @@ initial_state = np.radians(np.random.random(4)*360)
 step_size = 0.01
 pendulum = Pendulum(initial_state=initial_state, step_size=step_size, period=5)
 
-inputs = np.zeros((2*latent_size,latent_size))
-for k in range(latent_size):
-    inputs[k,k] = 1.
-    inputs[k+latent_size,k] = -1.
+#inputs = np.zeros((2*latent_size,latent_size))
+inputs = np.random.random((100,latent_size))
+_outputs = np.zeros((100,latent_size))
+
+#for k in range(latent_size):
+    #inputs[k,k] = 1.
+    #inputs[k+latent_size,k] = -1.
 
 for k in range(inputs.shape[0]):
-    initial_state = np.radians(np.random.random(4)*360)
+    print k
+    initial_state = np.zeros(4)#np.radians(np.random.random(4)*360)
     step_size = 0.01
     pendulum = Pendulum(initial_state=initial_state, step_size=step_size, period=5)
 
     state = np.copy(initial_state)
 
-    output = np.zeros((1000, 3))
-    for t in range(1000):
+    output = np.zeros((100, latent_size))
+    for t in range(100):
         actions = model.decode(y=inputs[k, :].reshape((1, latent_size)), state=state.reshape((1,4)))
         actions = actions.reshape((-1, 2))
         obs = np.zeros(actions.shape)
@@ -74,14 +78,19 @@ for k in range(inputs.shape[0]):
             obs[n, :] = pendulum.observed_out()
 
         output[t, :]  = model.encode(obs.reshape((1, -1)))
-    
-    for k in range(output.shape[1]):
-        plt.plot(output[:, 0])
-        plt.plot(output[:, 1])
-        plt.plot(output[:, 2])
+    _outputs[k, :] = np.mean(output, axis=0)
+plt.figure()
+plt.scatter(_outputs[:, 0], _outputs[:, 1])
+    #for k in range(output.shape[1]):
+    #    plt.plot(output[:, 0])
+    #    plt.plot(output[:, 1])
+    #    plt.plot(output[:, 2])
 
-    plt.show()
+plt.figure()
+plt.scatter(_outputs[:, 0], _outputs[:, 1])
+plt.figure()
+plt.scatter(inputs[:, 0], inputs[:, 1])
+plt.show()
 
     
-    print actions.shape
 
