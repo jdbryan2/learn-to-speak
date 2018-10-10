@@ -64,17 +64,25 @@ class Pendulum(object):
         self.state[3] = action[1]
         self.state[0] += self.step_size*self.state[1]
         self.state[2] += self.step_size*self.state[3]
+        # note: wrap position values around so that they correspond to -pi to pi
+        self.state[0] = ( self.state[0] + np.pi) % (2 * np.pi ) - np.pi
+        self.state[2] = ( self.state[2] + np.pi) % (2 * np.pi ) - np.pi
+        
 
 
 
 
 # initial state
-initial_state = np.radians(np.random.random(4)*360)
-#steps = 1000
+speed_limit = 360.
+initial_pos = np.radians((np.random.random(2)-0.5)*360.)
+initial_vel = np.radians((np.random.random(2)-0.5)*speed_limit)
+initial_state = np.array([initial_pos[0], initial_vel[0], initial_pos[1], initial_vel[1]])
+print initial_state
+#steps = 1000phases = ( phases + np.pi) % (2 * np.pi ) - np.pi
 step_size = 0.01
 if __name__ == '__main__':
 # integrate your ODE using scipy.integrate.
-    pendulum = Pendulum(initial_state=initial_state, step_size=step_size, period=5)
+    pendulum = Pendulum(initial_state=initial_state, step_size=step_size, period=5, speed_limit=speed_limit)
 
     for b in range(batches):
         state = np.zeros((steps, 4))
@@ -85,11 +93,12 @@ if __name__ == '__main__':
             x2 = np.zeros(steps)
             y2 = np.zeros(steps)
 
-        action = np.radians(100*(np.random.random((steps, 2))-0.5))
-        action[0, :] = 0. # initial action is set to zero
+        action = np.radians(speed_limit*(np.random.random((steps, 2))-0.5))
+        #action[0, :] = 0. # initial action is set to zero
 
         for k in range(state.shape[0]):
-            state[k] = pendulum.simulate_period(action[k,:])
+            state[k] = np.copy(pendulum.state)
+            pendulum.simulate_period(action[k,:])
             observation[k, :] = pendulum.observed_out()
             if SHOW_ANIMATION:
                 x1[k], y1[k], x2[k], y2[k] = pendulum.xy_out()
@@ -101,6 +110,9 @@ if __name__ == '__main__':
 
         # show trace
         if SHOW_TRACE:
+            plt.figure()
+            plt.plot(state)
+            plt.figure()
             plt.scatter(observation[:, 0], observation[:, 1])
             plt.show()
 
