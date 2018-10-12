@@ -7,15 +7,15 @@ import os
 
 SHOW_ANIMATION = False
 SHOW_TRACE = False
-steps = 10000
-batches = 10 
-save_dir = './pendulum_val/'
+steps = 1000 #10000
+batches = 100
+save_dir = './pendulum_train/'
 
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 class Pendulum(object):
-    def __init__(self, step_size=0.01, period=5, L1=1.0, L2=1.0, speed_limit=np.radians(360.), initial_state=np.zeros(4)):
+    def __init__(self, step_size=0.01, period=5, L1=1.0, L2=0, speed_limit=np.radians(360.), initial_state=np.zeros(4)):
         self.L1 = L1 # length of pendulum 1 in m
         self.L2 = L2 # length of pendulum 2 in m
         self.step_size = step_size
@@ -60,21 +60,27 @@ class Pendulum(object):
     def update_state(self, _action):
         action = self.limit_speed(_action)
 
-        self.state[1] = action[0]
-        self.state[3] = action[1]
-        self.state[0] += self.step_size*self.state[1]
-        self.state[2] += self.step_size*self.state[3]
-        # note: wrap position values around so that they correspond to -pi to pi
-        self.state[0] = ( self.state[0] + np.pi) % (2 * np.pi ) - np.pi
-        self.state[2] = ( self.state[2] + np.pi) % (2 * np.pi ) - np.pi
+        # position control
+        self.state[0] = action[0]
+        self.state[1] = 0.
+        self.state[2] = action[1]
+        self.state[3] = 0.
+        # velocity control
+        #self.state[1] = action[0]
+        #self.state[3] = action[1]
+        #self.state[0] += self.step_size*self.state[1]
+        #self.state[2] += self.step_size*self.state[3]
+        ## note: wrap position values around so that they correspond to -pi to pi
+        #self.state[0] = ( self.state[0] + np.pi) % (2 * np.pi ) - np.pi
+        #self.state[2] = ( self.state[2] + np.pi) % (2 * np.pi ) - np.pi
         
 
 
 
 
 # initial state
-speed_limit = 360.
-initial_pos = np.radians((np.random.random(2)-0.5)*360.)
+speed_limit = 180.
+initial_pos = np.radians((np.random.random(2)-0.5)*180.)
 initial_vel = np.radians((np.random.random(2)-0.5)*speed_limit)
 initial_state = np.array([initial_pos[0], initial_vel[0], initial_pos[1], initial_vel[1]])
 print initial_state
@@ -94,11 +100,14 @@ if __name__ == '__main__':
             y2 = np.zeros(steps)
 
         action = np.radians(speed_limit*(np.random.random((steps, 2))-0.5))
+        #action = np.zeros((180, 2))
+        #action[:, 1] = np.radians(np.arange(180))
+
         #action[0, :] = 0. # initial action is set to zero
 
         for k in range(state.shape[0]):
-            state[k] = np.copy(pendulum.state)
-            pendulum.simulate_period(action[k,:])
+            #state[k] = np.copy(pendulum.state)
+            state[k] = pendulum.simulate_period(action[k,:])
             observation[k, :] = pendulum.observed_out()
             if SHOW_ANIMATION:
                 x1[k], y1[k], x2[k], y2[k] = pendulum.xy_out()
