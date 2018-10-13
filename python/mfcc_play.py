@@ -18,24 +18,26 @@ load_fname = 'round588.npz'
 past = 1 
 future =1 
 
-ss= SubspaceDFA()
-ss.LoadPrimitives(fname=load_fname, directory=dirname)
-data = ss.ExtractDataFile("data/test/data0.npz")#, sample_period=sample_period)
-h = ss.EstimateStateHistory(data)
-v = ss.EstimateControlHistory(data)
-plt.figure()
-plt.plot(h.T)
-plt.figure()
-plt.plot(ss.raw_data['state_hist_1'].T)
-plt.show()
+from genfigures.plot_functions import tikz_save
 
-plt.figure()
-plt.plot(v.T)
-plt.figure()
-plt.plot(ss.raw_data['action_hist_1'].T)
-plt.show()
+#ss= SubspaceDFA()
+#ss.LoadPrimitives(fname=load_fname, directory=dirname)
+#data = ss.ExtractDataFile("data/test/data0.npz")#, sample_period=sample_period)
+#h = ss.EstimateStateHistory(data)
+#v = ss.EstimateControlHistory(data)
+#plt.figure()
+#plt.plot(h.T)
+#plt.figure()
+#plt.plot(ss.raw_data['state_hist_1'].T)
+#plt.show()
+#
+#plt.figure()
+#plt.plot(v.T)
+#plt.figure()
+#plt.plot(ss.raw_data['action_hist_1'].T)
+#plt.show()
 
-exit()
+#exit()
 
 #v_ = 5
 
@@ -51,17 +53,29 @@ ss.Features = SpectralAcousticFeatures(control_action='action_hist_1',
                                        control_sample_period=8,
                                        periodsperseg=1) # set feature extractor
 
-for k in range(0, 20):
-    ss.LoadDataDir(directory=dirname, min_index=k, max_index=k)
-    ss.ResetDataVars()
+dirname = 'data/rand_prim_5sec'
+#for k in range(0, 20):
+ss.LoadDataDir(directory=dirname, max_index=20)
+#ss.ResetDataVars()
     
-
+print "Estimating Primitives"
 ss.SubspaceDFA(dim)
 #ss.SavePrimitives(directory="data/test/rand_init_prim")
 #plt.figure()
 state_history = ss.StateHistoryFromFile(dirname+"/data20.npz")
-plt.plot(state_history.T)
-plt.title("State History")
+#plt.plot(state_history.T)
+#plt.title("State History")
+
+plt.figure()
+plt.imshow(np.abs(ss.K),interpolation="none")
+tikz_save('/home/jacob/Projects/Dissertation/Doc/tikz/acoustic_input_operator.tikz')
+#plt.title("Input operator for acoustic primitive")
+
+plt.figure()
+plt.imshow(np.abs(ss.O), interpolation="none")
+tikz_save('/home/jacob/Projects/Dissertation/Doc/tikz/acoustic_output_operator.tikz')
+#plt.title("Input operator for acoustic primitive")
+
 #plt.figure()
 #plt.plot(error[1:])
 #plt.title("Magnitude of error in estimate of F")
