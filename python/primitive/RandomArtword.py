@@ -22,6 +22,7 @@ class Artword:
         #        initial_art=np.zeros((aw.kArt_muscle.MAX, ))
         self.current_target[:, 1] = kwargs.get("initial_art", np.copy(self.current_target[:, 1]))
         self.current_target[:, 0] = np.ones(aw.kArt_muscle.MAX)*self.delayed_start
+        #print self.current_target
         #print self.current_target[:,1]
 
         self.previous_target = np.copy(self.current_target)

@@ -60,29 +60,6 @@ save_dir = '../data/qlearn/output'
 max_seconds =   5.0
 # RANDOM INIT
 initial_art=np.random.random((aw.kArt_muscle.MAX, )) #------
-# STATIC INIT
-# From a randomly generated art that worked well
-"""
-initial_art = np.array([ 0.52779292,  0.32185364,  0.86558425,  0.33471684,  0.65112661,  0.79903379,
- 0.11987483,  0.24855711,  0.31139851,  0.24787388,  0.19895598,  0.05290729,
- 0.32252938,  0.63632587,  0.50026815,  0.98682582,  0.05327814,  0.57564972,
- 0.09049773,  0.92107307,  0.25266528,  0.10626182,  0.59077853,  0.83012719,
- 0.65740627,  0.65219443,  0.7657366,   0.66722533,  0.49950773,])
-"""
-# Does well for state 0 with goal btw [.6,1.3)
-#initial_art=np.zeros((aw.kArt_muscle.MAX, ))
-# Does ok for state 1 with goal btw [-2,-1.33) using 1-10.0/(e-exploit_offset+10.0) for exploit
-#initial_art=np.ones((aw.kArt_muscle.MAX, ))
-
-# initialize from ipa 305. see ipa305.py
-"""
-initial_art=np.zeros((aw.kArt_muscle.MAX, ))
-initial_art[aw.kArt_muscle.INTERARYTENOID] = 0.5
-initial_art[aw.kArt_muscle.LUNGS] = 0.3
-initial_art[aw.kArt_muscle.MYLOHYOID] = 0.1
-initial_art[aw.kArt_muscle.SPHINCTER] = 0.7
-initial_art[aw.kArt_muscle.HYOGLOSSUS] = 0.3
-"""
 
 
 control = PrimitiveUtterance()
@@ -91,8 +68,8 @@ control.utterance = Utterance(directory=save_dir, utterance_length=max_seconds)
 
 # pull in relevant stuff from PrimitiveUtterance
 sample_period = control._sample_period
-dim = 2 #control._dim # dimension of states we will try to control
-target_dim = 2 # dimension of states we will try to control
+dim = 3 #control._dim # dimension of states we will try to control
+target_dim = 3 # dimension of states we will try to control
 full_dim = control._dim
 past = control._past
 future = control._future
@@ -109,13 +86,14 @@ print "Sample Period (ms): ", sample_period_ms
 
 
 # Initialize q learning class
-num_state_bins = 11
+# states centered on -0.1, 0.0, 0.1 # target is 0
+state_lims = 0.1 
+num_state_bins = 3
 num_action_bins = 3
-num_int_state_bins = 11
+#num_int_state_bins = 11
 reset_action = 100
 
 action_lims = 0.1
-state_lims = 1.
 # 1DState
 """
 goal_state = 1
@@ -134,52 +112,26 @@ states = states.reshape(1,states.shape[0])
 #states = np.concatenate((first_state,first_state),axis=0)
 
 first_state = np.linspace(-state_lims,state_lims,num=num_state_bins)
-first_state = first_state.reshape(1,first_state.shape[0])
-other_state = np.linspace(-state_lims,state_lims,num=num_state_bins)
-other_state = other_state.reshape(1,other_state.shape[0])
-states = np.concatenate((first_state,other_state),axis=0)
+states = np.tile(first_state, (dim, 1))
+#first_state = first_state.reshape(1,first_state.shape[0])
+#other_state = np.linspace(-state_lims,state_lims,num=num_state_bins)
+#other_state = other_state.reshape(1,other_state.shape[0])
+#states = np.concatenate((first_state,other_state),axis=0)
 
-
-# INTSTATE
-#action_int_state = np.linspace(-20,20,num=num_int_state_bins)
-#action_int_state = action_int_state.reshape(1,action_int_state.shape[0])
-#prev_state = np.linspace(-1,1,num=num_int_state_bins)
-#prev_state = prev_state.reshape(1,prev_state.shape[0])
-#prev_state = states
-#states = np.concatenate((states,action_int_state))
-#states = np.concatenate((states,prev_state))
 
 print states
-# 1DSTATE
-#goal_state_index = np.array([np.floor(num_state_bins/2.0)])
-#goal_state_index = np.array([7])
-# 2DSTATE and INTSTATE
-#goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0)])
-#goal_state_index = np.array([np.floor(num_state_bins/2.0),-1])
-#goal_state_index = np.array([np.floor(num_state_bins/2.0),np.floor(num_state_bins/3.0),-1,-1])
-#goal_state_index = np.array([7,5])
-#1.2,-1.7 # For IPA 305
-#goal_state_index = np.array([8,4])
-goal_state_index = np.array([5,5])
+goal_state_index = np.ones(dim) #np.array([1,1])
 print("Goal State")
 #print goal_state_index
 # 1DSTATE OR 2DSTATE
 ind2d = np.zeros((2,target_dim))
-# INTSTATE
-#ind2d = np.zeros((2,dim+1))
-#ind2d = np.zeros((2,dim*2))
-#ind2d[1,0] = goal_state_index
 ind2d[1,:] = goal_state_index
 print states[tuple(ind2d.astype(int))]
 
 #1DACTION
 actions_inc = np.linspace(-action_lims, action_lims,num=num_action_bins)
-#actions_inc = np.linspace(-4.0,4.0,num=num_action_bins)
-#actions_inc = np.append(actions_inc,reset_action)
 actions_inc = actions_inc.reshape(1,actions_inc.shape[0])
 # 2DACTION
-#actions_inc = np.concatenate((actions_inc,actions_inc),axis=0)
-#actions_inc = np.tile(actions_inc, (control._dim, 1)) # full dimension action
 actions_inc = np.tile(actions_inc, (dim, 1)) # full dimension action
 print actions_inc
 
@@ -382,7 +334,7 @@ for e in range(num_episodes+num_tests):
         plt.title("Undiscounted Accumulated Reward throughout Training")
         plt.xlabel("Episode")
         plt.ylabel("Total Reward")
-        control.SaveOutputs()
+        control.SaveOutputs(fname="episode_"+str(e))
         plt.show()
 
 print q_learn.Q.shape

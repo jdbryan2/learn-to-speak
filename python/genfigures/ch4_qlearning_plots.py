@@ -17,18 +17,18 @@ ind= get_last_index(dirname, 'round')
 load_fname = 'round%i.npz'%ind
 
 # create plots of state trajectories 
-sample_period_ms = 5
+sample_period_ms = 10 
 sample_period = sample_period_ms*8
 
 dh = DataHandler()
-dh.LoadDataDir(directory=dirname+'/selected_2')
-state_hist =dh.raw_data['state_hist_1'] 
+dh.LoadDataDir(directory=dirname+'/selected_3', min_index=99, max_index=99)
+state_hist =dh.raw_data['state_hist_1'][:, ::2]
 action_hist = dh.raw_data['action_hist_1']
 art_hist = dh.raw_data['art_hist']
 art_hist = art_hist[:, ::sample_period]
 
 plt.figure()
-MultiPlotTraces(state_hist, np.arange(state_hist.shape[0]), state_hist.shape[1], sample_period, highlight=[0,1])
+MultiPlotTraces(state_hist, np.arange(state_hist.shape[0]), state_hist.shape[1], sample_period, highlight=[0,1, 2])
 plt.xlabel('Time (s)')
 plt.ylabel('State Value')
 tikz_save('tikz/qlearn_states.tikz')

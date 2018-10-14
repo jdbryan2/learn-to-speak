@@ -50,8 +50,8 @@ class OperatorDataset:
     def get_batch(self, n=0, batch_size=50):
         start = n*batch_size
         stop = (n+1)*batch_size
-        #return self._input[start:stop, :], self._output[start:stop, :]
         return self._output[start:stop, :], self._input[start:stop, :]
+        #return self._input[start:stop, :], self._output[start:stop, :]
 
     def data(self):
         start = 0

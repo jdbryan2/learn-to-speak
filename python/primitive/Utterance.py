@@ -163,6 +163,7 @@ class Utterance(object):
         if not self._sim_init: 
             self._sim_init = True
             print "Setting up simulation..."
+            #print kwargs
             self.InitializeArticulation(**kwargs)
             self.InitializeDir(self.directory)  # appends DTS to folder name
             #self.SaveParams()  # save parameters before anything else
