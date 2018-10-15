@@ -38,6 +38,16 @@ def PlotDistribution(ave, std, rows):
     plt.plot(ave[rows]-std[rows], 'ro--', linewidth=1)
     plt.plot(ave[rows]+std[rows], 'ro--', linewidth=1)
 
+def get_index_list(directory, base_name = 'data'):
+    index_list = []  # using a list for simplicity
+    if os.path.exists(directory):
+        for filename in os.listdir(directory):
+            if filename.startswith(base_name) and filename.endswith(".npz"):
+                index = filter(str.isdigit, filename)
+                if len(index) > 0:
+                    index_list.append(int(index))
+
+    return index_list
 
 def get_last_index(directory, base_name = 'data'):
     index_list = []  # using a list for simplicity
