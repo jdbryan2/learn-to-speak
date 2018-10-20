@@ -1,0 +1,2 @@
+model_checkpoint_path: "artnet.ckpt"
+all_model_checkpoint_paths: "artnet.ckpt"

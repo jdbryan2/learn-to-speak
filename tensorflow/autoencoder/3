@@ -10,18 +10,17 @@ import tensorflow_utilities as tf_util
 
 from tensorflow.examples.tutorials.mnist import input_data
 
-from genfigures.plot_functions import get_index_list 
-
 # The basic idea here is that the autoencoder is learning a function approxation 
 # rather than the identity function. 
 # This allows it to learn an inverse transform that can be used as a channel for transmitting
 
 class VAE(Autoencoder):
-    def __init__(self, input_dim, latent_size, output_dim, inner_width=50, lr=1e-4, **kwargs):
+    def __init__(self, input_dim, latent_size, state_dim, output_dim, inner_width=50, lr=1e-4, **kwargs):
         # input
         x = tf.placeholder(tf.float32, (None, input_dim))
         self.x = x
         self.target = tf.placeholder(tf.float32, (None, output_dim))
+        self.start_state = tf.placeholder(tf.float32, (None, state_dim))
         #self.y = y
         # encoder
         with tf.name_scope('encoder'):
@@ -53,23 +52,22 @@ class VAE(Autoencoder):
             dec3 = dense(dec2, inner_width, activation=tf.nn.relu, name='dec3')
             #dec4 = dense(dec3, inner_width, activation=tf.nn.relu, name='dec4')
 
-            x_out = dense(dec3, output_dim, activation=tf.nn.relu, name='rx_out')
+            x_out = dense(dec3, output_dim, activation=tf.nn.sigmoid, name='rx_out')
             self.x_out = x_out
 
         # quality metrics
         with tf.name_scope('metrics'):
             # change to MSE for accuracy, tx_power has no bearing
-            #self.accuracy = tf.reduce_sum(tf.squared_difference(x_out, self.target))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
+            #self.accuracy = tf.reduce_mean(tf.squared_difference(x_out, self.target))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             self.accuracy = tf.losses.absolute_difference(x_out, self.target)
             self.latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
-            
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            #art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
+            #img_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
             art_loss = tf.losses.absolute_difference(x_out, self.target)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
-            loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
+            loss = tf.reduce_mean(art_loss + latent_loss)
             #loss = tf.reduce_mean(img_loss)
             #loss = tf_util.sigmoid_cross_entropy_loss( x, rx_logits, name='loss')
             self.loss = loss
@@ -89,12 +87,12 @@ class VAE(Autoencoder):
         return self.sess.run(self.encoder_std.output, {self.encoder_std.input: x})
 
     # note: self.target must get defined in the inheriting class
-    #def get_feed_dict(self, dset, n=None, batch_size=None):
-    #    if n is None or batch_size is None:
-    #        x, target, state = dset.data()
-    #    else:
-    #        x, target, state = dset.get_batch(n, batch_size)
-    #    return {self.x: x, self.target: target, self.start_state: state}
+    def get_feed_dict(self, dset, n=None, batch_size=None):
+        if n is None or batch_size is None:
+            x, target, state = dset.data()
+        else:
+            x, target, state = dset.get_batch(n, batch_size)
+        return {self.x: x, self.target: target, self.start_state: state}
 
     #def encode(self, x):
     #    return self.sess.run(self.encoder.output, {self.encoder.input: x})
@@ -119,79 +117,70 @@ def reshape_data(data,history):
     max_len = int(np.floor(data.shape[0]/history)*history)
     return data[:max_len, :].reshape((-1, data.shape[1]*history))
 
+class Dynamical_Dataset:
+    def __init__(self, directory, history_length, train=True):
+        self.directory = directory
+        self.history_length = history_length
 
-def LoadData(directory='speech_io', outputs='mfcc', inputs='art_segs', shuffle=True):
+        # pull indeces from the filenames
+        index_list = []  # using a list for simplicity
+        for filename in os.listdir(directory):
+            if filename.startswith('batch_') and filename.endswith(".npz"):
+                index_list.append(int(filter(str.isdigit, str(filename))))
 
-    ind_list = np.array(get_index_list(directory=directory, base_name='data'))
+        # sort numerically and load files in order
+        self.index_list = np.array(sorted(index_list))
+        
+        fname=directory+"/batch_%i.npz"
+        self.action = np.array([])
+        self.state = np.array([])
+        self.obs = np.array([])
+        for ind in self.index_list:
+            data = np.load(fname%ind)
+            #print fname%ind
+            #print data.keys()
+            #print self.action.shape, self.state.shape, self.obs.shape
+            action = reshape_data(data['action'], history_length)
+            state = reshape_data(data['state'], history_length)
+            obs = reshape_data(data['observation'], history_length)
+            if self.action.size == 0:
+                self.action = action
+                self.state = state[:, :4] # only keep the starting state
+                self.obs = obs
+            else:
+                self.action = np.append(self.action, action, axis=0)
+                self.state = np.append(self.state, state[:, :4], axis=0)
+                self.obs = np.append(self.obs, obs, axis=0)
 
-    ind_list = np.sort(ind_list)
-
-    features = np.array([])
-    spec = np.array([])
-    actions = np.array([])
-    print "Loading Data..."
-    for k in ind_list:
-        data = np.load("speech_io/data%i.npz"%k)
-
-        if features.size:
-            features = np.append(features, data[outputs], axis=0)
-            actions = np.append(actions, data[inputs][:, 1:, -1], axis=0)
-            #spec = np.append(spec, data['mel_spectrum'], axis=0)
-        else:
-            features = data[outputs]
-            actions = data[inputs][:, 1:, -1]
-            #spec = data['mel_spectrum']
-
-    #plt.imshow(spec.T, aspect=3*20)
-    #plt.show()
-    remove = ~np.isnan(features)
-    features = features[remove].reshape((-1, 13))
-    remove.reshape((-1, 13))
-    actions = actions[remove[:, 0], :]
-    #print remove.shape
-
-    E_m = np.mean(features[:, 0])
-    E_sd = np.std(features[:, 0])
-    print E_m, E_sd
-    m_count = np.sum(features[:, 0]>E_m)
-    sd_count = np.sum(features[:, 0]>E_m+E_sd)
-    count = features.shape[0]
-
-    print 1.*m_count/count, 1.*sd_count/count
-
-    #MultiPlotTraces(actions.T, np.arange(actions.shape[1]), actions.shape[0], 80)
-    #plt.show()
-
-    if shuffle:
-        new_index = np.arange(0, actions.shape[0]).astype('int')
+        # need to add a step where the data is shuffled 
+        new_index = np.arange(0, self.action.shape[0]).astype('int')
         np.random.shuffle(new_index)
 
-        return actions[new_index, :], features[new_index, :]
-    else: 
-        return actions, features
+        self.action = self.action[new_index, :]
+        self.state = self.state[new_index, :]
+        self.obs = self.obs[new_index, :]
 
-class PyraatDataset:
-    def __init__(self, actions, features):
-        self.actions = actions
-        self.features = features
 
     def num_batches(self, batch_size):
-        return int(np.floor(self.features.shape[0]/batch_size))
+        return int(np.floor(self.action.shape[0]/batch_size))
+
+    #def num_points(self):
+        #return self.mnist.num_examples
 
     def parameter_sizes(self):
-        return self.features.shape[1], self.actions.shape[1]
+        return self.obs.shape[1], self.action.shape[1], self.state.shape[1]
 
     def get_batch(self, n=0, batch_size=50):
         start = n*batch_size
         stop = (n+1)*batch_size
-        return self.features[start:stop, :], self.actions[start:stop, :]
-        #return self._input[start:stop, :], self._output[start:stop, :]
+        return self.obs[start:stop, :], self.action[start:stop, :], self.state[start:stop, :] 
 
     def data(self):
         start = 0
-        stop = self.actions.shape[0]
-        return self.features[start:stop, :], self.actions[start:stop, :]
-        #return self._input[start:stop, :], self._output[start:stop, :]
+        stop = self.action.shape[0]
+        return self.obs[start:stop, :], self.action[start:stop, :], self.state[start:stop, :] 
+
+
         
 
 if __name__ == '__main__':
