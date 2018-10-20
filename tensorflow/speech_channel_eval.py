@@ -114,6 +114,7 @@ model.load(load_path)
 rounds = 1000
 mean_error = np.zeros(rounds)
 coords = np.zeros((rounds, latent_size))
+coords_out = np.zeros((rounds, 98, latent_size))
 for k in range(rounds):
     h = np.zeros(latent_size)
     h[0] = np.random.normal()/2.
@@ -153,7 +154,7 @@ for k in range(rounds):
     #plt.show()
     
     _h = model.encode(mfcc_out)
-    
+    coords_out[k, :, :] = _h
     
     #for k in range(h.shape[1]):
     #    plt.figure()
@@ -164,7 +165,7 @@ for k in range(rounds):
     
     #plt.show()
 
-np.savez('3D_results', mean_error=mean_error, coords=coords)
+np.savez('3D_results', mean_error=mean_error, coords=coords, coords_out=coords_out)
 
 for d in range(latent_size):
     plt.scatter(coords[:, d], mean_error)
