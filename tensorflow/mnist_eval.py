@@ -5,6 +5,7 @@ import os
 import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.signal as sig
+from genfigures.plot_functions import *
 
 import tensorflow as tf
 from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distortion, blur_distortion
@@ -12,7 +13,7 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
-BLUR = True # whether or not to use the blurring distortion
+BLUR = False # whether or not to use the blurring distortion
 EPOCHS = 50
 
 # helper functions
@@ -82,8 +83,8 @@ tx = (0.5-np.random.random((num_points, latent_size)))*2.
 #tx_1 = np.append(np.zeros(base.size), base)
 #tx_1 = np.append(tx_1, np.zeros(base.size))
 #tx_2 = np.append(np.zeros(base.size*2), base)
-
-#print tx_0.size, tx_1.size, tx_2.size
+#
+##print tx_0.size, tx_1.size, tx_2.size
 #tx= np.array([tx_0, tx_1, tx_2]).T
 
 img_out = model.decode(tx)
@@ -94,7 +95,7 @@ rx_std = model.encode_std(img_out)
 error = np.abs(tx-rx)**2
 error= np.sqrt(np.sum(error, axis=1))
 
-std = np.exp(rx_std)**2
+std = np.exp(2*rx_std)
 std = np.sqrt(np.sum(std, axis=1))
 
 plt.scatter(error, std)
@@ -116,27 +117,75 @@ print 'Error standard deviation: ', np.std(error)
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-# For each set of style and range settings, plot n random points in the box
-# defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
-ind= np.where(error<0.2)
-ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='b', marker='^')
-ind= np.where((error<0.3)*(error > 0.2))
-ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='g', marker='^')
-#ind= np.where((error<0.4)* (error > 0.3))
-#ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='y', marker='^')
-#ind= np.where((error<0.5)*( error > 0.4))
-#ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='orange', marker='^')
-ind= np.where(error>1.)
-ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='r', marker='o')
-#ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
+if BLUR:
+    # For each set of style and range settings, plot n random points in the box
+    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
+    ind= np.where(error<0.2)
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='b', marker='^')
+    ind= np.where((error<0.3)*(error > 0.2))
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='g', marker='^')
+    #ind= np.where((error<0.4)* (error > 0.3))
+    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='y', marker='^')
+    #ind= np.where((error<0.5)*( error > 0.4))
+    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='orange', marker='^')
+    ind= np.where(error>1.)
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='r', marker='o')
+    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
+else:
+    # For each set of style and range settings, plot n random points in the box
+    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
+    ind= np.where(error<0.05)
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='b', marker='^')
+    ind= np.where((error<0.1)*(error > 0.05))
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='g', marker='^')
+    #ind= np.where((error<0.4)* (error > 0.3))
+    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='y', marker='^')
+    #ind= np.where((error<0.5)*( error > 0.4))
+    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='orange', marker='^')
+    ind= np.where(error>0.2)
+    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='r', marker='o')
+    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
 
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+    #ax.scatter(tx[:, 0], tx[:, 1], tx[:, 2], c='b', marker='o')
+    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='^')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 
 plt.show()
 
+if BLUR:
+    ind, = np.where(error<0.2)
+    np.random.shuffle(ind)
+    for k in range(10):
+        #mnist_show(img_out[ind[k], :])
+        plt.imshow(np.append(img_out[ind[k]].reshape((28,28)), img_in[ind[k]].reshape((28,28)), axis=1),
+                   interpolation='none')
+        tikz_save('/home/jacob/Desktop/mnist_figures/low_error_%i.tikz'%k)
+        plt.close()
+        #plt.show()
+    
+    ind, = np.where(error>1.)
+    np.random.shuffle(ind)
+    for k in range(10):
+        #mnist_show(img_out[ind[k], :])
+        plt.imshow(np.append(img_out[ind[k]].reshape((28,28)), img_in[ind[k]].reshape((28,28)), axis=1),
+                   interpolation='none')
+        tikz_save('/home/jacob/Desktop/mnist_figures/high_error_%i.tikz'%k)
+        plt.close()
+else:
 
+    ind = np.argsort(error)
+    for k in range(10):
+        #mnist_show(img_out[ind[k], :])
+        plt.imshow(img_out[ind[k]].reshape((28,28)), interpolation='none')
+        tikz_save('/home/jacob/Desktop/mnist_figures/low_error_%i.tikz'%k)
+        plt.show()
+
+        plt.imshow(img_out[ind[-k]].reshape((28,28)), interpolation='none')
+        tikz_save('/home/jacob/Desktop/mnist_figures/high_error_%i.tikz'%k)
+        plt.show()
 
 #for k in range(tx.shape[0]):
 #    plt.figure()
