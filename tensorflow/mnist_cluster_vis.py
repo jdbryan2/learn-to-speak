@@ -79,8 +79,8 @@ model.load(load_path)
 
 num_points = 1000
 
-img_in, clean_img, label  = d_train.get_labeled_batch(0,num_points)
-_, label_num = np.where(label)
+img_in, clean_img, label_num  = d_train.get_labeled_batch(0,num_points)
+#_, label_num = np.where(label)
 ind = np.argsort(label_num)
 label_num = label_num[ind]
 img_in = img_in[ind] # group by label
