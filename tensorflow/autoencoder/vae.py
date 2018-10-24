@@ -116,6 +116,10 @@ class MNIST_Dataset:
         batch, _  = self.mnist.next_batch(batch_size)
         return self.distort(batch), batch
 
+    def get_labeled_batch(self, n=0, batch_size=50):
+        batch, labels  = self.mnist.next_batch(batch_size)
+        return self.distort(batch), batch, labels
+
     def data(self):
         batch, _  = self.mnist.next_batch(self.num_points())
         return self.distort(batch), batch
