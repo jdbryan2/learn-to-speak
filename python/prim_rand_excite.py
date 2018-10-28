@@ -14,7 +14,8 @@ from primitive.DataHandler import DataHandler
 import pylab as plt
 
 from genfigures.plot_functions import *
-    
+
+NO_THRESHOLD = False   
 loops = 1000 
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
@@ -30,13 +31,17 @@ prim_dirname = 'data/batch_random_20_5'
 ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
 
-true_dim = prim._dim 
+#true_dim = prim._dim 
 
 
 loop_start = get_last_index(savedir, 'data')+1
 print loop_start
+k = loop_start
+failed_attempts = 0
 
-for k in range(loop_start, loop_start+loops):
+#for k in range(loop_start, loop_start+loops):
+while k < loop_start+loops:
+
     prim = PrimitiveUtterance()
     #prim.LoadPrimitives(full_filename)
     prim.LoadPrimitives(prim_filename, prim_dirname) # updated loading function
@@ -64,7 +69,7 @@ for k in range(loop_start, loop_start+loops):
                           random=True,
                           min_increment=0.1, # 20*sample_period, 
                           max_increment=0.1, # 20*sample_period,
-                          max_delta_target=0.5)
+                          max_delta_target=1.)
 
     # all factors over 3 to be constant zero
     #for factor in range(prim._dim):
@@ -95,7 +100,30 @@ for k in range(loop_start, loop_start+loops):
 
     #handler.raw_data = prim.GetOutputs()
     #handler.SaveAnimation(directory=prim.utterance.directory,fname="vid"+str(k))
-    prim.SaveOutputs(fname=str(k))
+
+    sound = prim.GetSoundWave()
+    total_energy = np.sum((sound[1:] - sound[:-1])**2)
+
+
+    print "*"*50
+    print "Total energy: %f"%total_energy
+
+    if total_energy > 10**(-3) or NO_THRESHOLD:
+        prim.SaveOutputs(fname=str(k))
+        #rand.SaveSequence(fname='sequence'+str(k), directory=sequence_dir)
+        print "Saved k=%i"%k
+        k = k+1
+
+        #energy = (sound[1:] - sound[:-1])**2
+        #average_energy = moving_average(energy.reshape((1,-1)), 100)
+        #plt.plot(average_energy.flatten())
+        #plt.show()
+
+    else:
+        failed_attempts= failed_attempts + 1
+        print "Utterance below sound threshold: %i"%failed_attempts
+    print "*"*50
+    #prim.SaveOutputs(fname=str(k))
 
 
     

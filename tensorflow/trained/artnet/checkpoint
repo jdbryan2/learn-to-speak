@@ -1,2 +1,2 @@
-model_checkpoint_path: "artnet.ckpt"
-all_model_checkpoint_paths: "artnet.ckpt"
+model_checkpoint_path: "acoustic_artnet.ckpt"
+all_model_checkpoint_paths: "acoustic_artnet.ckpt"
