@@ -15,22 +15,22 @@ import pylab as plt
 
 from genfigures.plot_functions import *
     
-loops = 500 
-utterance_length = 5. #10.0
+loops = 1000 
+utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
 #savedir = 'data/rand_steps_full'
-savedir = 'data/rand_prim_5sec'
+savedir = 'data/rand_prim_1sec'
 
 #prim_filename = 'round550'
 #prim_dirname = 'data/batch_random_1_1'
 #full_filename = os.path.join(prim_dirname, prim_filename)
 
-prim_dirname = 'data/batch_random_20_10'
+prim_dirname = 'data/batch_random_20_5'
 ind= get_last_index(prim_dirname, 'round')
 prim_filename = 'round%i.npz'%ind
 
-true_dim = 10#prim._dim 
+true_dim = prim._dim 
 
 
 loop_start = get_last_index(savedir, 'data')+1
@@ -41,10 +41,10 @@ for k in range(loop_start, loop_start+loops):
     #prim.LoadPrimitives(full_filename)
     prim.LoadPrimitives(prim_filename, prim_dirname) # updated loading function
 
-    initial_control = np.zeros(prim._dim)
-    initial_control[:true_dim] = np.random.random(true_dim)*2. - 1.
-    end_control = np.zeros(prim._dim)
-    end_control[:true_dim] = np.random.random(true_dim)*2 - 1.
+    initial_control = np.random.random(prim._dim)*2. - 1.
+    #initial_control[:true_dim] = np.random.random(true_dim)*2. - 1.
+    #end_control = np.zeros(prim._dim)
+    #end_control[:true_dim] = np.random.random(true_dim)*2 - 1.
 
     prim.utterance = Utterance(directory = savedir, 
                                utterance_length=utterance_length, 
@@ -63,8 +63,8 @@ for k in range(loop_start, loop_start+loops):
                           sample_period=sample_period,
                           random=True,
                           min_increment=0.1, # 20*sample_period, 
-                          max_increment=0.3, # 20*sample_period,
-                          max_delta_target=0.8)
+                          max_increment=0.1, # 20*sample_period,
+                          max_delta_target=0.5)
 
     # all factors over 3 to be constant zero
     #for factor in range(prim._dim):
@@ -75,8 +75,8 @@ for k in range(loop_start, loop_start+loops):
 
     prim.InitializeControl(initial_art = prim.GetControl(rand.GetAction(time=0.0)))
 
-    handler = DataHandler()
-    handler.params = prim.GetParams()
+    #handler = DataHandler()
+    #handler.params = prim.GetParams()
 
 
     prim._act = rand
