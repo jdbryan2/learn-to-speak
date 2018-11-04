@@ -1,0 +1,2 @@
+model_checkpoint_path: "primnet.ckpt"
+all_model_checkpoint_paths: "primnet.ckpt"
