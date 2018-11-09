@@ -1,4 +1,5 @@
-
+# Articulatory primitives single factor variation
+# basically randomly excites each dimension of the art prim one at a time
 import os
 import time
 import numpy as np
