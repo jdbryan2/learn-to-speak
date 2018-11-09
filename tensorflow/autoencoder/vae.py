@@ -14,7 +14,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 # This allows it to learn an inverse transform that can be used as a channel for transmitting
 
 class VAE(Autoencoder):
-    def __init__(self, input_dim, latent_size, output_dim, lr=1e-4, **kwargs):
+    def __init__(self, input_dim, latent_size, output_dim, lr=1e-4, netwidth=50, **kwargs):
         # input
         x = tf.placeholder(tf.float32, (None, input_dim))
         self.x = x
@@ -22,10 +22,10 @@ class VAE(Autoencoder):
         #self.y = y
         # encoder
         with tf.name_scope('encoder'):
-            enc1 = dense(x, 50, activation=tf.nn.relu, name='enc1')
-            enc2 = dense(enc1, 50, activation=tf.nn.relu, name='enc2')
-            enc3 = dense(enc2, 50, activation=tf.nn.relu, name='enc3')
-            #enc4 = dense(enc3, 50, activation=tf.nn.relu, name='enc4')
+            enc1 = dense(x, netwidth, activation=tf.nn.relu, name='enc1')
+            enc2 = dense(enc1, netwidth, activation=tf.nn.relu, name='enc2')
+            enc3 = dense(enc2, netwidth, activation=tf.nn.relu, name='enc3')
+            #enc4 = dense(enc3, netwidth, activation=tf.nn.relu, name='enc4')
 
             # variational layers
             # note: epsilon is shaped based on zeroth dim of enc4 so that it won't break if 
@@ -43,9 +43,9 @@ class VAE(Autoencoder):
         with tf.name_scope('decoder'):
             # NOTE: following line is tightly coupled to the architecture
             # dec1 is of size (None, 236, 4)
-            dec1 = dense(self.rx, 50, activation=tf.nn.relu, name='dec1')
-            dec2 = dense(dec1, 50, activation=tf.nn.relu, name='dec2')
-            dec3 = dense(dec2, 50, activation=tf.nn.relu, name='dec3')
+            dec1 = dense(self.rx, netwidth, activation=tf.nn.relu, name='dec1')
+            dec2 = dense(dec1, netwidth, activation=tf.nn.relu, name='dec2')
+            dec3 = dense(dec2, netwidth, activation=tf.nn.relu, name='dec3')
             #dec4 = dense(dec3, 50, activation=tf.nn.relu, name='dec4')
 
             x_out = dense(dec3, output_dim, activation=tf.nn.sigmoid, name='rx_out')
