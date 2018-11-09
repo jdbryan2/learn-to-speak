@@ -66,10 +66,11 @@ class VAE(Autoencoder):
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            #art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
-            art_loss = tf.losses.absolute_difference(x_out, self.target)
+            art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
+            #art_loss = tf.losses.absolute_difference(x_out, self.target)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
-            loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
+            #loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
+            loss = tf.reduce_mean(art_loss + input_dim/latent_size*latent_loss)
             #loss = tf.reduce_mean(img_loss)
             #loss = tf_util.sigmoid_cross_entropy_loss( x, rx_logits, name='loss')
             self.loss = loss

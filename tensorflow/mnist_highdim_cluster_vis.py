@@ -13,7 +13,7 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
-BLUR = False # whether or not to use the blurring distortion
+BLUR = True # whether or not to use the blurring distortion
 EPOCHS = 50
 
 # helper functions
@@ -40,10 +40,10 @@ def scatter3D(data, color='b', marker='o'):
 
 
 if BLUR:
-    test_name = 'mnist_blur_vae'
+    test_name = 'mnist_blur_hd'
     distortion = blur_distortion  # function pointer
 else:
-    test_name = 'mnist_null_vae'
+    test_name = 'mnist_null_hd'
     distortion = null_distortion # function pointer
 
 save_dir = './trained/mnist_hd'
@@ -57,7 +57,7 @@ mnist_path = '/home/jacob/Projects/Data/MNIST_data'
 
 input_dim = 28*28
 output_dim = 28*28
-latent_size = 3
+latent_size = 10 
 
 colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray', 'cyan', 'saddlebrown', 'fuchsia']
 
@@ -77,28 +77,76 @@ d_val = MNIST_Dataset(mnist_path, distortion, train=False)
 ###
 model.load(load_path)
 
-num_points = 1000
+num_points = 2000
 
-img_in, clean_img, label_num  = d_train.get_labeled_batch(0,num_points)
+img_in, clean_img, label_num  = d_val.get_labeled_batch(0,num_points)
 #_, label_num = np.where(label)
 ind = np.argsort(label_num)
 label_num = label_num[ind]
 img_in = img_in[ind] # group by label
 
 rx = model.encode(img_in)
-
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+img_out = model.decode(rx)
+rx_2 = model.encode(distortion(img_out))
 
 for k in range(10):
-    ind = np.where(label_num == k)
-    ax.scatter(rx[ind, 0], rx[ind, 1], rx[ind, 2], c=colors[k], marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
+    plt.figure()
+    mnist_show(img_in[k])
+    plt.figure()
+    mnist_show(img_out[k])
 
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+    plt.figure()
+    plt.scatter(np.arange(10), rx[k], c='blue', marker='o')
+    plt.scatter(np.arange(10), rx_2[k], c='red', marker='^')
+    plt.show()
 
+
+bins = np.arange(-2, 2.01, 0.2)
+#remap = np.array([0, 1, 4, 6, 8])
+hist = np.zeros((10, 10, bins.size-1))
+for k in range(10):
+    ind,  = np.where(label_num == k) 
+
+    for n in np.arange(10): 
+        hist[k, n] = np.histogram(rx[ind, n], bins)[0]
+        hist[k, n]= 1.*hist[k, n]/np.sum(hist[k,n]) # normalize to make into prob dist
+    #plt.figure()
+    #plt.imshow(hist[k])
+
+#plt.show()
+
+hist = hist+1e-30
+hist_dist = np.ones((10, 10, 10))*np.inf
+for k in range(10):
+    for n in range(10):
+        # kl divergence
+        #hist_dist[k, n] = np.sum(hist[k]*(np.log2(hist[k])-np.log2(hist[n])))
+
+        # size of histogram intersection
+        for j in range(10):
+            hist_dist[k, n, j] = np.min((hist_dist[k,n,j], np.sum(np.minimum(hist[k, j], hist[n,j]))))
+        #hist_dist[k, n] = np.sum(np.minimum(hist[k].flatten(), hist[n].flatten()), axis=-1)
+
+    #hist_dist[k, :] = hist_dist[k, :]/hist_dist[k, k] # normalize
+
+
+
+
+plt.figure()
+plt.imshow(np.min(hist_dist, axis=2))
+plt.colorbar()
 plt.show()
+
+#fig = plt.figure()
+#ax = fig.add_subplot(111, projection='3d')
+#
+#for k in range(10):
+#    ind = np.where(label_num == k)
+#    ax.scatter(rx[ind, 0], rx[ind, 1], rx[ind, 2], c=colors[k], marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
+#
+#ax.set_xlabel('X')
+#ax.set_ylabel('Y')
+#ax.set_zlabel('Z')
+#
+#plt.show()
 

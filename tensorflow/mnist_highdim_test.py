@@ -10,8 +10,8 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 TRAIN = True # train the model for another round of epochs
-BLUR = False # whether or not to use the blurring distortion
-EPOCHS = 50
+BLUR = True # whether or not to use the blurring distortion
+EPOCHS = 10
 
 # helper functions
 
@@ -27,7 +27,7 @@ else:
     test_name = 'mnist_null_hd'
     distortion = null_distortion # function pointer
 
-save_dir = './trained'
+save_dir = './trained/mnist_hd'
 
 #log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
 #log_dir = '/home/jbryan/Data/vae-test'
@@ -55,7 +55,7 @@ latent_size = 10
 #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
 session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
-model = VAE( input_dim, latent_size, output_dim, netwidth=50, log_dir=log_dir, auto_logging=False, sess=session)
+model = VAE( input_dim, latent_size, output_dim, netwidth=50, lr=1e-3, log_dir=log_dir, auto_logging=False, sess=session)
 
 session.run(tf.global_variables_initializer())
 
@@ -86,15 +86,18 @@ error = np.abs(tx-rx)
 print 'Average transmission error: ', np.mean(error)
 
 #for k in range(tx.shape[0]):
+for k in range(10):
 #    plt.figure()
 #    plt.plot(tx[k])
 #    plt.plot(rx[k], 'r')
 #    plt.plot(rx[k]+rx_std[k], 'r--')
 #    plt.plot(rx[k]-rx_std[k], 'r--')
-#    plt.figure()
-#    mnist_show(img_out[k])
-#    
-#    plt.show()
+    plt.figure()
+    mnist_show(img_in[k])
+    plt.figure()
+    mnist_show(img_out[k])
+    
+    plt.show()
 
 
 
