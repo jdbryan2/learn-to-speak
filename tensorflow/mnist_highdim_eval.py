@@ -14,14 +14,33 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
 BLUR = True # whether or not to use the blurring distortion
+EXAMPLES = 1
 EPOCHS = 50
 
 
 # helper functions
 
 # wrapper for showing mnist vectors as images
-def mnist_show(x):
-    plt.imshow(x.reshape((28, 28)))
+def mnist_show(x, y):
+    plt.imshow(np.append(x.reshape((28,28)), y.reshape((28,28)), axis=0), interpolation='none')
+    #plt.imshow(x.reshape((28, 28)))
+
+def mnist_sequence(x, y):
+    if x.shape[0] != y.shape[0]:
+        print "Sequences of images must be same size"
+        return 0
+
+    
+    if x.shape[0] > 1:
+        image = np.append(x[0].reshape((28,28)), y[0].reshape((28,28)), axis=0)
+        for k in range(1, x.shape[0]):
+            image = np.append(image, np.append(x[k].reshape((28,28)), y[k].reshape((28,28)), axis=0), axis=1)
+
+    else:
+        image = np.append(x.reshape((28,28)), y.reshape((28,28)), axis=0)
+
+    return plt.imshow(image, interpolation='none')
+
 
 def scatter3D(data, color='b', marker='o'):
 
@@ -47,10 +66,14 @@ else:
     test_name = 'mnist_null_hd'
     distortion = null_distortion # function pointer
 
-save_dir = './trained/mnist_hd'
+fig_dir = './figures/'+test_name
+
+if not os.path.exists(fig_dir):
+    os.makedirs(fig_dir)
 
 #log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
 #log_dir = '/home/jbryan/Data/vae-test'
+save_dir = './trained/mnist_hd'
 load_path = save_dir+'/'+test_name+'.ckpt'
 
 mnist_path = '/home/jacob/Projects/Data/MNIST_data'
@@ -86,7 +109,58 @@ img_in, clean_img, label_num  = d_val.get_labeled_batch(0,num_points)
 rx_std = model.encode_std(img_in)
 unused_dims = np.exp(np.mean(rx_std, axis=0))>0.99
 
+# encode and decode images to look at quality
+rx = model.encode(img_in)
+img_out = model.decode(rx)
+
+if EXAMPLES == 0:
+    for k in range(10):
+        ind, = np.where(label_num==k)
+
+        #plt.figure()
+        img_handle = mnist_sequence(img_in[ind[1:10]], img_out[ind[1:10]])
+        img_handle.set_cmap('Greys')
+        plt.axis('off')
+        tikz_save(fig_dir+'/examples_'+str(k))
+        #plt.show()
+        plt.close()
+
 #exit()
+
+if EXAMPLES == 1:
+    
+    dims = np.where(~unused_dims)[0]
+    samples = np.arange(-1, 1.01, 0.22)
+    err = np.zeros(latent_size)
+    for k in dims:
+        tx = 0.*np.ones((samples.size, latent_size))
+        tx[:, k] = samples
+
+        img_out = model.decode(tx)
+
+        img_in = distortion(img_out)
+        rx = model.encode(img_in)
+        img_out2 = model.decode(rx)
+
+        err[k] = np.mean(np.sum(np.abs(tx-rx)**2, axis=1))
+        #print np.mean(err)
+
+        plt.figure()
+        img_handle = mnist_sequence(img_out, img_out2)
+        img_handle.set_cmap('Greys')
+        plt.axis('off')
+        tikz_save(fig_dir+'/sweep_'+str(k))
+        plt.show()
+
+    print np.sum(0.5*np.log2(1+1/err[dims]))
+        #tikz_save(fig_dir+'/examples_'+str(k))
+        #plt.close()
+
+
+
+
+
+
 
 tx = (0.5-np.random.random((num_points, latent_size)))*2.
 tx[:, unused_dims] = 0.
@@ -110,24 +184,24 @@ rx_std = rx_std[:, ~unused_dims]
 tx = tx[:, ~unused_dims]
 latent_size = latent_size - np.sum(unused_dims)
 
-for k in range(latent_size):
-    plt.figure()
-    plt.scatter(np.arange(latent_size), tx[k], c='blue', marker='o')
-    plt.scatter(np.arange(latent_size), rx[k], c='red', marker='^')
-    plt.show()
+#for k in range(latent_size):
+#    plt.figure()
+#    plt.scatter(np.arange(latent_size), tx[k], c='blue', marker='o')
+#    plt.scatter(np.arange(latent_size), rx[k], c='red', marker='^')
+#    plt.show()
 
-error = np.abs(tx-rx)**2
-error= np.sqrt(np.mean(error, axis=1))
+square_error = np.sum(np.abs(tx-rx)**2, axis=1)
+MSE= np.mean(square_error)
 
-std = np.exp(2*rx_std)
-std = np.sqrt(np.mean(std, axis=1))
+var = np.sum(np.exp(2*rx_std)**2, axis=1)
+var = np.mean(var)
 
-plt.scatter(error, std)
-plt.xlabel('Error')
-plt.ylabel('Standard Deviation')
-plt.show()
+#plt.scatter(error, std)
+#plt.xlabel('Error')
+#plt.ylabel('Standard Deviation')
+#plt.show()
 
-ind = np.argsort(error)
+#ind = np.argsort(error)
 
 #for k in range(5):
 #    plt.figure()
@@ -136,48 +210,32 @@ ind = np.argsort(error)
 #plt.show()
 
 #print(error)
-print 'Average transmission error: ', np.mean(error)
-print 'Error standard deviation: ', np.std(error)
-print 'Average RX deviation: ', np.mean(std)
+print 'Transmission MSE: ', MSE
+#print 'Error standard deviation: ', np.std(error)
+print 'Mean RX Variance: ', var
+c = np.sum(0.5*np.log2(1+latent_size/MSE))
+print 'Estimated Channel Capacity: ', c
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+#plt.plot(error[ind])
+#plt.show()
 
-if BLUR:
-    # For each set of style and range settings, plot n random points in the box
-    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
-    ind= np.where(error<0.2)
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='b', marker='^')
-    ind= np.where((error<0.3)*(error > 0.2))
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='g', marker='^')
-    #ind= np.where((error<0.4)* (error > 0.3))
-    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='y', marker='^')
-    #ind= np.where((error<0.5)*( error > 0.4))
-    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='orange', marker='^')
-    ind= np.where(error>1.)
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='r', marker='o')
-    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
-else:
-    # For each set of style and range settings, plot n random points in the box
-    # defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
-    ind= np.where(error<0.05)
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='b', marker='^')
-    ind= np.where((error<0.1)*(error > 0.05))
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='g', marker='^')
-    #ind= np.where((error<0.4)* (error > 0.3))
-    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='y', marker='^')
-    #ind= np.where((error<0.5)*( error > 0.4))
-    #ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='orange', marker='^')
-    ind= np.where(error>0.2)
-    ax.scatter(tx[ind, 0], tx[ind, 1], tx[ind, 2], c='r', marker='o')
-    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='o')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
 
-    #ax.scatter(tx[:, 0], tx[:, 1], tx[:, 2], c='b', marker='o')
-    #ax.scatter(rx[:, 0], rx[:, 1], rx[:, 2], c='r', marker='^')#, s=np.mean(np.log(np.abs(rx_std)), axis=1))
 
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+dim_error = np.abs(tx-rx)**2
+mean_error = np.mean(dim_error, axis=0)
 
+cov_error = np.cov((tx-rx).T)
+plt.imshow(cov_error)
 plt.show()
+
+
+dim_var = np.exp(2*rx_std)**2
+mean_var = np.mean(dim_var, axis=0)
+
+#for k in range(dim_error.shape[1]):
+#    plt.figure()
+#    plt.scatter(dim_error[:, k], dim_var[:, k])
+#plt.show()
+
+
 
