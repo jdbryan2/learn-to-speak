@@ -10,8 +10,8 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 TRAIN = True # train the model for another round of epochs
-BLUR = True # whether or not to use the blurring distortion
-EPOCHS = 10
+BLUR = False # whether or not to use the blurring distortion
+EPOCHS = 20
 
 # helper functions
 

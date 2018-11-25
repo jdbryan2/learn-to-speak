@@ -46,7 +46,8 @@ else:
     test_name = 'mnist_null_vae'
     distortion = null_distortion # function pointer
 
-save_dir = './trained/mnist_hd'
+#save_dir = './trained/mnist_hd'
+save_dir = './trained'
 
 #log_dir = '/home/jacob/Projects/Data/vae/mnist-test'
 #log_dir = '/home/jbryan/Data/vae-test'
@@ -77,7 +78,7 @@ d_val = MNIST_Dataset(mnist_path, distortion, train=False)
 ###
 model.load(load_path)
 
-num_points = 1000
+num_points = 500
 
 img_in, clean_img, label_num  = d_train.get_labeled_batch(0,num_points)
 #_, label_num = np.where(label)

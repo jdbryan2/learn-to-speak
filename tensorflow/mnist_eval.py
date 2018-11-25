@@ -6,6 +6,7 @@ import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.signal as sig
 from genfigures.plot_functions import *
+from helper_functions import *
 
 import tensorflow as tf
 from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distortion, blur_distortion
@@ -76,24 +77,31 @@ d_val = MNIST_Dataset(mnist_path, distortion, train=False)
 ###
 model.load(load_path)
 
+# Plot input and output images
+##############################
+num_points = 1000
+img_in, clean_img, label_num  = d_val.get_labeled_batch(0,num_points)
+
+# encode and decode images to look at quality
+rx = model.encode(img_in)
+img_out = model.decode(rx)
+
+if EXAMPLES == 0:
+    for k in range(10):
+        mnist_examples(label_num, img_in, img_out, select=k)
+        plt.show()
+        #tikz_save(fig_dir+'/examples_'+str(k))
+        #plt.show()
+        #plt.close()
+
 num_points = 5000
-tx = (0.5-np.random.random((num_points, latent_size)))*2.
-#base = np.arange(-1., 1., 0.05)
-#tx_0 = np.append(base, np.zeros(base.size*2))
-#tx_1 = np.append(np.zeros(base.size), base)
-#tx_1 = np.append(tx_1, np.zeros(base.size))
-#tx_2 = np.append(np.zeros(base.size*2), base)
-#
-##print tx_0.size, tx_1.size, tx_2.size
-#tx= np.array([tx_0, tx_1, tx_2]).T
+#tx = (0.5-np.random.random((num_points, latent_size)))*2.
+tx = np.random.normal(0, 1, (num_points, latent_size))
 
 img_out = model.decode(tx)
 img_in = distortion(img_out)
 rx = model.encode(img_out)
 rx_std = model.encode_std(img_out)
-
-error = np.abs(tx-rx)**2
-error= np.sqrt(np.sum(error, axis=1))
 
 std = np.exp(2*rx_std)
 std = np.sqrt(np.sum(std, axis=1))
@@ -104,16 +112,13 @@ plt.ylabel('Standard Deviation')
 
 ind = np.argsort(error)
 
-#for k in range(5):
-#    plt.figure()
-#    mnist_show(img_out[ind[k]])
+cap, MSE, power = channel_capacity(tx, rx)
 
-#plt.show()
+print "MSE: ", MSE
+print "Power: ", power
+print "Channel Cap: ", cap
 
-#print(error)
-print 'Average transmission error: ', np.mean(error)
-print 'Error standard deviation: ', np.std(error)
-
+exit()
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 

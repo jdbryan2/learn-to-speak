@@ -1,2 +1,2 @@
-model_checkpoint_path: "mnist_blur_hd.ckpt"
-all_model_checkpoint_paths: "mnist_blur_hd.ckpt"
+model_checkpoint_path: "mnist_null_hd.ckpt"
+all_model_checkpoint_paths: "mnist_null_hd.ckpt"
