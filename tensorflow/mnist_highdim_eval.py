@@ -14,8 +14,8 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
-BLUR = False # whether or not to use the blurring distortion
-EXAMPLES = 1  
+BLUR = True # whether or not to use the blurring distortion
+EXAMPLES = 2  
 EPOCHS = 50
 
 
@@ -119,8 +119,8 @@ if EXAMPLES == 1:
 
 
 
-tx = (0.5-np.random.random((num_points, latent_size)))*2.
-#tx = np.random.normal(0, 1, (num_points, latent_size))
+#tx = (0.5-np.random.random((num_points, latent_size)))*2.
+tx = np.random.normal(0, 1, (num_points, latent_size))
 tx[:, unused_dims] = 0.
 
 img_out = model.decode(tx)
@@ -141,6 +141,7 @@ latent_size = latent_size - np.sum(unused_dims)
 #    plt.show()
 
 cap, MSE, power = channel_capacity(tx, rx)
+cap= channel_capacity2(tx, rx)
 #square_error = np.sum(np.abs(tx-rx)**2, axis=1)
 #power = np.mean(np.sum(np.abs(tx)**2, axis=1))
 #MSE= np.mean(square_error)
@@ -170,7 +171,6 @@ print 'Mean RX Variance: ', var
 #c2 = np.sum(0.5*np.log2(1+power/MSE))
 print 'Estimated Channel Capacity (power): ', cap
 print 'Estimated TX Power: ', power
-exit()
 
 
 #plt.plot(error[ind])
@@ -181,10 +181,18 @@ exit()
 dim_error = np.abs(tx-rx)**2
 mean_error = np.mean(dim_error, axis=0)
 
+cov_tx = np.cov(tx.T)
+cov_rx = np.cov(rx.T)
 cov_error = np.cov((tx-rx).T)
+
+Kt = np.linalg.det(cov_tx)
+Kr = np.linalg.det(cov_rx)
+Ke = np.linalg.det(cov_error)
 plt.imshow(cov_error)
 plt.show()
-
+Ht = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kt)
+Hr = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kr)
+He = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Ke)
 
 dim_var = np.exp(2*rx_std)**2
 mean_var = np.mean(dim_var, axis=0)

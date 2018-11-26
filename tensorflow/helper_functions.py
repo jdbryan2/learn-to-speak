@@ -53,3 +53,22 @@ def channel_capacity(tx, rx):
     MSE = np.mean(np.sum(np.abs(tx-rx)**2, axis=1))
     chan_cap = np.sum(0.5*np.log2(1+tx.shape[1]/MSE))
     return chan_cap, MSE, power
+
+def channel_capacity2(tx, rx):
+
+    latent_size = tx.shape[1]
+    cov_tx = np.cov(tx.T)
+    cov_rx = np.cov(rx.T)
+    cov_error = np.cov((tx-rx).T)
+
+    Kt = np.linalg.det(cov_tx)
+    Kr = np.linalg.det(cov_rx)
+    Ke = np.linalg.det(cov_error)
+
+    Ht = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kt)
+    Hr = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kr)
+    He = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Ke)
+
+    chan_cap = Hr-He
+
+    return chan_cap

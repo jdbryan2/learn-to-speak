@@ -14,8 +14,9 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
-BLUR = False # whether or not to use the blurring distortion
+BLUR = True # whether or not to use the blurring distortion
 EPOCHS = 50
+EXAMPLES = 2
 
 # helper functions
 
@@ -106,13 +107,14 @@ rx_std = model.encode_std(img_out)
 std = np.exp(2*rx_std)
 std = np.sqrt(np.sum(std, axis=1))
 
-plt.scatter(error, std)
-plt.xlabel('Error')
-plt.ylabel('Standard Deviation')
-
-ind = np.argsort(error)
+#plt.scatter(error, std)
+#plt.xlabel('Error')
+#plt.ylabel('Standard Deviation')
+#
+#ind = np.argsort(error)
 
 cap, MSE, power = channel_capacity(tx, rx)
+cap = channel_capacity2(tx, rx)
 
 print "MSE: ", MSE
 print "Power: ", power
