@@ -4,10 +4,11 @@ import pylab as plt
 import os
 from matplotlib2tikz import save as _tikz_save
 
-def tikz_save(fname):
+def tikz_save(fname, data_path=''):
     _tikz_save(fname, 
         figureheight = '\\figureheight',
-        figurewidth = '\\figurewidth')
+        figurewidth = '\\figurewidth', 
+        tex_relative_path_to_data=data_path)
 
 def PlotTraces(data, rows, max_length, sample_period, highlight=0, highlight_style='b-'):
     if data.shape[1] < max_length:

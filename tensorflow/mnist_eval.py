@@ -14,9 +14,9 @@ from autoencoder.vae import VAE, MNIST_Dataset, variable_summaries, null_distort
 # Flags for saving time
 LOAD = False  # load a previsou model at the location of load_path
 #TRAIN = True # train the model for another round of epochs
-BLUR = True # whether or not to use the blurring distortion
+BLUR = False # whether or not to use the blurring distortion
 EPOCHS = 50
-EXAMPLES = 2
+EXAMPLES = 0
 
 # helper functions
 
@@ -44,9 +44,13 @@ def scatter3D(data, color='b', marker='o'):
 if BLUR:
     test_name = 'mnist_blur_vae'
     distortion = blur_distortion  # function pointer
+    fig_dir = 'figures/mnist_blur'
+    data_path = 'tikz/mnist_blur'
 else:
     test_name = 'mnist_null_vae'
     distortion = null_distortion # function pointer
+    fig_dir = 'figures/mnist_null'
+    data_path = 'tikz/mnist_null'
 
 save_dir = './trained'
 
@@ -56,6 +60,7 @@ load_path = save_dir+'/'+test_name+'.ckpt'
 
 mnist_path = '/home/jacob/Projects/Data/MNIST_data'
 #mnist_path = '/home/jbryan/mnist' # badger path
+
 
 input_dim = 28*28
 output_dim = 28*28
@@ -90,11 +95,13 @@ img_out = model.decode(rx)
 if EXAMPLES == 0:
     for k in range(10):
         mnist_examples(label_num, img_in, img_out, select=k)
-        plt.show()
-        #tikz_save(fig_dir+'/examples_'+str(k))
         #plt.show()
-        #plt.close()
+        tikz_save(fig_dir+'/examples_'+str(k)+'.tikz', data_path='tikz/mnist_null')
+        #plt.show()
+        plt.close()
 
+
+exit()
 num_points = 5000
 #tx = (0.5-np.random.random((num_points, latent_size)))*2.
 tx = np.random.normal(0, 1, (num_points, latent_size))

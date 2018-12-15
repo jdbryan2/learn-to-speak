@@ -78,7 +78,7 @@ d_val = MNIST_Dataset(mnist_path, distortion, train=False)
 ###
 model.load(load_path)
 
-num_points = 500
+num_points = 1000
 
 img_in, clean_img, label_num  = d_train.get_labeled_batch(0,num_points)
 #_, label_num = np.where(label)
