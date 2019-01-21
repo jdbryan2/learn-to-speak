@@ -6,13 +6,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.signal as sig
 
 import tensorflow as tf
-from autoencoder.primitive_vae import VAE, PyraatDataset2, LoadData, variable_summaries
+from autoencoder.primitive_vae import VAE, PyraatDataset, LoadData, variable_summaries
 
 from genfigures.plot_functions import *
 from helper_functions import *
 
 # VAE parameters
-LOAD = True
+LOAD = False
 TRAIN = True
 EPOCHS = 10
 save_dir = './trained/primnet'
@@ -27,8 +27,8 @@ inner_width = 50
 # Create save_dir if it does not already exist
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
+    LOAD = False # don't load if we just had to create the save directory
 
-    np.savez(save_dir+'/params', )
 
 
 # load data
@@ -99,6 +99,7 @@ plt.plot(np.exp(np.mean(h_std, axis=0)))
 print('Saving model params')
 if LOAD==True and os.path.exists(save_dir+'/params.npz'):
     params = np.load(save_dir+'params.npz')
+    print 'Total EPOCHS: ', EPOCHS+params['EPOCHS']
     np.savez(save_dir+'/params',
              EPOCHS=EPOCHS+params['EPOCHS'], # tally up epochs
              latent_size=latent_size,
@@ -108,6 +109,7 @@ if LOAD==True and os.path.exists(save_dir+'/params.npz'):
              val_ratio=val_ratio)
 else:
     # overwrite or simply write new file
+    print 'Total EPOCHS: ', EPOCHS
     np.savez(save_dir+'/params',
              EPOCHS=EPOCHS, 
              latent_size=latent_size,
@@ -117,4 +119,4 @@ else:
 
 
 #plt.scatter(np.arange(50), np.mean(np.abs(x-_x)**2, axis=1))
-#plt.show()
+plt.show()
