@@ -12,9 +12,9 @@ from genfigures.plot_functions import *
 from helper_functions import *
 
 # VAE parameters
-LOAD = False
+LOAD = True
 TRAIN = True
-EPOCHS = 10
+EPOCHS = 80
 save_dir = './trained/primnet'
 test_name = 'primnet'
 log_dir = save_dir+'/'+test_name+'_logs'
@@ -71,6 +71,7 @@ session.run(tf.global_variables_initializer())
 
 ###
 if LOAD:
+    print "Loading previous model."
     model.load(load_path)
 
 if TRAIN:
@@ -98,7 +99,7 @@ plt.plot(np.exp(np.mean(h_std, axis=0)))
 
 print('Saving model params')
 if LOAD==True and os.path.exists(save_dir+'/params.npz'):
-    params = np.load(save_dir+'params.npz')
+    params = np.load(save_dir+'/params.npz')
     print 'Total EPOCHS: ', EPOCHS+params['EPOCHS']
     np.savez(save_dir+'/params',
              EPOCHS=EPOCHS+params['EPOCHS'], # tally up epochs
@@ -115,7 +116,9 @@ else:
              latent_size=latent_size,
              inner_width=inner_width,
              input_dim=input_dim,
-             output_dim=output_dim)
+             output_dim=output_dim,
+             val_ratio=val_ratio)
+
 
 
 #plt.scatter(np.arange(50), np.mean(np.abs(x-_x)**2, axis=1))
