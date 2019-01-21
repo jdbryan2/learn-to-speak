@@ -3,6 +3,22 @@ import os
 import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+def normalize(data, **kwargs):
+    if 'min_val' in kwargs:
+        min_val = kwargs['min_val']
+    else:
+        min_val = np.min(data, axis=0)
+
+    if 'max_val' in kwargs:
+        max_val = kwargs['max_val']
+    else:
+        max_val = np.max(data, axis=0)
+
+    data = (data-min_val)/(max_val - min_val)
+    return data, min_val, max_val
+
+def denormalize(data, min_val, max_val):
+    return data*(max_val - min_val)+min_val
 
 def mnist_show(x, y):
     plt.imshow(np.append(x.reshape((28,28)), y.reshape((28,28)), axis=0), interpolation='none')

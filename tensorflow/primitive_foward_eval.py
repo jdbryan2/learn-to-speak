@@ -14,6 +14,7 @@ import tensorflow as tf
 from autoencoder.primitive_vae import VAE, PyraatDataset2, LoadData, variable_summaries
 
 from genfigures.plot_functions import *
+from helper_functions import *
 
 
 
@@ -50,25 +51,6 @@ def simulate(act_seq, directory):
     prim.SaveOutputs()
     mfcc_out, mel_spectrum, spectrum = tb.mfcc(prim.GetSoundWave(), nwin=240, nstep=80, nfft=512, nceps=13, fs=8000)
     return mfcc_out
-
-def normalize(data, **kwargs):
-    if 'min_val' in kwargs:
-        min_val = kwargs['min_val']
-    else:
-        min_val = np.min(data, axis=0)
-
-    if 'max_val' in kwargs:
-        max_val = kwargs['max_val']
-    else:
-        max_val = np.max(data, axis=0)
-
-    data = (data-min_val)/(max_val - min_val)
-    return data, min_val, max_val
-
-def denormalize(data, min_val, max_val):
-    return data*(max_val - min_val)+min_val
-
-
 
 
 LOAD = True

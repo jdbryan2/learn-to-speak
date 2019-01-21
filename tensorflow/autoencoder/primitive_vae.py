@@ -10,10 +10,10 @@ import tensorflow_utilities as tf_util
 
 from tensorflow.examples.tutorials.mnist import input_data
 
-from genfigures.plot_functions import get_index_list 
+from genfigures.plot_functions import get_index_list
 
-# The basic idea here is that the autoencoder is learning a function approxation 
-# rather than the identity function. 
+# The basic idea here is that the autoencoder is learning a function approxation
+# rather than the identity function.
 # This allows it to learn an inverse transform that can be used as a channel for transmitting
 
 class VAE(Autoencoder):
@@ -31,11 +31,9 @@ class VAE(Autoencoder):
             #enc4 = dense(enc3, inner_width, activation=tf.nn.relu, name='enc4')
 
             # variational layers
-            # note: epsilon is shaped based on zeroth dim of enc4 so that it won't break if 
-            #       enc4 is made convolutional
             mn = dense(enc3, units=latent_size)
-            sd       = 0.5 * tf.layers.dense(enc3, units=latent_size)            
-            epsilon = tf.random_normal(tf.stack([tf.shape(enc3)[0], latent_size])) 
+            sd       = 0.5 * tf.layers.dense(enc3, units=latent_size)
+            epsilon = tf.random_normal(tf.stack([tf.shape(enc3)[0], latent_size]))
 
             samples  = mn + tf.multiply(epsilon, tf.exp(sd))
             self.tx = mn
@@ -43,7 +41,7 @@ class VAE(Autoencoder):
             #self._latent_in = samples
             self.rx = samples
             #self.rx = tf.concat((samples, self.start_state), axis=1) # starting state feeds into the latent space
-            
+
         # decoder
         with tf.name_scope('decoder'):
             # NOTE: following line is tightly coupled to the architecture
@@ -62,12 +60,12 @@ class VAE(Autoencoder):
             #self.accuracy = tf.reduce_sum(tf.squared_difference(x_out, self.target))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             self.accuracy = tf.losses.absolute_difference(x_out, self.target)
             self.latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
-            
+
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
         with tf.name_scope('loss'):
-            art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
-            #art_loss = tf.losses.absolute_difference(x_out, self.target)
+            #art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
+            art_loss = tf.losses.absolute_difference(x_out, self.target)
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             #loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
             loss = tf.reduce_mean(art_loss + input_dim/latent_size*latent_loss)
@@ -171,7 +169,7 @@ def LoadData(directory='speech_io', outputs_name='mfcc', inputs_name='action_seg
         np.random.shuffle(new_index)
 
         return inputs[new_index, :], outputs[new_index, :], states[new_index,:]
-    else: 
+    else:
         return inputs, outputs, states
 
 class PyraatDataset2:
@@ -222,11 +220,9 @@ class PyraatDataset:
         stop = self.actions.shape[0]
         return self.features[start:stop, :], self.actions[start:stop, :]
         #return self._input[start:stop, :], self._output[start:stop, :]
-        
+
 
 if __name__ == '__main__':
     import pylab as plt
     LOAD = True
     TRAIN = True
-
-
