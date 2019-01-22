@@ -64,31 +64,6 @@ def LoadData(directory='speech_io', outputs_name='mfcc', inputs_name='action_seg
     else:
         return inputs, outputs, states
 
-class PyraatDataset2:
-    def __init__(self, actions, features):
-        self.actions = actions
-        self.features = features
-
-    def num_batches(self, batch_size):
-        return int(np.floor(self.features.shape[0]/batch_size))
-
-    def parameter_sizes(self):
-        return self.features.shape[1], self.actions.shape[1]+self.features.shape[1]
-
-    def get_batch(self, n=0, batch_size=50):
-        start = n*batch_size
-        stop = (n+1)*batch_size
-        return self.features[start:stop, :], np.append(self.actions[start:stop, :], self.features[start:stop, :],
-                                                       axis=1)
-        #return self._input[start:stop, :], self._output[start:stop, :]
-
-    def data(self):
-        start = 0
-        stop = self.actions.shape[0]
-        #return self.features[start:stop, :], self.actions[start:stop, :]
-        return self.features[start:stop, :], np.append(self.actions[start:stop, :], self.features[start:stop, :],
-                                                       axis=1)
-        #return self._input[start:stop, :], self._output[start:stop, :]
 
 class PyraatDataset:
     def __init__(self, actions, features):

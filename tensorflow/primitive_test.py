@@ -6,7 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.signal as sig
 
 import tensorflow as tf
-from autoencoder.primitive_vae import VAE, PyraatDataset, LoadData, variable_summaries
+from autoencoder.primitive_vae import VAE, variable_summaries
+from data_loader import PyraatDataset, LoadData
 
 from genfigures.plot_functions import *
 from helper_functions import *
@@ -15,28 +16,37 @@ from helper_functions import *
 LOAD = True
 TRAIN = True
 EPOCHS = 80
-save_dir = './trained/primnet'
-test_name = 'primnet'
-log_dir = save_dir+'/'+test_name+'_logs'
-load_path = save_dir+'/'+test_name+'.ckpt'
-save_path = save_dir+'/'+test_name+'.ckpt'
 
 latent_size = 20
 inner_width = 50
 
+test_name = 'primnet'
+
+save_dir = './trained/' + test_name
+log_dir = save_dir+'/'+test_name+'_logs'
+load_path = save_dir+'/'+test_name+'.ckpt'
+save_path = save_dir+'/'+test_name+'.ckpt'
 # Create save_dir if it does not already exist
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
     LOAD = False # don't load if we just had to create the save directory
 
 
+if test_name == 'artnet2':
+    # states get ignored so just point them at something
+    inputs, outputs, states = LoadData(directory='speech_io', inputs_name='art_segs', outputs_name='mfcc', states_name='art_segs', shuffle=True)
 
-# load data
-inputs, outputs, states = LoadData(directory='primitive_io', inputs_name='action_segs', states_name='state_segs',
-                                   outputs_name='mfcc', shuffle=True)
+elif test_name == 'primnet':
 
-# append state variables to inputs
-inputs = np.append(inputs, states, axis=1)
+    inputs, outputs, states = LoadData(directory='primitive_io', inputs_name='action_segs', states_name='state_segs', outputs_name='mfcc', shuffle=True)
+
+    # append state variables to inputs
+    inputs = np.append(inputs, states, axis=1)
+
+else:
+    print "You done fucked up."
+    exit()
+
 
 # normalize to range of [0, 1]
 outputs, min_out, max_out = normalize(outputs)
