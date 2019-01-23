@@ -20,7 +20,7 @@ EPOCHS = 80
 latent_size = 20
 inner_width = 50
 
-test_name = 'primnet'
+test_name = 'artnet2'
 
 save_dir = './trained/' + test_name
 log_dir = save_dir+'/'+test_name+'_logs'
