@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import scipy.signal as sig
+from scikits.talkbox import segment_axis
 
 from genfigures.plot_functions import get_index_list
 
@@ -11,7 +12,7 @@ def reshape_data(data,history):
     return data[:max_len, :].reshape((-1, data.shape[1]*history))
 
 
-def LoadData(directory='speech_io', outputs_name='mfcc', inputs_name='action_segs', states_name='state_segs', shuffle=True):
+def LoadData(directory='speech_io', outputs_name='mfcc', inputs_name='action_segs', states_name='state_segs', shuffle=True, seq_length=1):
 
     ind_list = np.array(get_index_list(directory=directory, base_name='data'))
 
@@ -35,23 +36,36 @@ def LoadData(directory='speech_io', outputs_name='mfcc', inputs_name='action_seg
             states = data[states_name][:, :, -1]
             #spec = data['mel_spectrum']
 
+    if seq_length > 1:
+
+        print outputs.shape
+        outputs = segment_axis(outputs, length=seq_length, overlap=seq_length-1, axis=0, end='cut')
+        print outputs.shape
+        outputs = outputs.reshape((outputs.shape[0], outputs.shape[1]*outputs.shape[2]))
+
+        inputs = segment_axis(inputs, length=seq_length, overlap=seq_length-1, axis=0, end='cut')
+        inputs = inputs.reshape((inputs.shape[0], inputs.shape[1]*inputs.shape[2]))
+
+        states = segment_axis(states, length=seq_length, overlap=seq_length-1, axis=0, end='cut')
+        states = states.reshape((states.shape[0], states.shape[1]*states.shape[2]))
+
     #plt.imshow(spec.T, aspect=3*20)
     #plt.show()
     remove = ~np.isnan(outputs)
-    outputs = outputs[remove].reshape((-1, 13))
-    remove.reshape((-1, 13))
+    outputs = outputs[remove].reshape((-1, outputs.shape[1]))
+    #remove.reshape((-1, 13))
     inputs = inputs[remove[:, 0], :]
     states = states[remove[:, 0], :]
-    print remove.shape
+    print "Tossing out NaN rows: ", np.sum(np.sum(remove, axis=1)==0), " of ", remove.shape[0]
 
-    E_m = np.mean(outputs[:, 0])
-    E_sd = np.std(outputs[:, 0])
-    print E_m, E_sd
-    m_count = np.sum(outputs[:, 0]>E_m)
-    sd_count = np.sum(outputs[:, 0]>E_m+E_sd)
-    count = outputs.shape[0]
+    #E_m = np.mean(outputs[:, 0])
+    #E_sd = np.std(outputs[:, 0])
+    #print E_m, E_sd
+    #m_count = np.sum(outputs[:, 0]>E_m)
+    #sd_count = np.sum(outputs[:, 0]>E_m+E_sd)
+    #count = outputs.shape[0]
 
-    print 1.*m_count/count, 1.*sd_count/count
+    #print 1.*m_count/count, 1.*sd_count/count
 
     #MultiPlotTraces(actions.T, np.arange(actions.shape[1]), actions.shape[0], 80)
     #plt.show()
@@ -87,3 +101,18 @@ class PyraatDataset:
         stop = self.actions.shape[0]
         return self.features[start:stop, :], self.actions[start:stop, :]
         #return self._input[start:stop, :], self._output[start:stop, :]
+
+if __name__=='__main__':
+
+    inputs, outputs, states = LoadData(directory='speech_io',
+                                       inputs_name='art_segs',
+                                       outputs_name='mfcc',
+                                       states_name='art_segs',
+                                       shuffle=True,
+                                       seq_length=3)
+
+    import pylab as plt
+    plt.figure()
+    plt.imshow(outputs[:30, :])
+    plt.show()
+

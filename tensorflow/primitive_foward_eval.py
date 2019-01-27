@@ -11,7 +11,8 @@ from primitive.Utterance import Utterance
 from primitive.ActionSequence import ActionSequence
 
 import tensorflow as tf
-from autoencoder.primitive_vae import VAE, PyraatDataset, LoadData, variable_summaries
+from autoencoder.primitive_vae import VAE, variable_summaries
+from data_loader as PyraatDataset, LoadData
 
 from genfigures.plot_functions import *
 from helper_functions import *

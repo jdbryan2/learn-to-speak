@@ -15,12 +15,12 @@ from helper_functions import *
 # VAE parameters
 LOAD = True
 TRAIN = True
-EPOCHS = 80
+EPOCHS = 20
 
 latent_size = 20
-inner_width = 50
+inner_width = 100
 
-test_name = 'artnet2'
+test_name = 'primgest_net'
 
 save_dir = './trained/' + test_name
 log_dir = save_dir+'/'+test_name+'_logs'
@@ -34,7 +34,12 @@ if not os.path.exists(save_dir):
 
 if test_name == 'artnet2':
     # states get ignored so just point them at something
-    inputs, outputs, states = LoadData(directory='speech_io', inputs_name='art_segs', outputs_name='mfcc', states_name='art_segs', shuffle=True)
+    inputs, outputs, states = LoadData(directory='speech_io',
+                                       inputs_name='art_segs',
+                                       outputs_name='mfcc',
+                                       states_name='art_segs',
+                                       shuffle=True,
+                                       seq_length=6)
 
 elif test_name == 'primnet':
 
