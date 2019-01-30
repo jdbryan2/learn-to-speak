@@ -13,17 +13,19 @@ from genfigures.plot_functions import *
 from helper_functions import *
 
 # VAE parameters
-LOAD = True
+LOAD = False
 TRAIN = True
-EPOCHS = 20
+EPOCHS = 10
+SAVE_INTERVAL = 5
 
 latent_size = 20
 inner_width = 100
+gesture_length = 6
 
-test_name = 'primgest_net'
+test_name = "primgest_%i"%gesture_length
 
 save_dir = './trained/' + test_name
-log_dir = save_dir+'/'+test_name+'_logs'
+log_dir = None #save_dir+'/'+test_name+'_logs'
 load_path = save_dir+'/'+test_name+'.ckpt'
 save_path = save_dir+'/'+test_name+'.ckpt'
 # Create save_dir if it does not already exist
@@ -32,18 +34,22 @@ if not os.path.exists(save_dir):
     LOAD = False # don't load if we just had to create the save directory
 
 
-if test_name == 'artnet2':
+if test_name[:3] == 'art':
     # states get ignored so just point them at something
     inputs, outputs, states = LoadData(directory='speech_io',
                                        inputs_name='art_segs',
                                        outputs_name='mfcc',
                                        states_name='art_segs',
                                        shuffle=True,
-                                       seq_length=6)
+                                       seq_length=gesture_length)
 
-elif test_name == 'primnet':
+elif test_name[:4] == 'prim':
 
-    inputs, outputs, states = LoadData(directory='primitive_io', inputs_name='action_segs', states_name='state_segs', outputs_name='mfcc', shuffle=True)
+    inputs, outputs, states = LoadData(directory='primitive_io',
+                                       inputs_name='action_segs',
+                                       states_name='state_segs',
+                                       outputs_name='mfcc',
+                                       shuffle=True)
 
     # append state variables to inputs
     inputs = np.append(inputs, states, axis=1)
@@ -90,8 +96,16 @@ if LOAD:
     model.load(load_path)
 
 if TRAIN:
-    model.train(d_train, epochs=EPOCHS, batch_size=50, d_val=d_val)
-    model.save(save_path)
+    total_epochs = 0
+    while total_epochs < EPOCHS:
+        print "Total Epochs Trained: " + str(total_epochs)
+        if SAVE_INTERVAL > EPOCHS-total_epochs:
+            model.train(d_train, epochs=EPOCHS-total_epochs, batch_size=50, d_val=d_val)
+            total_epochs += EPOCHS-total_epochs
+        else:
+            model.train(d_train, epochs=SAVE_INTERVAL, batch_size=50, d_val=d_val)
+            total_epochs += SAVE_INTERVAL
+        model.save(save_path)
 
 
 # End Training
@@ -122,17 +136,19 @@ if LOAD==True and os.path.exists(save_dir+'/params.npz'):
              inner_width=inner_width,
              input_dim=input_dim,
              output_dim=output_dim,
-             val_ratio=val_ratio)
+             val_ratio=val_ratio,
+             gesture_length=gesture_length)
 else:
     # overwrite or simply write new file
     print 'Total EPOCHS: ', EPOCHS
     np.savez(save_dir+'/params',
-             EPOCHS=EPOCHS, 
+             EPOCHS=EPOCHS,
              latent_size=latent_size,
              inner_width=inner_width,
              input_dim=input_dim,
              output_dim=output_dim,
-             val_ratio=val_ratio)
+             val_ratio=val_ratio,
+             gesture_length=gesture_length)
 
 
 
