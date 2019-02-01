@@ -91,6 +91,8 @@ session.run(tf.global_variables_initializer())
 
 
 ###
+# TODO: Add printout to show how dimensions are being used on each iter
+###
 if LOAD:
     print "Loading previous model."
     model.load(load_path)
@@ -119,8 +121,8 @@ y,x = d_val.get_batch(0, 50)
 h_std = model.encode_std(y)
 
 unused_dims = np.exp(np.mean(h_std, axis=0))>0.9
-print("Unused dimensions:")
-print(unused_dims)
+print("Unused dimensions: %i/%i"%(np.sum(unused_dims), latent_size))
+
 plt.figure()
 plt.plot(np.exp(np.mean(h_std, axis=0)))
 
