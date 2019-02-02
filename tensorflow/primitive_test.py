@@ -13,16 +13,19 @@ from genfigures.plot_functions import *
 from helper_functions import *
 
 # VAE parameters
-LOAD = False
+LOAD = True
 TRAIN = True
 EPOCHS = 10
-SAVE_INTERVAL = 5
+SAVE_INTERVAL = 1
 
-latent_size = 20
+latent_size = 10
 inner_width = 100
-gesture_length = 6
+gesture_length = 1
+#beta = 1.*latent_size/inner_width
+beta = 0.001
 
-test_name = "primgest_%i"%gesture_length
+test_name = "artgest_%i"%gesture_length
+#test_name = "primgest_%i"%gesture_length
 
 save_dir = './trained/' + test_name
 log_dir = None #save_dir+'/'+test_name+'_logs'
@@ -49,7 +52,8 @@ elif test_name[:4] == 'prim':
                                        inputs_name='action_segs',
                                        states_name='state_segs',
                                        outputs_name='mfcc',
-                                       shuffle=True)
+                                       shuffle=True,
+                                       seq_length=gesture_length)
 
     # append state variables to inputs
     inputs = np.append(inputs, states, axis=1)
@@ -85,7 +89,8 @@ input_dim, output_dim = d_train.parameter_sizes()
 session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
 model = VAE( input_dim, latent_size, output_dim,
-             log_dir=log_dir, inner_width=inner_width, auto_logging=False, sess=session, lr=1e-3)
+             log_dir=log_dir, inner_width=inner_width, beta=beta,
+             auto_logging=False, sess=session, lr=1e-3)
 
 session.run(tf.global_variables_initializer())
 
@@ -109,6 +114,17 @@ if TRAIN:
             total_epochs += SAVE_INTERVAL
         model.save(save_path)
 
+        y,x = d_train.get_batch(0, 50)
+
+        h_std = model.encode_std(y)
+
+        unused_dims = np.exp(np.mean(h_std, axis=0))>0.9
+        print("Unused dimensions: %i/%i"%(np.sum(unused_dims), latent_size))
+        print(np.exp(np.mean(h_std, axis=0)))
+
+    #plt.figure()
+    #plt.plot(np.exp(np.mean(h_std, axis=0)))
+
 
 # End Training
 ####################
@@ -116,7 +132,7 @@ if TRAIN:
 # print out unused dimensions
 
 # identify unused dimensions
-y,x = d_val.get_batch(0, 50)
+y,x = d_train.get_batch(0, 50)
 
 h_std = model.encode_std(y)
 
@@ -139,7 +155,8 @@ if LOAD==True and os.path.exists(save_dir+'/params.npz'):
              input_dim=input_dim,
              output_dim=output_dim,
              val_ratio=val_ratio,
-             gesture_length=gesture_length)
+             gesture_length=gesture_length,
+             beta=beta)
 else:
     # overwrite or simply write new file
     print 'Total EPOCHS: ', EPOCHS
@@ -150,7 +167,8 @@ else:
              input_dim=input_dim,
              output_dim=output_dim,
              val_ratio=val_ratio,
-             gesture_length=gesture_length)
+             gesture_length=gesture_length,
+             beta=beta)
 
 
 

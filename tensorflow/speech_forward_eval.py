@@ -93,7 +93,7 @@ else:
 
 save_dir = './trained/artnet'
 test_name = 'artnet'
-log_dir = save_dir+'/'+test_name+'_logs'
+#log_dir = save_dir+'/'+test_name+'_logs'
 load_path = save_dir+'/'+test_name+'.ckpt'
 
 if not os.path.exists(save_dir):

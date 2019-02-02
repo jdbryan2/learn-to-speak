@@ -194,7 +194,7 @@ Ht = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kt)
 Hr = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Kr)
 He = 0.5*np.log2((2*np.pi*np.exp(1))**latent_size*Ke)
 
-dim_var = np.exp(2*rx_std)**2
+dim_var = np.exp(rx_std)
 mean_var = np.mean(dim_var, axis=0)
 
 #for k in range(dim_error.shape[1]):

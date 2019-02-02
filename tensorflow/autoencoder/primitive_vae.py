@@ -18,7 +18,12 @@ from genfigures.plot_functions import get_index_list
 
 class VAE(Autoencoder):
     def __init__(self, input_dim, latent_size, output_dim, inner_width=50, lr=1e-4, **kwargs):
-        # input
+        if 'beta' in kwargs:
+            beta = kwargs['beta']
+        else:
+            beta = 1.*latent_size/input_dim
+
+            # input
         x = tf.placeholder(tf.float32, (None, input_dim))
         self.x = x
         self.target = tf.placeholder(tf.float32, (None, output_dim))
@@ -69,10 +74,13 @@ class VAE(Autoencoder):
             art_loss = tf.losses.absolute_difference(x_out, self.target)
 
             latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
+            #latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
 
+            loss = tf.reduce_sum(art_loss + beta*latent_loss)
+            #loss = tf.reduce_mean(art_loss + beta*latent_loss)
             #loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
             #loss = tf.reduce_mean(art_loss + input_dim/latent_size*latent_loss)
-            loss = tf.reduce_mean(art_loss + latent_loss)
+            #loss = tf.reduce_mean(art_loss + latent_loss)
 
             self.loss = loss
         # optimizer
