@@ -64,7 +64,7 @@ class VAE(Autoencoder):
             # change to MSE for accuracy, tx_power has no bearing
             #self.accuracy = tf.reduce_sum(tf.squared_difference(x_out, self.target))#tf_util.accuracy(x, self.rx_bits, name='accuracy')
             self.accuracy = tf.losses.absolute_difference(x_out, self.target)
-            self.latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
+            self.latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
 
             #self.tx_power = tf_util.power(tx, name='tx_power')
         # loss
@@ -73,11 +73,12 @@ class VAE(Autoencoder):
             #art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
             art_loss = tf.losses.absolute_difference(x_out, self.target)
 
-            latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
+            latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
+            latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             #latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
 
-            loss = tf.reduce_sum(art_loss + beta*latent_loss)
-            #loss = tf.reduce_mean(art_loss + beta*latent_loss)
+            #loss = tf.reduce_sum(art_loss + beta*latent_loss)
+            loss = tf.reduce_mean(art_loss + beta*latent_loss)
             #loss = tf.reduce_mean(art_loss + latent_size/input_dim*latent_loss)
             #loss = tf.reduce_mean(art_loss + input_dim/latent_size*latent_loss)
             #loss = tf.reduce_mean(art_loss + latent_loss)

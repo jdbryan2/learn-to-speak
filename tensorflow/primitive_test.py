@@ -13,16 +13,16 @@ from genfigures.plot_functions import *
 from helper_functions import *
 
 # VAE parameters
-LOAD = True
+LOAD = False
 TRAIN = True
-EPOCHS = 10
+EPOCHS = 100
 SAVE_INTERVAL = 1
 
 latent_size = 10
 inner_width = 100
 gesture_length = 1
 #beta = 1.*latent_size/inner_width
-beta = 0.001
+beta = 0.005
 
 test_name = "artgest_%i"%gesture_length
 #test_name = "primgest_%i"%gesture_length
