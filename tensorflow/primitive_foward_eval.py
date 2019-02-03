@@ -17,7 +17,15 @@ from data_loader import PyraatDataset, LoadData, tile_gestures
 from genfigures.plot_functions import *
 from helper_functions import *
 
+import argparse
 
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--batch', type=int, default=0)
+
+args = parser.parse_args()
+print "batch: ", args.batch
+
+#exit()
 # function for quickly simulating and returning corresponding MFCC sequence
 
 
@@ -55,9 +63,12 @@ def simulate(act_seq, directory):
     return mfcc_out
 
 
+test_name = 'primtest_1'
+#test_name = 'primtest1_5'
+#test_name = 'primtest2_1'
 #test_name = 'primtest2_5'
-#test_name = 'primtest3_1'
-test_name = 'primtest3_5'
+test_name = 'primtest3_1'
+#test_name = 'primtest3_5'
 save_dir = './trained/'+test_name
 load_path = save_dir+'/'+test_name+'.ckpt'
 log_dir = save_dir+'/'+test_name+'_logs' # needed parameter for VAE model
@@ -124,8 +135,10 @@ session.run(tf.global_variables_initializer())
 model.load(load_path)
 
 # load specific batch from data (make sure data is not randomized when loaded)
-batch_ind = 2
-directory = "prim_out/b"+str(batch_ind)
+batch_ind = args.batch
+directory = "prim_out/"+test_name+"/b"+str(batch_ind+1) # adjust so it matches with original data
+
+save_data = {}
 
 # load directly from original data file
 #######################################
@@ -133,64 +146,66 @@ directory = "prim_out/b"+str(batch_ind)
 #y_in, mel_spectrum, spectrum = tb.mfcc(data['sound_wave'], nwin=240, nstep=80, nfft=512, nceps=13, fs=8000)
 #y_in, _, _ = normalize(y_in, min_val=min_out, max_val=max_out) # confusing notation on in vs out -> min_out == output of vocal tract
 
+# compute average variance on each primitive dimension
+y,x = d_train.get_batch(0, 5000)
+
+h_std = model.encode_std(y)
+h_std = np.mean(np.exp(h_std)**2, axis=0)
+save_data['h_std'] = h_std # save standard deviation
+
+
 # get specific batch from dataset
 y,x = d_train.get_batch(batch_ind, 98)
 #x = x[:, :20] # this was product of crappy dataset design
 
-
 h = model.encode(y)
+h = moving_average(h, n=3) # moving average
+save_data['h'] = h
+
 _x = model.decode(h)
-x_in = denormalize(_x, min_val=min_in, max_val=max_in)
+x_hat = denormalize(_x, min_val=min_in, max_val=max_in)
+save_data['x_hat'] = x_hat
 
 y_out = denormalize(y, min_val=min_out, max_val=max_out)
+save_data['y'] = y_out
+
+
+save_data['x'] = denormalize(x, min_val=min_in, max_val=max_in)
 
 if gesture_length>1:
-    last_row = x_in[-1, :]
-    x_in = x_in[::gesture_length, :]
-    x_in = x_in.reshape((-1, x_in.shape[1]/gesture_length))
+    last_row = x_hat[-1, :]
+    x_hat = x_hat[::gesture_length, :]
+    x_hat = x_hat.reshape((-1, x_hat.shape[1]/gesture_length))
     #x_in = np.append(x_in, last_row[:x_in.shape[1]].reshape((1, -1)), axis=0)
 
-y_sim = simulate(x_in[:, :10], directory)
+y_hat = simulate(x_hat[:, :10], directory)
+save_data['y_hat'] = y_hat
 
 
-plt.figure()
-plt.imshow(y_sim)
-plt.figure()
-plt.imshow(y_out)
-plt.show()
+
+y_hat = tile_gestures(y_hat, gesture_length)
+#plt.imshow(y_hat)
+#plt.show()
+y_hat, _, _ = normalize(y_hat, min_val=min_out[:y_hat.shape[1]], max_val=max_out[:y_hat.shape[1]])
 
 
-#h = model.encode(y)
-hs = model.encode_std(y)
+h_hat = model.encode(y_hat)
+h_hat = moving_average(h_hat, n=10)
+save_data['h_hat'] = h_hat
 
-min_h = h-np.exp(hs)
-max_h = h+np.exp(hs)
+#hs = model.encode_std(y_hat)
+
+min_h = h_hat-h_std #np.exp(hs)
+max_h = h_hat+h_std #np.exp(hs)
+
+np.savez(directory+'/model_data', **save_data)
 
 #for k in range(h.shape[1]):
 #    plt.plot(h[:, k])
+#    plt.plot(h_hat[:, k], 'r')
 #    plt.plot(min_h[:, k], '--r')
 #    plt.plot(max_h[:, k], '--r')
 #    plt.show()
-
-
-y_sim = tile_gestures(y_sim, gesture_length)
-plt.imshow(y_sim)
-plt.show()
-y_sim, _, _ = normalize(y_sim, min_val=min_out[:y_sim.shape[1]], max_val=max_out[:y_sim.shape[1]])
-
-
-h_hat = model.encode(y_sim)
-hs = model.encode_std(y_sim)
-
-min_h = h_hat-np.exp(hs)
-max_h = h_hat+np.exp(hs)
-
-for k in range(h.shape[1]):
-    plt.plot(h[:, k])
-    plt.plot(h_hat[:, k], 'r')
-    plt.plot(min_h[:, k], '--r')
-    plt.plot(max_h[:, k], '--r')
-    plt.show()
 
 #_x = model.decode(h)
 #_xp = model.decode(h+hs)
@@ -199,41 +214,42 @@ for k in range(h.shape[1]):
 #error = np.abs(x-_x)
 #plt.plot(error)
 #plt.show()
-
-for k in range(10):
-    plt.figure()
-    plt.plot(x[:, k], '-b')
-    plt.plot(_x[:, k], '-r')
-#    plt.plot(_xp[:, k], '--r')
-#    plt.plot(_xn[:, k], '--r')
-
-plt.show()
-
-
-
-exit()
-directory = "prim_out/b"+str(batch_ind)
-
-# compute features from output sound
-mfcc_out = simulate(_x, directory)
-mfcc_out = tile_gestures(mfcc_out, gesture_length)
-mfcc_out, _, _ = normalize(mfcc_out, min_val=min_out[:mfcc_out.shape[1]], max_val=max_out[:mfcc_out.shape[1]]) # confusing notation on in vs out -> min_out == output of vocal tract
-
-plt.figure()
-plt.imshow(mfcc_out)
-plt.figure()
-plt.imshow(y_in)
-
-plt.show()
-
-_h = model.encode(mfcc_out)
-
-for k in range(h.shape[1]):
-    plt.plot(h[:, k], 'b')
-    plt.plot(_h[:, k], 'r')
-    plt.show()
-
-#plt.scatter(y, x)
-
-#plt.scatter(y, _x, c='r')
+#x = denormalize(x, min_val=min_in, max_val=max_in)
+#_x = denormalize(_x, min_val=min_in, max_val=max_in)
+#for k in range(10):
+#    plt.figure()
+#    plt.plot(x[:, k], '-b')
+#    plt.plot(_x[:, k], '-r')
+##    plt.plot(_xp[:, k], '--r')
+##    plt.plot(_xn[:, k], '--r')
+#
 #plt.show()
+
+
+
+#exit()
+#directory = "prim_out/b"+str(batch_ind)
+#
+## compute features from output sound
+#mfcc_out = simulate(_x, directory)
+#mfcc_out = tile_gestures(mfcc_out, gesture_length)
+#mfcc_out, _, _ = normalize(mfcc_out, min_val=min_out[:mfcc_out.shape[1]], max_val=max_out[:mfcc_out.shape[1]]) # confusing notation on in vs out -> min_out == output of vocal tract
+#
+#plt.figure()
+#plt.imshow(mfcc_out)
+#plt.figure()
+#plt.imshow(y_in)
+#
+#plt.show()
+#
+#_h = model.encode(mfcc_out)
+#
+#for k in range(h.shape[1]):
+#    plt.plot(h[:, k], 'b')
+#    plt.plot(_h[:, k], 'r')
+#    plt.show()
+#
+##plt.scatter(y, x)
+#
+##plt.scatter(y, _x, c='r')
+##plt.show()

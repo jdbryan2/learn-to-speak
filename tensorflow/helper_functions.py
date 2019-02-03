@@ -3,6 +3,16 @@ import os
 import pylab as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, axis=0, dtype=float)
+    ret[n:, :] = ret[n:, :] - ret[:-n, :]
+    ret[n-1:, :] = ret[n - 1:, :] / n
+    for k in range(n-1):
+        ret[k, :] = ret[k, :]/(k+1)
+    return ret
+    #return ret / n
+
+
 def normalize(data, **kwargs):
     if 'min_val' in kwargs:
         min_val = kwargs['min_val']

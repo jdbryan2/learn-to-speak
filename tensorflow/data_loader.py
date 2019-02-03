@@ -18,7 +18,9 @@ def tile_gestures(inputs, seq_length):
         #inputs = segment_axis(inputs[:-2, :], length=seq_length, overlap=seq_length-1, axis=0, end='cut')
         #inputs = inputs.reshape((inputs.shape[0], inputs.shape[1]*inputs.shape[2]))
 
-    return outputs
+        return outputs
+    else:
+        return inputs
 
 def reshape_data(data,history):
     max_len = int(np.floor(data.shape[0]/history)*history)
