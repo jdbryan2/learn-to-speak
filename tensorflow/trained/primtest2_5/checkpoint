@@ -1,0 +1,2 @@
+model_checkpoint_path: "primtest2_5.ckpt"
+all_model_checkpoint_paths: "primtest2_5.ckpt"

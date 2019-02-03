@@ -12,13 +12,15 @@ from primitive.ActionSequence import ActionSequence
 
 import tensorflow as tf
 from autoencoder.primitive_vae import VAE, variable_summaries
-from data_loader as PyraatDataset, LoadData
+from data_loader import PyraatDataset, LoadData, tile_gestures
 
 from genfigures.plot_functions import *
 from helper_functions import *
 
 
 # function for quickly simulating and returning corresponding MFCC sequence
+
+
 def simulate(act_seq, directory):
     utterance_length = 1.0
     loops = 1
@@ -42,7 +44,7 @@ def simulate(act_seq, directory):
     # load targets from act_seq
     time = np.arange(0.03, 1.01, 0.01)
     for k in range(act_seq.shape[1]):
-        for t in range(act_seq.shape[0]):
+        for t in range(min(act_seq.shape[0], time.size)):
             prim._act.SetManualTarget(k, act_seq[t,k], time[t]) # muscle, target, time
 
     prim.InitializeControl(initial_art = prim.GetControl(prim._act.GetAction(time=0.0)))
@@ -53,8 +55,10 @@ def simulate(act_seq, directory):
     return mfcc_out
 
 
-save_dir = './trained/primnet'
-test_name = 'primnet'
+#test_name = 'primtest2_5'
+#test_name = 'primtest3_1'
+test_name = 'primtest3_5'
+save_dir = './trained/'+test_name
 load_path = save_dir+'/'+test_name+'.ckpt'
 log_dir = save_dir+'/'+test_name+'_logs' # needed parameter for VAE model
 
@@ -65,6 +69,8 @@ latent_size = params['latent_size']
 inner_width = params['inner_width']
 input_dim = params['input_dim']
 output_dim = params['output_dim']
+gesture_length = params['gesture_length']
+beta = params['beta']
 
 LOAD_DATA = True
 # compute normalization parameters from data if needed
@@ -83,11 +89,16 @@ else:
     inputs, outputs, states = LoadData(directory='primitive_io',
                                        inputs_name='action_segs',
                                        states_name='state_segs',
-                                       outputs_name='mfcc', shuffle=False)
+                                       outputs_name='mfcc', shuffle=False,
+                                       seq_length=gesture_length)
 
     # append states to input if the loaded input dim is larger than the primitive inputs alone
-    if input_dim > inputs.shape[1]:
+    # "output_dim" has to do with VAE output, not channel output (vae output is channel input...)
+    if output_dim > inputs.shape[1]:
+        #print "appending states" 
+        #print input_dim, output_dim,inputs.shape[1], outputs.shape[1]
         inputs = np.append(inputs, states, axis=1)
+        #exit()
 
     outputs, min_out, max_out = normalize(outputs)
     inputs, min_in, max_in = normalize(inputs)
@@ -96,24 +107,24 @@ else:
     input_dim, output_dim = d_train.parameter_sizes()
 
     np.savez(save_dir+'/norms', min_out=min_out,
-                          max_out=max_out,
-                          min_in=min_in,
-                          max_in=max_in,
-                          input_dim=input_dim,
-                          output_dim=output_dim)
+                                max_out=max_out,
+                                min_in=min_in,
+                                max_in=max_in,
+                                input_dim=input_dim,
+                                output_dim=output_dim)
 
 
 # load up VAE
 session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
-model = VAE( input_dim, latent_size, output_dim, log_dir=log_dir, inner_width=inner_width, auto_logging=False, sess=session, lr=1e-3)
+model = VAE( input_dim, latent_size, output_dim, log_dir=log_dir, inner_width=inner_width, auto_logging=False, sess=session, lr=1e-3, beta=beta)
 
 session.run(tf.global_variables_initializer())
 
 model.load(load_path)
 
 # load specific batch from data (make sure data is not randomized when loaded)
-batch_ind = 0
+batch_ind = 2
 directory = "prim_out/b"+str(batch_ind)
 
 # load directly from original data file
@@ -126,10 +137,21 @@ directory = "prim_out/b"+str(batch_ind)
 y,x = d_train.get_batch(batch_ind, 98)
 #x = x[:, :20] # this was product of crappy dataset design
 
-x_in = denormalize(x, min_val=min_in, max_val=max_in)
+
+h = model.encode(y)
+_x = model.decode(h)
+x_in = denormalize(_x, min_val=min_in, max_val=max_in)
+
 y_out = denormalize(y, min_val=min_out, max_val=max_out)
 
+if gesture_length>1:
+    last_row = x_in[-1, :]
+    x_in = x_in[::gesture_length, :]
+    x_in = x_in.reshape((-1, x_in.shape[1]/gesture_length))
+    #x_in = np.append(x_in, last_row[:x_in.shape[1]].reshape((1, -1)), axis=0)
+
 y_sim = simulate(x_in[:, :10], directory)
+
 
 plt.figure()
 plt.imshow(y_sim)
@@ -138,10 +160,39 @@ plt.imshow(y_out)
 plt.show()
 
 
-h = model.encode(y)
+#h = model.encode(y)
 hs = model.encode_std(y)
 
-_x = model.decode(h)
+min_h = h-np.exp(hs)
+max_h = h+np.exp(hs)
+
+#for k in range(h.shape[1]):
+#    plt.plot(h[:, k])
+#    plt.plot(min_h[:, k], '--r')
+#    plt.plot(max_h[:, k], '--r')
+#    plt.show()
+
+
+y_sim = tile_gestures(y_sim, gesture_length)
+plt.imshow(y_sim)
+plt.show()
+y_sim, _, _ = normalize(y_sim, min_val=min_out[:y_sim.shape[1]], max_val=max_out[:y_sim.shape[1]])
+
+
+h_hat = model.encode(y_sim)
+hs = model.encode_std(y_sim)
+
+min_h = h_hat-np.exp(hs)
+max_h = h_hat+np.exp(hs)
+
+for k in range(h.shape[1]):
+    plt.plot(h[:, k])
+    plt.plot(h_hat[:, k], 'r')
+    plt.plot(min_h[:, k], '--r')
+    plt.plot(max_h[:, k], '--r')
+    plt.show()
+
+#_x = model.decode(h)
 #_xp = model.decode(h+hs)
 #_xn = model.decode(h-hs)
 
@@ -158,12 +209,15 @@ for k in range(10):
 
 plt.show()
 
+
+
 exit()
 directory = "prim_out/b"+str(batch_ind)
 
 # compute features from output sound
 mfcc_out = simulate(_x, directory)
-mfcc_out, _, _ = normalize(mfcc_out, min_val=min_out, max_val=max_out) # confusing notation on in vs out -> min_out == output of vocal tract
+mfcc_out = tile_gestures(mfcc_out, gesture_length)
+mfcc_out, _, _ = normalize(mfcc_out, min_val=min_out[:mfcc_out.shape[1]], max_val=max_out[:mfcc_out.shape[1]]) # confusing notation on in vs out -> min_out == output of vocal tract
 
 plt.figure()
 plt.imshow(mfcc_out)

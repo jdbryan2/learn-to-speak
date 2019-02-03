@@ -73,7 +73,7 @@ class VAE(Autoencoder):
             #art_loss = tf.reduce_sum(tf.squared_difference(x_out, self.target), 1)
             art_loss = tf.losses.absolute_difference(x_out, self.target)
 
-            latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
+            #latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd))
             latent_loss = -0.5 * tf.reduce_mean(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
             #latent_loss = -0.5 * tf.reduce_sum(1.0 + 2.0 * sd - tf.square(mn) - tf.exp(2.0 * sd), 1)
 

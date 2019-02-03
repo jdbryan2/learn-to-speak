@@ -7,6 +7,19 @@ from scikits.talkbox import segment_axis
 
 from genfigures.plot_functions import get_index_list
 
+def tile_gestures(inputs, seq_length):
+    if seq_length > 1:
+        base_len = inputs.shape[1]
+        data_len = inputs.shape[0]
+        outputs = np.zeros((inputs.shape[0], inputs.shape[1]*seq_length))
+        for k in range(seq_length):
+            outputs[:data_len-k, k*base_len:(k+1)*base_len] = inputs[k:]
+
+        #inputs = segment_axis(inputs[:-2, :], length=seq_length, overlap=seq_length-1, axis=0, end='cut')
+        #inputs = inputs.reshape((inputs.shape[0], inputs.shape[1]*inputs.shape[2]))
+
+    return outputs
+
 def reshape_data(data,history):
     max_len = int(np.floor(data.shape[0]/history)*history)
     return data[:max_len, :].reshape((-1, data.shape[1]*history))

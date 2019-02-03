@@ -6,7 +6,9 @@ import scipy.signal as sig
 import scikits.talkbox.features as tb
 
 import tensorflow as tf
-from autoencoder.pyraat_vae import VAE, PyraatDataset, LoadData, variable_summaries
+#from autoencoder.pyraat_vae import VAE, PyraatDataset, LoadData, variable_summaries
+from autoencoder.primitive_vae import VAE, variable_summaries
+from data_loader import PyraatDataset, LoadData
 
 import PyRAAT as vt
 #import primitive.RandomArtword as aw
@@ -21,15 +23,16 @@ def simulate(art_seq, directory):
     loops = 1
 
     free_muscles = np.array([aw.kArt_muscle.INTERARYTENOID ,
-                    aw.kArt_muscle.MASSETER ,
-                    aw.kArt_muscle.ORBICULARIS_ORIS ,
-                    aw.kArt_muscle.MYLOHYOID ,
-                    aw.kArt_muscle.STYLOGLOSSUS ,
-                    aw.kArt_muscle.GENIOGLOSSUS])# ,
+                             aw.kArt_muscle.MASSETER ,
+                             aw.kArt_muscle.ORBICULARIS_ORIS ,
+                             aw.kArt_muscle.MYLOHYOID ,
+                             aw.kArt_muscle.STYLOGLOSSUS ,
+                             aw.kArt_muscle.GENIOGLOSSUS,
+                             aw.kArt_muscle.LUNGS])# ,
     free_muscles = np.sort(free_muscles)
 
     initial_art= np.zeros(aw.kArt_muscle.MAX)
-    initial_art[aw.kArt_muscle.LUNGS] = 0.5
+    #initial_art[aw.kArt_muscle.LUNGS] = 0.5
     initial_art[aw.kArt_muscle.LEVATOR_PALATINI] = 1.
     initial_art[free_muscles] = art_seq[0,:]
 
@@ -52,11 +55,11 @@ def simulate(art_seq, directory):
     for k in range(aw.kArt_muscle.MAX):
         if k not in free_muscles:
 
-            if k ==  aw.kArt_muscle.LUNGS:
-                utterance.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 1.0], 
-                                                                      [0.5, 0.0])
+            #if k ==  aw.kArt_muscle.LUNGS:
+            #    utterance.SetManualArticulation(aw.kArt_muscle.LUNGS, [0.0, 1.0], 
+            #                                                          [0.5, 0.0])
 
-            elif k == aw.kArt_muscle.LEVATOR_PALATINI:
+            if k == aw.kArt_muscle.LEVATOR_PALATINI:
                 utterance.SetManualArticulation(aw.kArt_muscle.LEVATOR_PALATINI,  [0.0, utterance_length], 
                                                                                   [1.0, 1.0])
             else:
@@ -91,23 +94,39 @@ else:
 
 
 
-save_dir = './trained/artnet'
-test_name = 'artnet'
-#log_dir = save_dir+'/'+test_name+'_logs'
+#test_name = 'artnet'
+#test_name = 'artgest_1'
+test_name = 'arttest_1'
+save_dir = './trained/'+test_name
+#test_name = 'artnet'
+log_dir = save_dir+'/'+test_name+'_logs'
 load_path = save_dir+'/'+test_name+'.ckpt'
 
-if not os.path.exists(save_dir):
-    os.makedirs(save_dir)
+#if not os.path.exists(save_dir):
+#    os.makedirs(save_dir)
 
 
-latent_size = 7
+print "Loading network paramters."
+params = np.load(save_dir+'/params.npz')
+EPOCHS = params['EPOCHS']
+latent_size = params['latent_size']
+inner_width = params['inner_width']
+input_dim = params['input_dim']
+output_dim = params['output_dim']
+gesture_length = params['gesture_length']
+beta = params['beta']
+
+#latent_size = 7
 #print input_size, output_size, state_size 
 
 #from jh_utilities.datasets.unsupervised_dataset import UnsupervisedDataset
 session = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
 #model = VAE( input_dim, latent_size, state_dim, output_dim, log_dir=log_dir, inner_width=20, auto_logging=False, sess=session)
-model = VAE( input_dim, latent_size, output_dim, log_dir=log_dir, inner_width=50, auto_logging=False, sess=session, lr=1e-3)
+#model = VAE( input_dim, latent_size, output_dim, log_dir=log_dir, inner_width=50, auto_logging=False, sess=session, lr=1e-3)
+model = VAE( input_dim, latent_size, output_dim,
+             log_dir=log_dir, inner_width=inner_width, beta=beta,
+             auto_logging=False, sess=session, lr=1e-3)
 
 session.run(tf.global_variables_initializer())
 
@@ -117,7 +136,7 @@ session.run(tf.global_variables_initializer())
 ###
 model.load(load_path)
 
-batch_ind = 5
+batch_ind = 1
 
 data = np.load("../python/data/test/breathe_rand_init_%i/data1.npz"%batch_ind)
 y_in, mel_spectrum, spectrum = tb.mfcc(data['sound_wave'], nwin=240, nstep=80, nfft=512, nceps=13, fs=8000)

@@ -15,16 +15,17 @@ from helper_functions import *
 # VAE parameters
 LOAD = False
 TRAIN = True
-EPOCHS = 100
+EPOCHS = 50
 SAVE_INTERVAL = 1
 
-latent_size = 10
+latent_size = 20
 inner_width = 100
-gesture_length = 1
+gesture_length = 5
 #beta = 1.*latent_size/inner_width
-beta = 0.005
+beta = 0.0001
 
-test_name = "artgest_%i"%gesture_length
+#test_name = "arttest_%i"%gesture_length
+test_name = "primtest3_%i"%gesture_length
 #test_name = "primgest_%i"%gesture_length
 
 save_dir = './trained/' + test_name
@@ -56,7 +57,7 @@ elif test_name[:4] == 'prim':
                                        seq_length=gesture_length)
 
     # append state variables to inputs
-    inputs = np.append(inputs, states, axis=1)
+    #inputs = np.append(inputs, states, axis=1)
 
 else:
     print "You done fucked up."
@@ -81,6 +82,7 @@ if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
 input_dim, output_dim = d_train.parameter_sizes()
+#beta = beta*input_dim/latent_size # scale beta appropriately
 
 ####################
 # Train Neural Net
