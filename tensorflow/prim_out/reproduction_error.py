@@ -39,6 +39,8 @@ print min_y
 if os.path.exists(directory):
     for filename in os.listdir(directory):
         print filename
+        if filename[0] != 'b':
+            continue
         data = np.load(directory+'/'+filename+'/model_data.npz')
         print data.keys()
 
@@ -49,6 +51,7 @@ if os.path.exists(directory):
         y_hat = data['y_hat']
         x_hat = data['x_hat']
         h_hat = data['h_hat']
+        h_std = data['h_std']
 
         total_samples += y.shape[0]
 
@@ -59,7 +62,16 @@ if os.path.exists(directory):
 
 print total_samples
 y_mean = y_mean/total_samples
-h_error = h_error[:10]
+#h_error = h_error[:10]
+
+plt.figure()
+plt.bar(np.arange(h_std.size), h_std)
+plt.ylabel('Decoder Variance')
+plt.xlabel('Speech Primitive')
+tikz_save(directory+'/primitive_std.tikz',
+            data_path='tikz/ICE/')
+plt.show()
+plt.close()
 
 plt.figure()
 plt.bar(np.arange(h_error.size), 100*h_error/total_samples)
