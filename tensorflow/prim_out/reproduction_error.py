@@ -27,6 +27,10 @@ x_error = 0
 h_error = 0
 total_samples = 0
 
+
+H = np.zeros((1, 20))
+H_hat = np.zeros((1, 20))
+
 d = np.load('norms.npz')
 min_x = d['min_in']
 max_x = d['max_in']
@@ -53,6 +57,9 @@ if os.path.exists(directory):
         h_hat = data['h_hat']
         h_std = data['h_std']
 
+        H = np.append(H, h, axis=0)
+        H_hat = np.append(H_hat, h_hat, axis=0)
+
         total_samples += y.shape[0]
 
         y_mean += np.sum(y, axis=0)
@@ -63,6 +70,71 @@ if os.path.exists(directory):
 print total_samples
 y_mean = y_mean/total_samples
 #h_error = h_error[:10]
+
+# Computing information capacity
+cov_E = np.cov(H.T-H_hat.T)/4.
+cov_H_hat = np.cov(H_hat.T)
+cov_H= np.cov(H.T)
+
+lambE, QE = np.linalg.eig(cov_E)
+lambH, QH = np.linalg.eig(cov_H_hat)
+
+AH  = np.dot(QE.T, np.dot(cov_H, QE))
+AH_hat  = np.dot(QE.T, np.dot(cov_H_hat, QE))
+
+a_H = np.zeros(20)
+a_H_hat = np.zeros(20)
+
+for k in range(20):
+    a_H[k] = AH[k,k]
+    a_H_hat[k] = AH_hat[k,k]
+
+
+
+plt.figure()
+plt.imshow(cov_E)
+plt.title('$\\Sigma_E$')
+tikz_save(directory+'/ICE_error_covariance.tikz',
+            data_path='tikz/ICE/')
+
+plt.figure()
+plt.imshow(cov_H_hat)
+plt.title('$\\Sigma_{\\hat{h}}$')
+#plt.title('H_hat')
+tikz_save(directory+'/ICE_output_covariance.tikz',
+            data_path='tikz/ICE/')
+#
+#plt.figure()
+#plt.imshow(cov_H)
+#plt.title('H')
+#plt.show()
+
+#plt.figure()
+#plt.plot(lambE)
+#plt.plot(lambH)
+#plt.plot(a_H-lambE)
+#plt.title('H')
+#plt.figure()
+plt.figure()
+plt.plot(lambE, 'r--', label='$\\lambda_E$')
+#plt.plot(lambH)
+plt.plot(a_H_hat, 'b', label='$A_{k,k}$')
+plt.legend(loc='upper right')
+plt.grid(True)
+
+tikz_save(directory+'/ICE_waterfill.tikz',
+            data_path='tikz/ICE/')
+plt.show()
+
+ind = a_H_hat>lambE
+a_H_hat = a_H_hat[ind]
+lambE = lambE[ind]
+print np.log2(np.product(a_H_hat)), np.log2(np.product(lambE)), np.log2(np.product(a_H_hat))- np.log2(np.product(lambE))
+
+exit()
+
+
+
 
 plt.figure()
 plt.bar(np.arange(h_std.size), h_std)

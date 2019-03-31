@@ -67,7 +67,7 @@ test_name = 'primtest_1'
 #test_name = 'primtest1_5'
 #test_name = 'primtest2_1'
 #test_name = 'primtest2_5'
-test_name = 'primtest3_1'
+#test_name = 'primtest3_1'
 #test_name = 'primtest3_5'
 save_dir = './trained/'+test_name
 load_path = save_dir+'/'+test_name+'.ckpt'
@@ -151,6 +151,11 @@ y,x = d_train.get_batch(0, 5000)
 
 h_std = model.encode_std(y)
 h_std = np.mean(np.exp(h_std)**2, axis=0)
+
+plt.plot(h_std)
+plt.title(beta)
+plt.show()
+exit()
 save_data['h_std'] = h_std # save standard deviation
 
 
