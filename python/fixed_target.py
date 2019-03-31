@@ -21,7 +21,7 @@ loops = 10
 utterance_length = 1. #10.0
 #full_utterance = loops*utterance_length
 
-savedir = 'data/fixed_target/D'
+savedir = 'data/fixed_target2/D'
 
 #prim_filename = 'round411'
 prim_dirname = 'data/batch_random_20_10'
@@ -36,17 +36,18 @@ dim = prim.K.shape[0]
 print dim
 
 
-for act_dim in range(4, dim):
+for act_dim in range(0, 4):
 
     loop_start = get_last_index(savedir+str(act_dim))+1
 
     for k in range(loop_start, loop_start+loops):
         initial_control = np.zeros(dim)
-        initial_control[act_dim] = np.random.random(1)*2. - 1.
+        #initial_control[act_dim] = np.random.random(1)*2. - 1.
         print "Loop: ", k, " Dim: ", act_dim
         print "Initial Input: ", initial_control[act_dim]
         end_control = np.zeros(dim)
-        #end_control[:dim] = np.random.random(dim)*2 - 1.
+        #end_control[:dim] = np.ones(dim)*(-1.0)**k#np.random.random(dim)*2 - 1.
+        end_control[act_dim] = (-1.0)**k
 
         prim.utterance = Utterance(directory = savedir+str(act_dim), 
                                    utterance_length=utterance_length, 
@@ -97,6 +98,8 @@ for act_dim in range(4, dim):
         save_data['state_hist'] = prim.state_hist
         save_data['action_hist'] = prim.action_hist
         np.savez(os.path.join(savedir+str(act_dim), 'state_action_'+str(k)), **save_data)
+
+        prim.SaveOutputs(fname=str(k))
         print prim.state_hist.shape
 
         if DEBUG == True:
