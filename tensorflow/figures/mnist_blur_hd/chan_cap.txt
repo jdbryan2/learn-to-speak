@@ -1,0 +1,4 @@
+Transmission MSE:  0.11147502275902074
+Mean RX Variance:  0.056419138
+Estimated Channel Capacity:  2.8883641107603077
+

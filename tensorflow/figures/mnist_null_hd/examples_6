@@ -1,0 +1,19 @@
+% This file was created by matplotlib2tikz v0.6.17.
+\begin{tikzpicture}
+
+\begin{axis}[
+hide x axis,
+hide y axis,
+xmin=-0.5, xmax=251.5,
+ymin=-0.5, ymax=55.5,
+width=\figurewidth,
+height=\figureheight,
+tick align=outside,
+tick pos=left,
+x grid style={lightgray!92.02614379084967!black},
+y grid style={lightgray!92.02614379084967!black}
+]
+\addplot graphics [includegraphics cmd=\pgfimage,xmin=-0.5, xmax=251.5, ymin=55.5, ymax=-0.5] {examples_61.png};
+\end{axis}
+
+\end{tikzpicture}
